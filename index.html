@@ -30,8 +30,18 @@
   }
 
   html,body{height:100%;}
+  html{
+    /* スマホでボタンを連打したときに画面が拡大しないようにする。
+       ダブルタップ拡大は touch-action で止める（user-scalable=no はiOSが無視する） */
+    touch-action:manipulation;
+    -webkit-text-size-adjust:100%;
+  }
   body{
     margin:0;
+    touch-action:manipulation;
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    user-select:none;
     background:var(--ink);
     color:var(--enamel);
     font-family:var(--font-ui);
@@ -40,6 +50,7 @@
   }
 
   #app{
+    touch-action:manipulation;
     min-height:100dvh;
     display:flex;
     flex-direction:column;
@@ -66,6 +77,14 @@
   }
   #bar b{color:var(--mint);}
   #score{color:var(--gold);font-variant-numeric:tabular-nums;}
+  #bar-r{display:flex;align-items:center;gap:10px;}
+  #stage-tag{color:var(--mint);font-family:var(--font-ui);letter-spacing:0;font-size:11px;}
+  #btn-snd{
+    font-size:16px;line-height:1;padding:4px 6px;
+    background:var(--panel);border:1px solid #235c78;border-radius:6px;
+    color:var(--enamel);cursor:pointer;touch-action:manipulation;
+  }
+  #btn-snd:active{transform:translateY(1px);}
 
   #frame{
     position:relative;
@@ -168,8 +187,43 @@
     cursor:pointer;
     touch-action:manipulation;
   }
+  button.go.ghost{background:var(--panel-2);color:var(--enamel);border-bottom-color:#071c2c;
+    font-size:clamp(10px,1.9vw,13px);padding:9px 18px;letter-spacing:.12em;}
   button.go:active{transform:translateY(2px);border-bottom-width:2px;}
   button.go:focus-visible{outline:3px solid var(--gold);outline-offset:3px;}
+
+  /* ---- ボス選択 ---- */
+  #s-select{justify-content:flex-start;padding:2.5% 3%;gap:6px;overflow:auto;}
+  #grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:clamp(4px,1.1vw,10px);
+    width:min(100%,430px);
+  }
+  .cell{
+    position:relative;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:4px 2px 5px;
+    background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid #24597a;border-bottom:3px solid #071c2c;border-radius:8px;
+    color:var(--enamel);cursor:pointer;
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+    font-family:var(--font-ui);
+  }
+  .cell canvas{width:clamp(34px,7.4vw,52px);height:clamp(34px,7.4vw,52px);image-rendering:pixelated;}
+  .cell .nm{font-size:clamp(8px,1.55vw,11px);line-height:1.15;font-weight:700;letter-spacing:0;}
+  .cell .ti{font-size:clamp(7px,1.3vw,9px);color:var(--steel);line-height:1.1;}
+  .cell:active{transform:translateY(2px);border-bottom-width:1px;}
+  .cell.done{border-color:var(--mint);}
+  .cell.done::after{
+    content:"CLEAR";position:absolute;top:3px;right:3px;
+    font-family:var(--font-disp);font-size:8px;letter-spacing:.1em;
+    color:var(--ink);background:var(--mint);border-radius:3px;padding:1px 3px;
+  }
+  .cell.lock{opacity:.45;filter:grayscale(.7);cursor:not-allowed;}
+  .cell.lock::after{content:"\1F512";position:absolute;top:3px;right:4px;font-size:11px;}
+  .cell.final{border-color:var(--gold);}
+  .cell.final.open{box-shadow:0 0 0 2px var(--gold),0 0 18px rgba(255,212,71,.5);}
 
   /* ---- touch pad ---- */
   #pad{
@@ -184,7 +238,8 @@
     -webkit-tap-highlight-color:transparent;
   }
   .cluster{display:flex;gap:12px;}
-  .cluster.right{justify-content:flex-end;}
+  .cluster.right{justify-content:flex-end;gap:8px;}
+  .cluster.right .btn{width:clamp(44px,13.5vw,74px);}
   .btn{
     -webkit-user-select:none;user-select:none;
     touch-action:none;
@@ -205,6 +260,7 @@
   .btn.arrow{font-size:24px;}
   .btn.fire{background:linear-gradient(180deg,#3a6f88,#17435c);border-color:#4fd7c6;}
   .btn.jump{background:linear-gradient(180deg,#8a3556,#5a1e37);border-color:#ff7ba3;}
+  .btn.slide{background:linear-gradient(180deg,#4a3f7a,#241d47);border-color:#a08bff;}
   .btn.pressed{transform:translateY(3px);border-bottom-width:1px;filter:brightness(1.35);}
 
   #tip{
@@ -257,7 +313,11 @@
 <div id="app">
   <div id="bar">
     <div>DENTAL<b>MAN</b></div>
-    <div id="score">SCORE 000000</div>
+    <div id="bar-r">
+      <span id="stage-tag"></span>
+      <span id="score">SCORE 000000</span>
+      <button id="btn-snd" type="button" aria-label="音のオン・オフ" aria-pressed="false">🔊</button>
+    </div>
   </div>
 
   <div id="frame">
@@ -266,25 +326,50 @@
     <div class="screen on" id="s-title">
       <p class="kicker">Stage 01 — Plaque Cavern</p>
       <h1>デンタル<span>マン</span></h1>
-      <p class="sub">白衣のヒーローがフッ素ブラスターで虫歯菌を撃ち抜く。最深部で待つ王「キング・カリエス」を削り切れ。</p>
+      <p class="sub">白衣のヒーローがフッ素ブラスターで虫歯菌を撃ち抜く。8体のボスを好きな順に倒し、最後に待つ大魔王ムシバーンを削り切れ。</p>
       <button class="go" id="btn-start">Start</button>
       <p class="keys">
-        <kbd>←</kbd><kbd>→</kbd> 移動 ／ <kbd>X</kbd> または <kbd>↑</kbd> ジャンプ ／ <kbd>Space</kbd> ショット（長押しで溜め）<br>
-        <kbd>P</kbd> ポーズ ／ <kbd>M</kbd> 音のオン・オフ ／ スマホは下のボタンで操作
+        <kbd>←</kbd><kbd>→</kbd> 移動 ／ <kbd>X</kbd> または <kbd>↑</kbd> ジャンプ ／ <kbd>Space</kbd> ショット<br>
+        溜め撃ちは<b>4段階</b>（長く押すほど強い） ／ <kbd>C</kbd> または <kbd>↓</kbd>+ジャンプ でスライディング<br>
+        <kbd>P</kbd> ポーズ ／ <kbd>M</kbd> 音のオン・オフ ／ スマホは下のボタンで操作<br>
+        音が出ないときは右上の 🔊 を押してください
       </p>
+    </div>
+
+    <div class="screen" id="s-select">
+      <p class="kicker">Select Boss</p>
+      <div id="grid"></div>
+      <p class="sub" id="sel-msg">好きなボスから挑戦できます。8体たおすと、まん中の扉がひらく。</p>
+    </div>
+
+    <div class="screen" id="s-stage">
+      <p class="kicker" id="stg-kicker">Stage</p>
+      <p class="big" id="stg-name">STAGE</p>
+      <p class="sub" id="stg-sub"></p>
+      <button class="go" id="btn-go">Start</button>
+      <button class="go ghost" id="btn-back">ボス選択にもどる</button>
+    </div>
+
+    <div class="screen" id="s-end">
+      <p class="kicker">All Clear</p>
+      <p class="big win">MOUTH SAVED!</p>
+      <p class="sub" id="end-msg"></p>
+      <button class="go" id="btn-end">ボス選択にもどる</button>
     </div>
 
     <div class="screen" id="s-over">
       <p class="big lose">GAME OVER</p>
       <p class="sub" id="over-msg">虫歯に負けた。もう一度ブラッシングからやり直そう。</p>
       <button class="go" id="btn-retry">Retry</button>
+      <button class="go ghost" id="btn-back2">ボス選択にもどる</button>
     </div>
 
     <div class="screen" id="s-clear">
       <p class="kicker">Stage Clear</p>
       <p class="big win">CAVITY FREE!</p>
       <p class="sub" id="clear-msg">キング・カリエス撃破。口腔内に平和が戻った。</p>
-      <button class="go" id="btn-again">Play Again</button>
+      <button class="go" id="btn-next">ボス選択へ</button>
+      <button class="go ghost" id="btn-again">もう一度このステージ</button>
     </div>
 
     <div class="screen" id="s-pause">
@@ -299,26 +384,152 @@
       <div class="btn arrow" data-k="right">▶</div>
     </div>
     <div class="cluster right">
+      <div class="btn slide" data-k="slide">SLIDE<small>すべる</small></div>
       <div class="btn fire" data-k="fire">FIRE<small>長押しで溜め</small></div>
       <div class="btn jump" data-k="jump">JUMP<small>ジャンプ</small></div>
     </div>
   </div>
 
-  <p id="tip">スマホは横向きにすると画面が大きくなります。音が出るので外では音量にご注意ください。</p>
+  <p id="tip">スマホは横向きにすると画面が大きくなります。音が出るので外では音量にご注意ください。<br>
+  進み具合はこの端末に保存されます（次に開いたときは倒したボスがCLEARのまま）。</p>
 </div>
 
 <script>
 (function(){
 "use strict";
 
-/* viewport meta（アーティファクトの<head>に後から差し込む） */
-(function(){
-  var m=document.createElement("meta");
-  m.name="viewport";
-  m.content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no";
-  document.head.appendChild(m);
-})();
+/* ===== levels.js ===== */
+/* このファイルは src/gen_levels.py が書き出す。手で直さないこと。 */
+var LEVELS=[
+{n:1,name:"プラーク洞窟",sub:"Plaque Cavern",boss:"caries",bossName:"キング・カリエス",bossTitle:"虫歯の王",
+ pal:{sky1:"#0a2135",sky2:"#04121e",far:"#0e2c44",mid:"#143a55",tile:"#eaf7f6",tileHi:"#ffffff",tileLo:"#9fc4cb",tileEdge:"#5d8d99",plat:"#2fd6c2",platLo:"#12796f"},
+ map:[
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        h           |      ======        |                    |    w               |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |              w     |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |   w                |########  ##########|########  ##########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                t   |              ######|          ##########|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |######              |##########     w    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        h           |      ======        |                    |               w    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |      w        t    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################"
+ ]},
+{n:2,name:"歯石鉱山",sub:"Tartar Mine",boss:"tank",bossName:"タルタル・タンク",bossTitle:"歯石戦車",
+ pal:{sky1:"#2a2312",sky2:"#120d05",far:"#3d3316",mid:"#524425",tile:"#e6d9a8",tileHi:"#fff6cf",tileLo:"#a9945a",tileEdge:"#6d5c2e",plat:"#ffd447",platLo:"#8a6f1a"},
+ map:[
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |            w       |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                t   |             #######|             #######|    w        #######|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |   w                |#########  #########|#########  #########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        h           |      ======        |                    |              w     |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |      ##     ##     |      ##  w  ##  w  |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |               t    |             #######|             #######|             #######|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |  w               w |#####  #####  ######|#####  #####  ######",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################"
+ ]},
+{n:3,name:"酸の谷",sub:"Acid Valley",boss:"slime",bossName:"プラーク・スライム",bossTitle:"歯垢のぬし",
+ pal:{sky1:"#0f2a16",sky2:"#040f07",far:"#153a1f",mid:"#1d5029",tile:"#cfe9b8",tileHi:"#eafbd8",tileLo:"#89ad6f",tileEdge:"#4d6b3c",plat:"#b6ff4d",platLo:"#4d7a12"},
+ map:[
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |   w                |#########   ########|#########^^^########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        h           |      ======        |                    |               t    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |   w                |########   #########|########   #########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |               w    |#####   ############|#####^^^############",
+  "                    |                    |                    |                    |                    |                    |                    |                    |              h     |            =====   |                    |                    |   =====            |                    |         w          |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |  w      w          |#####  #####  ######|#####  #####  ######",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |      t         w   |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################"
+ ]},
+{n:4,name:"歯ぐきの沼",sub:"Gum Swamp",boss:"queen",bossName:"ジンジバ・クイーン",bossTitle:"歯周病の女王",
+ pal:{sky1:"#3a1024",sky2:"#16040c",far:"#4d1730",mid:"#6a2142",tile:"#ffd7e2",tileHi:"#fff0f4",tileLo:"#c98da1",tileEdge:"#8a4f64",plat:"#ff8fb4",platLo:"#8c2f4f"},
+ map:[
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |            f       |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        h           |      ======        |                    |    w           f   |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |   w                |########   #########|########   #########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |              h     |            =====   |                    |                    |   =====            |                    |          f         |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |    w               |##########   #######|##########^^^#######",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                t   |             #######|             #######|        f    #######|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |  w               f |#####  #####  ######|#####  #####  ######",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################"
+ ]},
+{n:5,name:"砂糖の街",sub:"Sugar Town",boss:"bomber",bossName:"シュガー・ボマー",bossTitle:"砂糖の爆弾魔",
+ pal:{sky1:"#1a1440",sky2:"#07051a",far:"#261b58",mid:"#332570",tile:"#f6e9ff",tileHi:"#ffffff",tileLo:"#b79fd0",tileEdge:"#6d5590",plat:"#c08bff",platLo:"#5a2f8c"},
+ map:[
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |      ##     ##     |      ##  w  ##   f |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        ===         |                    |   w            w   |########   #########|########   #########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |              h     |            =====   |                    |                    |   =====            |                    |         f          |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |   t                |#########   ########|#########   ########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |               w    |######   ###########|######^^^###########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        h           |      ======        |                    |     w          f   |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                t   |             #######|             #######|      w      #######|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################"
+ ]},
+{n:6,name:"酸竜のねぐら",sub:"Acid Dragon Lair",boss:"dragon",bossName:"アシッド・ドラゴン",bossTitle:"酸の竜",
+ pal:{sky1:"#062a2b",sky2:"#01100f",far:"#0b3d3c",mid:"#105150",tile:"#c8f2ee",tileHi:"#e9fffc",tileLo:"#7fb3ae",tileEdge:"#3f6d6a",plat:"#4dffd9",platLo:"#0d6f5f"},
+ map:[
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |   f                |########   #########|########^^^#########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |               t    |             #######|             #######|     w       #######|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        ===         |                    |  w              f  |########   #########|########   #########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |              h     |            =====   |                    |                    |   =====            |                    |         w          |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |    f               |###########   ######|###########^^^######",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |  w       w         |#####  #####  ######|#####  #####  ######",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        h           |      ======        |                    |               t    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################"
+ ]},
+{n:7,name:"矯正ワイヤー工場",sub:"Wire Factory",boss:"wire",bossName:"ブレース・ワイヤーマン",bossTitle:"矯正ワイヤーの怪人",
+ pal:{sky1:"#12202c",sky2:"#050a10",far:"#1b2f40",mid:"#264055",tile:"#c9d8e2",tileHi:"#eef6fb",tileLo:"#8496a4",tileEdge:"#4a5a68",plat:"#8fd7ff",platLo:"#2b6284"},
+ map:[
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                t   |             #######|             #######|             #######|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |      ##     ##     |      ## w   ##  f  |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |   w                |########   #########|########   #########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |              h     |            =====   |                    |                    |   =====            |                    |   w      f         |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |               t    |             #######|             #######|    f        #######|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        ===         |                    |  w              w  |########   #########|########   #########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        h           |      ======        |                    |      t         w   |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################"
+ ]},
+{n:8,name:"夜の顎",sub:"Grinding Castle",boss:"knight",bossName:"ナイト・グラインダー",bossTitle:"歯ぎしりの騎士",
+ pal:{sky1:"#1c1020",sky2:"#08040b",far:"#2a1832",mid:"#3a2145",tile:"#ded0e6",tileHi:"#f7effc",tileLo:"#9a88a6",tileEdge:"#5d4a68",plat:"#d78bff",platLo:"#6b2f8c"},
+ map:[
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |   w                |#######   ##########|#######^^^##########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                t   |             #######|             #######|     f       #######|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |  w       f         |#####  #####  ######|#####  #####  ######",
+  "                    |                    |                    |                    |                    |                    |                    |                    |              h     |            =====   |                    |                    |   =====            |                    |         w       f  |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |    w               |############   #####|############^^^#####",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        ===         |                    |  t              w  |########   #########|########   #########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        h           |      ======        |                    |      w        f    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################"
+ ]},
+{n:9,name:"魔王の口腔",sub:"Demon Maw",boss:"mushiburn",bossName:"大魔王ムシバーン",bossTitle:"口腔の闇",
+ pal:{sky1:"#3a0512",sky2:"#120005",far:"#500a1c",mid:"#6d0f27",tile:"#ffd0d8",tileHi:"#fff0f3",tileLo:"#c4818f",tileEdge:"#7d3a48",plat:"#ff4d80",platLo:"#8c1f42"},
+ map:[
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        w       f   |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |    w               |#########   ########|#########^^^########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                t   |             #######|             #######|      f      #######|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |              h     |            =====   |                    |                    |   =====            |                    |         w          |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |  f       w         |#####  #####  ######|#####  #####  ######",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                t   |######   ###########|######^^^###########",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |        h           |      ======        |                    |     w         f    |####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################",
+  "                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################"
+ ]},
+];
 
+/* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
 var W=480, H=272, TS=16, ROWS=17;
 var GRAV=0.52, MAXFALL=8.2;
@@ -341,86 +552,30 @@ var C={
   acid:"#b6ff4d", boss:"#ff6f9c", bossLo:"#a02a55", bossDark:"#5d1730"
 };
 
-/* ============================ レベル ============================ */
-/* '#'=床  '='=足場  '^'=トゲ  'w'=虫歯菌  't'=歯石砲台  'h'=歯ブラシ(回復) */
-var CHUNKS=[
-[ /* 1 スタート */
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","              w     ",
-"####################","####################"],
-[ /* 2 足場と歯石砲台 */
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","        h           ",
-"      ======        ","                    ","   w             t  ",
-"####################","####################"],
-[ /* 3 トゲの谷 */
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","  h                 ",
-" ====               ","                    ","               w    ",
-"########   #########","########^^^#########"],
-[ /* 4 のぼり階段 */
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                ####","           w  ######","          ##########",
-"####################","####################"],
-[ /* 5 くだり */
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","   h                ",
-"######              ","######              ","######        t   w ",
-"####################","####################"],
-[ /* 6 二つの穴 */
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","  w         w       ",
-"#####   #####   ####","#####   #####   ####"],
-[ /* 7 穴と空中足場 */
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","              h     ",
-"            =====   ","                    ","         w          ",
-"####   #############","####   #############"],
-[ /* 8 ボス前 */
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","         h          ",
-"        ====        ","                    ","   t          w     ",
-"####################","####################"],
-[ /* 9 ボス部屋（前半） */
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ","                    ",
-"                    ","                    ","                    ",
-"####################","####################"],
-[ /* 10 ボス部屋（後半・奥の壁） */
-"                  ##","                  ##","                  ##","                  ##",
-"                  ##","                  ##","                  ##","                  ##",
-"                  ##","                  ##","                  ##","                  ##",
-"                  ##","                  ##","                  ##",
-"####################","####################"]
-];
+/* ============================ ステージの読み込み ============================ */
+/* '#'=床 '='=足場 '^'=トゲ / 'w'=虫歯菌 't'=歯石砲台 'f'=浮遊菌 / 'h'=歯ブラシ */
+var stageIdx=0, LV=null, PAL=null;
+var MAP=[], COLSN=0, LVW=0, BOSS_TRIGGER=0, GATE_X=0;
 
-var MAP=[], COLSN=0;
-(function buildMap(){
+function loadStage(i){
+  stageIdx=i;
+  LV=LEVELS[i];
+  PAL=LV.pal;
+  MAP=[];
+  var chunks=[];
+  for(var c=0;c<LV.map.length;c++) chunks.push(LV.map[c].split("|"));
   for(var r=0;r<ROWS;r++){
     var line="";
-    for(var c=0;c<CHUNKS.length;c++){
-      var row=CHUNKS[c][r]||"";
-      line += (row+"                    ").slice(0,20);
+    for(var k=0;k<chunks.length;k++){
+      line += ((chunks[k][r]||"")+"                    ").slice(0,20);
     }
     MAP.push(line);
   }
   COLSN=MAP[0].length;
-})();
-var LVW=COLSN*TS;
-var BOSS_TRIGGER=(COLSN-40)*TS;      /* ボス部屋に入ったら */
-var GATE_X=BOSS_TRIGGER-8;
+  LVW=COLSN*TS;
+  BOSS_TRIGGER=(COLSN-40)*TS;   /* 最後の2チャンク＝ボス部屋 */
+  GATE_X=BOSS_TRIGGER-8;
+}
 
 function tileAt(cx,cy){
   if(cy<0) return " ";
@@ -438,150 +593,310 @@ function hazardPx(x,y){
   return tileAt(Math.floor(x/TS), Math.floor(y/TS))==="^";
 }
 
+/* ===== 20_audio.js ===== */
 /* ============================ 音 ============================ */
-var AC=null, master=null, muted=false, bgmOn=true;
+var AC=null, master=null, musicGain=null, sfxGain=null, muted=false;
+
+/* iPhoneの消音スイッチ（マナーモード）対策。
+   無音の<audio>を1本ループさせておくと再生用のオーディオセッションに切り替わり、
+   マナーモードでもWebAudioの音が出る。これが無いと本体スイッチだけで無音になる。 */
+var SILENT_WAV="data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA";
+var unlockEl=null;
+function mediaUnlock(){
+  if(unlockEl) return;
+  try{
+    unlockEl=document.createElement("audio");
+    unlockEl.src=SILENT_WAV;
+    unlockEl.loop=true; unlockEl.volume=0.05;
+    unlockEl.setAttribute("playsinline","");
+    unlockEl.setAttribute("preload","auto");
+    var pr=unlockEl.play(); if(pr&&pr.catch) pr.catch(function(){});
+  }catch(e){}
+}
 function audioInit(){
-  if(AC) return;
   var K=window.AudioContext||window.webkitAudioContext;
   if(!K) return;
-  AC=new K();
-  master=AC.createGain(); master.gain.value=0.28; master.connect(AC.destination);
-  bgmStart();
+  mediaUnlock();
+  if(!AC){
+    AC=new K();
+    master=AC.createGain(); master.gain.value=muted?0:0.55; master.connect(AC.destination);
+    musicGain=AC.createGain(); musicGain.gain.value=0.9; musicGain.connect(master);
+    sfxGain=AC.createGain(); sfxGain.gain.value=1.0; sfxGain.connect(master);
+    musicStart();
+  }
+  if(AC.state==="suspended") AC.resume();
 }
-function beep(freq,dur,type,vol,slideTo){
+function setMuted(v){
+  muted=!!v;
+  if(master) master.gain.value=muted?0:0.55;
+  if(unlockEl){
+    if(muted) unlockEl.pause();
+    else { var pr=unlockEl.play(); if(pr&&pr.catch) pr.catch(function(){}); }
+  }
+  try{ localStorage.setItem("dentalman_mute", muted?"1":"0"); }catch(e){}
+  var b=document.getElementById("btn-snd");
+  if(b){ b.textContent=muted?"🔇":"🔊"; b.setAttribute("aria-pressed",muted?"true":"false"); }
+}
+
+/* --- 音の素 --- */
+function voice(freq,dur,type,vol,slideTo,when,dest){
   if(!AC||muted) return;
+  var t0=when||AC.currentTime;
   var o=AC.createOscillator(), g=AC.createGain();
-  o.type=type||"square"; o.frequency.setValueAtTime(freq,AC.currentTime);
-  if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(30,slideTo),AC.currentTime+dur);
-  g.gain.setValueAtTime(vol||0.2,AC.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur);
-  o.connect(g); g.connect(master); o.start(); o.stop(AC.currentTime+dur+0.02);
+  o.type=type||"square";
+  o.frequency.setValueAtTime(freq,t0);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(30,slideTo),t0+dur);
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0005,vol||0.2),t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g); g.connect(dest||sfxGain);
+  o.start(t0); o.stop(t0+dur+0.03);
 }
-function noise(dur,vol,hz){
+function beep(freq,dur,type,vol,slideTo){ voice(freq,dur,type,vol,slideTo); }
+function noise(dur,vol,hz,when,dest,q){
   if(!AC||muted) return;
-  var n=Math.floor(AC.sampleRate*dur);
+  var t0=when||AC.currentTime;
+  var n=Math.max(1,Math.floor(AC.sampleRate*dur));
   var b=AC.createBuffer(1,n,AC.sampleRate), d=b.getChannelData(0);
   for(var i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
   var s=AC.createBufferSource(); s.buffer=b;
-  var f=AC.createBiquadFilter(); f.type="bandpass"; f.frequency.value=hz||1400;
+  var f=AC.createBiquadFilter(); f.type="bandpass"; f.frequency.value=hz||1400; f.Q.value=q||1;
   var g=AC.createGain(); g.gain.value=vol||0.22;
-  s.connect(f); f.connect(g); g.connect(master); s.start();
+  s.connect(f); f.connect(g); g.connect(dest||sfxGain);
+  s.start(t0);
 }
+function kick(t,v){
+  if(!AC||muted) return;
+  var o=AC.createOscillator(), g=AC.createGain();
+  o.type="sine";
+  o.frequency.setValueAtTime(180,t);
+  o.frequency.exponentialRampToValueAtTime(46,t+0.12);
+  g.gain.setValueAtTime(v||0.42,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+  o.connect(g); g.connect(musicGain);
+  o.start(t); o.stop(t+0.22);
+}
+function snare(t,v){ noise(0.13,v||0.22,1900,t,musicGain,0.7); voice(190,0.07,"triangle",0.08,90,t,musicGain); }
+function hat(t,v){ noise(0.028,v||0.05,9000,t,musicGain,0.9); }
+
+/* --- 効果音（全ステージ共通） --- */
 var SFX={
-  shoot:function(){beep(880,0.07,"square",0.13,320);},
-  charge2:function(){beep(300,0.22,"sawtooth",0.2,1200);},
-  charge1:function(){beep(420,0.14,"square",0.17,900);},
-  jump:function(){beep(340,0.11,"square",0.14,760);},
-  hit:function(){noise(0.07,0.16,2600);},
-  kill:function(){noise(0.2,0.26,900); beep(520,0.16,"square",0.12,120);},
-  hurt:function(){beep(200,0.28,"sawtooth",0.24,70);},
-  pick:function(){beep(880,0.08,"triangle",0.2); setTimeout(function(){beep(1320,0.12,"triangle",0.2);},80);},
-  bossHit:function(){noise(0.09,0.2,700);},
-  bossDie:function(){noise(1.1,0.34,420);},
-  gate:function(){beep(120,0.5,"square",0.2,60);}
+  shoot:function(){beep(880,0.07,"square",0.16,320);},
+  charge2:function(){beep(300,0.22,"sawtooth",0.24,1200);},
+  charge1:function(){beep(420,0.14,"square",0.2,900);},
+  jump:function(){beep(340,0.11,"square",0.17,760);},
+  hit:function(){noise(0.07,0.19,2600);},
+  kill:function(){noise(0.2,0.3,900); beep(520,0.16,"square",0.14,120);},
+  hurt:function(){beep(200,0.28,"sawtooth",0.28,70);},
+  pick:function(){beep(880,0.08,"triangle",0.24); setTimeout(function(){beep(1320,0.12,"triangle",0.24);},80);},
+  bossHit:function(){noise(0.09,0.24,700);},
+  bossDie:function(){noise(1.1,0.38,420);},
+  gate:function(){beep(120,0.5,"square",0.24,60);},
+  boom:function(){noise(0.3,0.34,300); beep(90,0.3,"sawtooth",0.2,40);},
+  dash:function(){noise(0.18,0.14,600);},
+  laser:function(){beep(1200,0.3,"sawtooth",0.16,180);},
+  charge3:function(){beep(220,0.34,"sawtooth",0.26,1800); setTimeout(function(){beep(1600,0.16,"square",0.18,600);},90);}
 };
 
-/* --- BGM（軽いチップチューン・ループ） --- */
-var bgmTimer=null, bgmStep=0, bgmNext=0;
-var LEAD=[0,7,12,7,10,7,12,7, 0,7,12,7,10,7,12,7, -2,5,10,5,8,5,10,5, -4,3,8,3,7,3,8,3];
-var BASS=[0,0,7,0, 0,0,7,0, -2,-2,5,-2, -4,-4,3,-4];
+/* ============================ 音楽 ============================
+   全部その場で合成（音源ファイルなし）。step は8分音符。null は休符。
+   曲は state と現在のステージから自動で決まる。 */
 function ntof(s){ return 220*Math.pow(2,s/12); }
-function bgmStart(){
-  if(!AC||bgmTimer) return;
-  bgmNext=AC.currentTime+0.1;
-  bgmTimer=setInterval(function(){
-    if(!AC) return;
-    var spb=0.125; /* 16分 ≒ 120bpm */
-    while(bgmNext < AC.currentTime+0.25){
-      if(bgmOn && !muted && state==="play"){
-        var l=LEAD[bgmStep%LEAD.length];
-        var o=AC.createOscillator(), g=AC.createGain();
-        o.type="square"; o.frequency.value=ntof(l+12);
-        g.gain.setValueAtTime(0.055,bgmNext);
-        g.gain.exponentialRampToValueAtTime(0.001,bgmNext+spb*0.9);
-        o.connect(g); g.connect(master); o.start(bgmNext); o.stop(bgmNext+spb);
-        if(bgmStep%2===0){
-          var b=BASS[Math.floor(bgmStep/2)%BASS.length];
-          var o2=AC.createOscillator(), g2=AC.createGain();
-          o2.type="triangle"; o2.frequency.value=ntof(b-12);
-          g2.gain.setValueAtTime(0.11,bgmNext);
-          g2.gain.exponentialRampToValueAtTime(0.001,bgmNext+spb*1.6);
-          o2.connect(g2); g2.connect(master); o2.start(bgmNext); o2.stop(bgmNext+spb*2);
-        }
-        if(bgmStep%4===2) noise(0.05,0.05,5200);
+
+function mkTrack(o){
+  var t={
+    bpm:o.bpm, len:32, once:!!o.once,
+    lead:o.lead, bass:o.bass,
+    lw:o.lw||"square", bw:o.bw||"triangle",
+    lv:(o.lv===undefined?0.1:o.lv), bv:(o.bv===undefined?0.17:o.bv),
+    ln:(o.ln===undefined?0.92:o.ln),
+    drum:o.drum||"basic",
+    fn:function(i,t2,spb){
+      var l=this.lead[i];
+      if(l!==null&&l!==undefined) voice(ntof(l+12),spb*this.ln,this.lw,this.lv,0,t2,musicGain);
+      if(this.bass){
+        if(this.bass.length>=32) voice(ntof(this.bass[i]-12),spb*0.8,this.bw,this.bv,0,t2,musicGain);
+        else if(i%2===0) voice(ntof(this.bass[i/2]-12),spb*1.7,this.bw,this.bv,0,t2,musicGain);
       }
-      bgmStep++; bgmNext+=spb;
+      var d=this.drum;
+      if(d==="basic"){
+        if(i%8===0||i%8===6) kick(t2);
+        if(i%8===4) snare(t2);
+        hat(t2, i%2===0?0.05:0.028);
+      } else if(d==="drive"){
+        if(i%4===0) kick(t2);
+        if(i%8===4) snare(t2,0.26);
+        hat(t2, i%2===0?0.055:0.03);
+      } else if(d==="heavy"){
+        if(i%8===0||i%8===3||i%8===6) kick(t2,0.5);
+        if(i%8===4) snare(t2,0.28);
+        if(i%2===0) hat(t2,0.045);
+      } else if(d==="soft"){
+        if(i%8===0) kick(t2,0.3);
+        if(i%4===0) hat(t2,0.03);
+      }
     }
-  },60);
+  };
+  if(o.len) t.len=o.len;
+  return t;
 }
 
-/* ============================ 入力 ============================ */
-var keys={left:false,right:false,jump:false,fire:false};
-var jumpEdge=false, lastJump=false;
-var KEYMAP={ArrowLeft:"left",ArrowRight:"right",KeyA:"left",KeyD:"right",
-  ArrowUp:"jump",KeyX:"jump",KeyK:"jump",
-  Space:"fire",KeyZ:"fire",KeyJ:"fire"};
-window.addEventListener("keydown",function(e){
-  if(e.code==="Space"||e.code.indexOf("Arrow")===0) e.preventDefault();
-  if(e.repeat) return;
-  audioInit();
-  var k=KEYMAP[e.code]; if(k) keys[k]=true;
-  if(e.code==="KeyP") togglePause();
-  if(e.code==="KeyM"){ muted=!muted; if(master) master.gain.value=muted?0:0.28; }
-  if(e.code==="Enter"){ if(state==="title") startGame(); else if(state==="over"||state==="clear") startGame(); }
-});
-window.addEventListener("keyup",function(e){
-  var k=KEYMAP[e.code]; if(k) keys[k]=false;
-});
-(function pad(){
-  var btns=document.querySelectorAll("#pad .btn");
-  Array.prototype.forEach.call(btns,function(b){
-    var k=b.getAttribute("data-k");
-    function on(e){e.preventDefault();audioInit();keys[k]=true;b.classList.add("pressed");}
-    function off(e){e.preventDefault();keys[k]=false;b.classList.remove("pressed");}
-    b.addEventListener("pointerdown",on);
-    b.addEventListener("pointerup",off);
-    b.addEventListener("pointercancel",off);
-    b.addEventListener("pointerleave",off);
-  });
-})();
+/* --- タイトル --- */
+var T_TITLE=mkTrack({bpm:96, lw:"triangle", lv:0.085, ln:1.7, drum:"soft",
+  lead:[0,null,3,null, 7,null,5,null, 3,null,0,null, -2,null,null,null,
+        5,null,8,null, 12,null,10,null, 7,null,3,null, 0,null,null,null],
+  bass:[0,0,7,0, -4,-4,3,-4, 3,3,10,3, -2,-2,5,-2]});
 
-/* ============================ 状態 ============================ */
-var state="title";
-var player, spawns=[], enemies=[], pbullets=[], ebullets=[], parts=[], pickups=[];
-var cam={x:0}, boss=null, score=0, ready=0, shake=0, frame=0, flash=0;
+/* --- ステージ9曲（1曲ずつ性格を変えてある） --- */
+var T_STAGE=[
+  /* 1 プラーク洞窟：明るい行進曲 */
+  mkTrack({bpm:138, drum:"basic",
+    lead:[0,3,7,5, 3,0,null,-5, 3,7,10,7, 5,3,null,0,
+          5,8,12,10, 8,5,null,3, 7,10,14,12, 10,7,5,3],
+    bass:[0,0,7,0, -4,-4,3,-4, 3,3,10,3, -2,-2,5,-2]}),
+  /* 2 歯石鉱山：重い足踏み */
+  mkTrack({bpm:118, drum:"heavy", lv:0.105, bv:0.19,
+    lead:[5,null,5,8, 10,null,8,5, 3,null,3,5, 7,null,5,3,
+          5,null,5,8, 10,12,13,12, 10,8,7,5, 3,null,null,null],
+    bass:[5,5,12,5, 1,1,8,1, 3,3,10,3, 0,0,7,0]}),
+  /* 3 酸の谷：不安げで速い */
+  mkTrack({bpm:146, drum:"drive", lv:0.095,
+    lead:[0,1,0,-2, 0,1,0,3, 5,6,5,3, 5,6,5,7,
+          8,7,5,3, 5,3,1,0, -2,0,1,3, 5,3,1,0],
+    bass:[0,0,0,-2, 0,0,0,3, 5,5,5,3, 0,0,-2,0]}),
+  /* 4 歯ぐきの沼：ゆっくり不気味 */
+  mkTrack({bpm:104, drum:"soft", lw:"triangle", lv:0.1, ln:1.6,
+    lead:[7,null,null,5, null,3,null,null, 2,null,null,3, null,5,null,null,
+          7,null,null,10, null,8,null,7, 5,null,3,null, 2,null,null,null],
+    bass:[-5,-5,2,-5, -3,-3,4,-3, -5,-5,2,-5, -7,-7,0,-7]}),
+  /* 5 砂糖の街：跳ねる長調 */
+  mkTrack({bpm:152, drum:"basic", lv:0.1,
+    lead:[3,7,10,7, 12,10,7,10, 5,8,12,8, 15,12,8,12,
+          3,7,10,7, 12,15,17,15, 14,12,10,8, 7,5,3,null],
+    bass:[3,3,10,3, -4,-4,3,-4, 5,5,12,5, 0,0,7,0]}),
+  /* 6 酸竜のねぐら：低くうねる */
+  mkTrack({bpm:112, drum:"heavy", lw:"sawtooth", lv:0.085, bv:0.16, ln:1.5,
+    lead:[0,null,-1,null, 0,null,3,null, 2,null,1,null, 0,null,null,null,
+          -2,null,-3,null, -2,null,1,null, 0,null,-1,null, -2,null,null,null],
+    bass:[0,0,0,0, 0,0,-1,0, 0,0,0,0, 0,0,-1,0,
+          -5,-5,-5,-5, -5,-5,-6,-5, -5,-5,-5,-5, -5,-5,-6,-5]}),
+  /* 7 矯正ワイヤー工場：機械の刻み */
+  mkTrack({bpm:158, drum:"drive", lv:0.09, ln:0.6,
+    lead:[0,0,7,0, 3,3,10,3, 5,5,12,5, 3,3,10,3,
+          0,0,7,0, -2,-2,5,-2, -4,-4,3,-4, -5,-5,2,-5],
+    bass:[0,0,7,0, 3,3,10,3, 5,5,12,5, -2,-2,5,-2]}),
+  /* 8 夜の顎：荘厳な短調 */
+  mkTrack({bpm:128, drum:"heavy", lv:0.1,
+    lead:[0,3,7,12, 10,7,3,0, -2,1,5,10, 8,5,1,-2,
+          0,3,7,12, 15,14,12,10, 8,7,5,3, 0,null,null,null],
+    bass:[0,0,7,0, -2,-2,5,-2, -4,-4,3,-4, -5,-5,2,-5]}),
+  /* 9 魔王の口腔：終末 */
+  mkTrack({bpm:168, drum:"drive", lw:"sawtooth", lv:0.09,
+    lead:[0,-1,-2,-1, 0,3,0,-1, -2,-3,-4,-3, -2,1,-2,-3,
+          0,-1,-2,-1, 0,5,7,8, 7,5,3,1, 0,-1,-2,null],
+    bass:[0,0,0,0, 0,0,-1,0, -5,-5,-5,-5, -5,-5,-6,-5,
+          0,0,0,0, 0,0,-1,0, -7,-7,-7,-7, -7,-7,-8,-7]})
+];
 
-function makeSpawns(){
-  spawns=[];
-  for(var r=0;r<ROWS;r++) for(var c=0;c<COLSN;c++){
-    var t=MAP[r][c];
-    if(t==="w"||t==="t") spawns.push({x:c*TS,y:r*TS,type:t,dead:false,inst:null});
-    if(t==="h") pickups.push({x:c*TS+3,y:r*TS+2,got:false,t:0});
+/* --- ボス戦（1〜8共通）と、大魔王戦 --- */
+var T_BOSS=mkTrack({bpm:162, drum:"drive", lv:0.095, ln:0.85,
+  lead:[0,-1,0,3, 0,-1,0,5, 0,-1,0,3, 7,6,5,3,
+        -2,-3,-2,1, -2,-3,-2,3, -2,-3,-2,1, 5,3,1,0],
+  bass:[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,-1,0,
+        -2,-2,-2,-2, -2,-2,-2,-2, -3,-3,-3,-3, -3,-3,-4,-3],
+  bw:"sawtooth", bv:0.13});
+
+var T_FINAL=mkTrack({bpm:176, drum:"drive", lw:"sawtooth", lv:0.1, ln:0.8,
+  lead:[0,12,-1,11, 0,12,3,15, -2,10,-3,9, -2,10,1,13,
+        0,12,-1,11, 0,12,7,19, 5,17,3,15, 1,13,0,null],
+  bass:[0,0,-1,0, 0,0,-1,0, -5,-5,-6,-5, -5,-5,-6,-5,
+        0,0,-1,0, 0,0,-1,0, -7,-7,-8,-7, -7,-7,-8,-7],
+  bw:"sawtooth", bv:0.14});
+
+/* --- 短い曲（1回だけ鳴る） --- */
+var T_CLEAR={bpm:150, len:16, once:true,
+  lead:[12,12,12,null, 10,null,12,null, 15,null,null,null, 19,null,null,null],
+  fn:function(i,t,spb){
+    var l=this.lead[i];
+    if(l!==null){
+      voice(ntof(l+12),spb*1.8,"square",0.13,0,t,musicGain);
+      voice(ntof(l+7),spb*1.8,"triangle",0.09,0,t,musicGain);
+      voice(ntof(l-12),spb*1.8,"triangle",0.15,0,t,musicGain);
+    }
+    if(i%4===0) kick(t);
+  }};
+
+var T_OVER={bpm:92, len:12, once:true,
+  lead:[0,null,-2,null, -4,null,-5,null, -7,null,null,null],
+  fn:function(i,t,spb){
+    var l=this.lead[i];
+    if(l!==null){
+      voice(ntof(l+12),spb*1.7,"sawtooth",0.11,0,t,musicGain);
+      voice(ntof(l-12),spb*1.7,"triangle",0.13,0,t,musicGain);
+    }
+  }};
+
+var T_END={bpm:132, len:32, once:true,
+  lead:[0,3,7,12, 15,12,7,3, 5,8,12,15, 17,15,12,8,
+        7,10,14,19, 17,14,10,7, 12,null,null,null, null,null,null,null],
+  fn:function(i,t,spb){
+    var l=this.lead[i];
+    if(l!==null){
+      voice(ntof(l+12),spb*1.6,"square",0.12,0,t,musicGain);
+      voice(ntof(l+3),spb*1.6,"triangle",0.07,0,t,musicGain);
+      voice(ntof(l-12),spb*1.6,"triangle",0.14,0,t,musicGain);
+    }
+    if(i%4===0) kick(t);
+    if(i%8===4) snare(t,0.2);
+    hat(t,0.04);
+  }};
+
+var curTrack=null, curName="", mStep=0, mNext=0, mTimer=null;
+
+function wantTrack(){
+  if(state==="clear")  return "clear";
+  if(state==="over")   return "over";
+  if(state==="ending") return "end";
+  if(state==="play"||state==="pause"){
+    if(boss && boss.dead===0) return (stageIdx===8)?"final":"boss";
+    return "s"+stageIdx;
+  }
+  return "title";
+}
+function trackByName(n){
+  if(n==="title") return T_TITLE;
+  if(n==="boss")  return T_BOSS;
+  if(n==="final") return T_FINAL;
+  if(n==="clear") return T_CLEAR;
+  if(n==="over")  return T_OVER;
+  if(n==="end")   return T_END;
+  if(n.charAt(0)==="s") return T_STAGE[parseInt(n.slice(1),10)];
+  return null;
+}
+function musicStart(){
+  if(!AC||mTimer) return;
+  mNext=AC.currentTime+0.08;
+  mTimer=setInterval(musicTick,50);
+}
+function musicTick(){
+  if(!AC) return;
+  var want=wantTrack();
+  if(want!==curName){
+    curName=want; curTrack=trackByName(want); mStep=0;
+    mNext=Math.max(mNext, AC.currentTime+0.05);
+  }
+  if(!curTrack||muted){ mNext=Math.max(mNext,AC.currentTime+0.05); return; }
+  var spb=30/curTrack.bpm;                 /* 8分音符の長さ（秒） */
+  var guard=0;
+  while(mNext < AC.currentTime+0.3 && guard++<64){
+    if(!(curTrack.once && mStep>=curTrack.len)) curTrack.fn(mStep%curTrack.len, mNext, spb);
+    mStep++;
+    if(!curTrack.once && mStep>=curTrack.len) mStep=0;
+    mNext+=spb;
   }
 }
 
-function reset(){
-  gateOn=false; boss=null; score=0; frame=0; shake=0; flash=0;
-  enemies=[]; pbullets=[]; ebullets=[]; parts=[]; pickups=[];
-  makeSpawns();
-  player={x:48,y:200,w:12,h:21,vx:0,vy:0,face:1,grounded:false,
-    hp:28,maxhp:28,inv:0,charge:0,shootAnim:0,coyote:0,buf:0,anim:0,
-    cpx:48,cpy:200,dead:0};
-  cam.x=0; ready=110;
-}
-
-/* ============================ 生成 ============================ */
-function makeEnemy(sp){
-  if(sp.type==="w") return {sp:sp,type:"w",x:sp.x+1,y:sp.y+2,w:14,h:14,vx:-0.85,vy:0,hp:2,hurt:0,t:Math.random()*60};
-  return {sp:sp,type:"t",x:sp.x+1,y:sp.y+2,w:14,h:14,vx:0,vy:0,hp:4,hurt:0,t:60+Math.random()*60,warn:0};
-}
-function part(x,y,col,n,spd){
-  for(var i=0;i<n;i++){
-    var a=Math.random()*Math.PI*2, s=(0.4+Math.random())*(spd||2);
-    parts.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-0.5,life:18+Math.random()*16,col:col,sz:1+(Math.random()*2|0)});
-  }
-}
-
+/* ===== 25_game.js ===== */
 /* ============================ 物理 ============================ */
 function moveX(e){
   var nx=e.x+e.vx, hit=false;
@@ -609,6 +924,77 @@ function overlap(a,b){
   return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
 }
 
+/* ============================ 状態 ============================ */
+var state="title";
+var player, spawns=[], enemies=[], pbullets=[], ebullets=[], parts=[], pickups=[];
+var cam={x:0}, boss=null, score=0, ready=0, shake=0, frame=0, flash=0;
+
+/* 溜め撃ちは4段階（押しっぱなしの長さで威力が上がる） */
+var CHG=[0,30,66,108];
+function chargeLv(n){
+  if(n>=CHG[3]) return 3;
+  if(n>=CHG[2]) return 2;
+  if(n>=CHG[1]) return 1;
+  return 0;
+}
+
+var PH_STAND=21, PH_SLIDE=12;   /* 立ち／スライディング中の高さ */
+
+function makeSpawns(){
+  spawns=[];
+  for(var r=0;r<ROWS;r++) for(var c=0;c<COLSN;c++){
+    var t=MAP[r][c];
+    if(t==="w"||t==="t"||t==="f") spawns.push({x:c*TS,y:r*TS,type:t,dead:false,inst:null});
+    if(t==="h") pickups.push({x:c*TS+3,y:r*TS+2,got:false,t:0});
+  }
+}
+
+function reset(){
+  gateOn=false; boss=null; score=0; frame=0; shake=0; flash=0;
+  enemies=[]; pbullets=[]; ebullets=[]; parts=[]; pickups=[];
+  makeSpawns();
+  player={x:48,y:200,w:12,h:PH_STAND,vx:0,vy:0,face:1,grounded:false,
+    hp:28,maxhp:28,inv:0,charge:0,shootAnim:0,coyote:0,buf:0,anim:0,
+    slide:0,slideCool:0,cpx:48,cpy:200,dead:0};
+  cam.x=0; ready=110;
+}
+
+/* ============================ 生成 ============================ */
+function makeEnemy(sp){
+  if(sp.type==="w") return {sp:sp,type:"w",x:sp.x+1,y:sp.y+2,w:14,h:14,vx:-0.85,vy:0,hp:2,hurt:0,t:Math.random()*60};
+  if(sp.type==="f") return {sp:sp,type:"f",x:sp.x+1,y:sp.y+2,w:14,h:14,vx:0,vy:0,hp:2,hurt:0,t:Math.random()*60,y0:sp.y+2};
+  return {sp:sp,type:"t",x:sp.x+1,y:sp.y+2,w:14,h:14,vx:0,vy:0,hp:4,hurt:0,t:60+Math.random()*60,warn:0};
+}
+function part(x,y,col,n,spd){
+  for(var i=0;i<n;i++){
+    var a=Math.random()*Math.PI*2, s=(0.4+Math.random())*(spd||2);
+    parts.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-0.5,life:18+Math.random()*16,col:col,sz:1+(Math.random()*2|0)});
+  }
+}
+/* 敵の弾。kind で見た目が変わる。grav で落ちる。bomb は着弾で破裂 */
+function eshot(o){
+  o.w=o.w||8; o.h=o.h||8; o.dmg=o.dmg||2; o.grav=o.grav||0;
+  o.kind=o.kind||"ball"; o.life=o.life||0;
+  ebullets.push(o);
+  return o;
+}
+
+/* ============================ スライディング ============================ */
+function headClear(p){
+  var ny=p.y-(PH_STAND-PH_SLIDE);
+  return !solidPx(p.x+2,ny+2) && !solidPx(p.x+p.w-2,ny+2);
+}
+function startSlide(p){
+  p.slide=28; p.h=PH_SLIDE; p.y+=(PH_STAND-PH_SLIDE);
+  p.charge=0; SFX.dash();
+  part(p.x+(p.face>0?0:p.w),p.y+10,"#bffff4",5,1.6);
+}
+function endSlide(p){
+  if(!headClear(p)){ p.slide=1; return false; }   /* 天井が低いあいだは伏せたまま */
+  p.slide=0; p.h=PH_STAND; p.y-=(PH_STAND-PH_SLIDE);
+  return true;
+}
+
 /* ============================ 更新 ============================ */
 function update(){
   frame++;
@@ -618,7 +1004,6 @@ function update(){
 
   var p=player;
 
-  /* --- 死亡演出 --- */
   if(p.dead>0){
     p.dead--;
     updateParts();
@@ -627,31 +1012,56 @@ function update(){
   }
   if(ready>0){ updateParts(); return; }
 
-  /* --- 移動 --- */
-  var ax=0;
-  if(keys.left) ax-=1;
-  if(keys.right) ax+=1;
-  if(ax!==0){ p.face=ax; p.vx=ax*RUN; p.anim+=0.22; } else { p.vx=0; }
+  var jumpEdge=(keys.jump && !lastJump);
+  var slideEdge=(keys.slide && !lastSlide) || (keys.down && jumpEdge);
+  lastSlide=keys.slide;
 
-  if(p.grounded) p.coyote=6; else if(p.coyote>0) p.coyote--;
-  if(p.buf>0) p.buf--;
-  if(keys.jump && !lastJump) p.buf=8;
+  /* --- スライディング --- */
+  if(p.slide>0){
+    p.slide--;
+    p.vx=p.face*4.3;
+    moveX(p);
+    if(p.wallHit) p.slide=0;
+    if(jumpEdge && p.grounded && headClear(p)){
+      endSlide(p); p.vy=JUMPV; p.grounded=false; p.buf=0; p.coyote=0; SFX.jump();
+    } else if(p.slide<=0){
+      endSlide(p);
+    }
+    if(p.slide>0 && frame%3===0) part(p.x+(p.face>0?0:p.w),p.y+9,"#9fe8ff",1,1);
+  } else {
+    /* --- 移動 --- */
+    var ax=0;
+    if(keys.left) ax-=1;
+    if(keys.right) ax+=1;
+    if(ax!==0){ p.face=ax; p.vx=ax*RUN; p.anim+=0.22; } else { p.vx=0; }
+
+    if(p.grounded) p.coyote=6; else if(p.coyote>0) p.coyote--;
+    if(p.buf>0) p.buf--;
+    if(jumpEdge) p.buf=8;
+    if(p.buf>0 && p.coyote>0){ p.vy=JUMPV; p.buf=0; p.coyote=0; p.grounded=false; SFX.jump(); }
+    if(!keys.jump && p.vy<-3) p.vy=-3;   /* 可変ジャンプ */
+
+    if(slideEdge && p.grounded && p.slideCool<=0){ startSlide(p); p.slideCool=10; }
+    moveX(p);
+  }
   lastJump=keys.jump;
-  if(p.buf>0 && p.coyote>0){ p.vy=JUMPV; p.buf=0; p.coyote=0; p.grounded=false; SFX.jump(); }
-  if(!keys.jump && p.vy<-3) p.vy=-3;   /* 可変ジャンプ */
+  if(p.slideCool>0) p.slideCool--;
 
   p.vy=Math.min(MAXFALL,p.vy+GRAV);
-  moveX(p); moveY(p);
+  moveY(p);
 
-  /* --- ショット・チャージ --- */
-  if(keys.fire){
+  /* --- ショット・チャージ（スライディング中は撃てない） --- */
+  if(p.slide>0){
+    p.charge=0;
+  } else if(keys.fire){
     if(p.charge===0){ shoot(0); }
     p.charge++;
-    if(p.charge===34) SFX.charge1();
-    if(p.charge===70) SFX.charge2();
+    if(p.charge===CHG[1]) SFX.charge1();
+    if(p.charge===CHG[2]) SFX.charge2();
+    if(p.charge===CHG[3]){ SFX.charge3(); shake=4; }
   } else {
-    if(p.charge>=70) shoot(2);
-    else if(p.charge>=34) shoot(1);
+    var lv=chargeLv(p.charge);
+    if(lv>0) shoot(lv);
     p.charge=0;
   }
   if(p.shootAnim>0) p.shootAnim--;
@@ -665,7 +1075,7 @@ function update(){
   if(hazardPx(p.x+p.w/2,p.y+p.h-3)) hurtPlayer(4,true);
 
   /* --- チェックポイント --- */
-  if(p.grounded && frame%20===0 && p.y<H-20 && !gateOn){ p.cpx=p.x; p.cpy=p.y-2; }
+  if(p.grounded && p.slide===0 && frame%20===0 && p.y<H-20 && !gateOn){ p.cpx=p.x; p.cpy=p.y-2; }
 
   /* --- カメラ --- */
   var tx=p.x+p.w/2-W/2;
@@ -676,8 +1086,7 @@ function update(){
   /* --- ボス開始 --- */
   if(!gateOn && p.x>BOSS_TRIGGER+24){
     gateOn=true; SFX.gate(); shake=20;
-    boss={x:BOSS_TRIGGER+300,y:-60,w:52,h:46,hp:44,maxhp:44,vx:0,vy:0,face:-1,
-      state:"intro",t:0,hops:0,cycle:0,hurt:0,mouth:0,dead:0};
+    boss=makeBoss(LV.boss);
   }
 
   updateSpawns();
@@ -688,13 +1097,15 @@ function update(){
   updateParts();
 }
 
+/* level 0=通常 1=小 2=中 3=最大（つらぬく） */
 function shoot(level){
   var p=player;
   if(level===0 && pbullets.filter(function(b){return !b.big;}).length>=3) return;
-  var y=p.y+9, x=p.x+(p.face>0?p.w:-4);
-  if(level===0){ pbullets.push({x:x,y:y,w:6,h:4,vx:p.face*5.6,dmg:1,big:0}); SFX.shoot(); }
-  else if(level===1){ pbullets.push({x:x,y:y-2,w:10,h:8,vx:p.face*5.9,dmg:2,big:1}); SFX.charge1(); }
-  else { pbullets.push({x:x,y:y-6,w:18,h:16,vx:p.face*6.2,dmg:4,big:2}); SFX.charge2(); shake=6; }
+  var y=p.y+(p.h===PH_SLIDE?4:9), x=p.x+(p.face>0?p.w:-4);
+  if(level===0){ pbullets.push({x:x,y:y,w:6,h:4,vx:p.face*5.6,dmg:1,big:0,cd:0}); SFX.shoot(); }
+  else if(level===1){ pbullets.push({x:x,y:y-2,w:10,h:8,vx:p.face*5.9,dmg:2,big:1,cd:0}); SFX.charge1(); }
+  else if(level===2){ pbullets.push({x:x,y:y-6,w:18,h:16,vx:p.face*6.2,dmg:4,big:2,cd:0}); SFX.charge2(); shake=6; }
+  else { pbullets.push({x:x,y:y-10,w:26,h:24,vx:p.face*6.6,dmg:7,big:3,cd:0}); SFX.charge3(); shake=12; flash=8; }
   p.shootAnim=12;
 }
 
@@ -720,26 +1131,35 @@ function updateEnemies(){
       e.vy=Math.min(MAXFALL,e.vy+GRAV);
       moveX(e); moveY(e);
       if(e.wallHit) e.vx=-e.vx;
-      /* 端で折り返す */
       var ahead=e.x+(e.vx>0?e.w+2:-2);
       if(e.grounded && !solidPx(ahead,e.y+e.h+3)) e.vx=-e.vx;
       if(e.vx===0) e.vx=-0.85;
+    } else if(e.type==="f"){
+      /* 浮遊菌：上下に揺れながら、ゆっくり主人公へ寄る */
+      var dx=(p.x+6)-(e.x+7);
+      e.vx=Math.max(-0.9,Math.min(0.9,dx*0.012));
+      e.x+=e.vx;
+      e.y=e.y0+Math.sin(e.t*0.055)*22;
+      if(e.t%210===180){
+        eshot({x:e.x+4,y:e.y+8,vx:0,vy:1.8,dmg:2,kind:"spore",grav:0.02});
+        SFX.shoot();
+      }
     } else {
       if(e.t%150===120) e.warn=30;
       if(e.warn>0) e.warn--;
       if(e.t%150===0 && Math.abs(e.x-p.x)<230){
-        var dx=(p.x+6)-(e.x+7), dy=(p.y+8)-(e.y+6);
-        var d=Math.hypot(dx,dy)||1;
-        ebullets.push({x:e.x+5,y:e.y+4,w:6,h:6,vx:dx/d*2.1,vy:dy/d*2.1,dmg:2});
+        var ddx=(p.x+6)-(e.x+7), ddy=(p.y+8)-(e.y+6);
+        var d=Math.hypot(ddx,ddy)||1;
+        eshot({x:e.x+5,y:e.y+4,w:6,h:6,vx:ddx/d*2.1,vy:ddy/d*2.1,dmg:2,kind:"ball"});
         SFX.shoot();
       }
     }
 
-    /* 弾との判定 */
     for(var j=pbullets.length-1;j>=0;j--){
       var b=pbullets[j];
+      if(b.cd>0) continue;
       if(overlap(b,e)){
-        e.hp-=b.dmg; e.hurt=8;
+        e.hp-=b.dmg; e.hurt=8; if(b.big) b.cd=10;
         part(b.x,b.y,C.mint,4,1.6);
         if(!b.big) pbullets.splice(j,1);
         if(e.hp<=0){
@@ -761,104 +1181,40 @@ function updateEnemies(){
   }
 }
 
-function updateBoss(){
-  if(!boss) return;
-  var b=boss, p=player;
-  if(b.hurt>0) b.hurt--;
-  if(b.mouth>0) b.mouth--;
-  b.t++;
-
-  if(b.dead>0){
-    b.dead--;
-    if(b.dead%6===0){ part(b.x+10+Math.random()*32,b.y+8+Math.random()*30,C.gold,8,2.4); SFX.hit(); }
-    if(b.dead===0){
-      score+=4000+player.hp*100;
-      SFX.bossDie(); flash=30;
-      state="clear"; showScreen("s-clear");
-      document.getElementById("clear-msg").textContent=
-        "キング・カリエス撃破。残りHP "+player.hp+" ／ SCORE "+score+"。口腔内に平和が戻った。";
-    }
-    return;
-  }
-
-  if(b.state==="intro"){
-    b.vy=Math.min(MAXFALL,b.vy+GRAV);
-    moveY(b);
-    if(b.grounded){ b.state="wait"; b.t=0; shake=14; part(b.x+26,b.y+46,C.enamel,16,2.4); }
-    return;
-  }
-
-  b.face = (p.x+6 < b.x+26) ? -1 : 1;
-
-  if(b.state==="wait"){
-    b.vx=0;
-    b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
-    if(b.t>46){
-      b.t=0;
-      if(b.cycle%3===2 && enemies.length<2){ b.state="summon"; b.mouth=70; }
-      else { b.state="jump"; b.hops=0; b.vy=-9.2; b.vx=b.face*2.2; }
-    }
-  }
-  else if(b.state==="jump"){
-    b.vy=Math.min(MAXFALL,b.vy+GRAV);
-    moveX(b); moveY(b);
-    if(b.wallHit) b.vx=-b.vx;
-    if(b.grounded && b.vy===0){
-      b.hops++; shake=8; part(b.x+26,b.y+46,C.enamel,10,2);
-      if(b.hops>=(b.hp<b.maxhp/2?3:2)){ b.state="shoot"; b.t=0; b.vx=0; b.mouth=80; }
-      else { b.vy=-9.2; b.vx=b.face*2.2; }
-    }
-  }
-  else if(b.state==="shoot"){
-    b.vx=0; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
-    if(b.t===20||b.t===40||b.t===60){
-      var n=(b.hp<b.maxhp/2)?5:3;
-      for(var i=0;i<n;i++){
-        var a=(-0.55)+(i/(n-1))*1.1;
-        ebullets.push({x:b.x+26,y:b.y+26,w:8,h:8,
-          vx:b.face*2.6*Math.cos(a), vy:2.6*Math.sin(a)-0.8, dmg:3, acid:true});
-      }
-      SFX.shoot();
-    }
-    if(b.t>82){ b.state="wait"; b.t=0; b.cycle++; }
-  }
-  else if(b.state==="summon"){
-    b.vx=0; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
-    if(b.t===30||b.t===50){
-      enemies.push({sp:null,type:"w",x:b.x+20,y:b.y+30,w:14,h:14,vx:-1.1,vy:-3,hp:2,hurt:0,t:0});
-      SFX.hit();
-    }
-    if(b.t>72){ b.state="wait"; b.t=0; b.cycle++; }
-  }
-
-  /* 被弾 */
-  for(var k=pbullets.length-1;k>=0;k--){
-    var bl=pbullets[k];
-    if(overlap(bl,b)){
-      var mult=(b.mouth>0)?2:1;      /* 口を開けている間は弱点 */
-      b.hp-=bl.dmg*mult; b.hurt=10;
-      part(bl.x,bl.y,mult>1?C.gold:C.mint,6,2);
-      if(!bl.big) pbullets.splice(k,1);
-      SFX.bossHit();
-      if(b.hp<=0){ b.hp=0; b.dead=90; shake=30; ebullets=[]; break; }
-    }
-  }
-  if(b.dead===0 && overlap(p,b)) hurtPlayer(4,false,b.x+26);
-}
-
 function updateBullets(){
   var p=player,i,b;
   for(i=pbullets.length-1;i>=0;i--){
     b=pbullets[i]; b.x+=b.vx;
+    if(b.cd>0) b.cd--;
     if(b.big<2 && solidPx(b.x+b.w/2,b.y+b.h/2)){ part(b.x,b.y,C.mint,4,1.4); pbullets.splice(i,1); continue; }
     if(b.x<cam.x-40||b.x>cam.x+W+40) pbullets.splice(i,1);
   }
   for(i=ebullets.length-1;i>=0;i--){
-    b=ebullets[i]; b.x+=b.vx; b.y+=b.vy;
-    if(b.acid) b.vy+=0.045;
-    if(solidPx(b.x+b.w/2,b.y+b.h/2)){ part(b.x,b.y,C.acid,4,1.4); ebullets.splice(i,1); continue; }
-    if(overlap(b,p)){ hurtPlayer(b.dmg,false,b.x+b.w/2); ebullets.splice(i,1); continue; }
-    if(b.x<cam.x-40||b.x>cam.x+W+40||b.y>H+30||b.y<-40) ebullets.splice(i,1);
+    b=ebullets[i];
+    b.x+=b.vx; b.y+=b.vy;
+    if(b.grav) b.vy+=b.grav;
+    if(b.life){ b.life--; if(b.life<=0){ ebullets.splice(i,1); continue; } }
+    if(b.kind!=="shock" && solidPx(b.x+b.w/2,b.y+b.h/2)){
+      if(b.bomb) burst(b.x+b.w/2,b.y+b.h/2);
+      part(b.x,b.y,C.acid,4,1.4);
+      ebullets.splice(i,1); continue;
+    }
+    if(b.kind==="shock" && !solidPx(b.x+b.w/2,b.y+b.h+4)){ ebullets.splice(i,1); continue; }
+    if(overlap(b,p)){
+      hurtPlayer(b.dmg,false,b.x+b.w/2);
+      if(b.bomb) burst(b.x+b.w/2,b.y+b.h/2);
+      ebullets.splice(i,1); continue;
+    }
+    if(b.x<cam.x-60||b.x>cam.x+W+60||b.y>H+30||b.y<-60) ebullets.splice(i,1);
+  }
+}
+/* 爆弾の破裂：4方向に破片 */
+function burst(x,y){
+  SFX.boom(); shake=8;
+  part(x,y,C.gold,16,3);
+  for(var k=0;k<4;k++){
+    var a=-0.3-k*0.75;
+    eshot({x:x-3,y:y-3,w:6,h:6,vx:Math.cos(a)*2.6,vy:Math.sin(a)*2.6,dmg:2,kind:"shard",grav:0.12});
   }
 }
 
@@ -886,6 +1242,7 @@ function hurtPlayer(dmg,respawn,srcX){
   var p=player;
   if(p.inv>0||p.dead>0) return;
   p.hp-=dmg; p.inv=64; SFX.hurt(); shake=8;
+  if(p.slide>0){ p.slide=0; if(!headClear(p)){ p.slide=1; } else { p.h=PH_STAND; p.y-=(PH_STAND-PH_SLIDE); } }
   p.vx=0; p.vy=-3.2;
   p.x += (srcX===undefined) ? -p.face*6 : ((p.x+p.w/2<srcX)?-8:8);
   part(p.x+6,p.y+10,C.caries,10,2);
@@ -896,6 +1253,788 @@ function hurtPlayer(dmg,respawn,srcX){
   }
 }
 
+/* ===== 30_bosses.js ===== */
+/* ============================ ボス ============================
+   9体。1体ずつ動きも見た目も別物にしてある。
+   共通ルール：口を開けている（b.mouth>0）あいだは弱点で、受けるダメージが2倍。 */
+
+function arenaL(){ return BOSS_TRIGGER+10; }
+function arenaR(){ return LVW-2*TS; }
+function clampX(b){
+  var l=arenaL(), r=arenaR()-b.w;
+  if(b.x<l){ b.x=l; b.wallHit=true; }
+  if(b.x>r){ b.x=r; b.wallHit=true; }
+}
+function floorY(b){ return 15*TS-b.h; }        /* 床の上に立つときのy */
+/* 壁ぎわに張りつかないよう、端では内側へ跳ばせる */
+function bounceDir(b,p){
+  if(b.x<arenaL()+30) return 1;
+  if(b.x+b.w>arenaR()-30) return -1;
+  return (p.x+6<b.x+b.w/2)?-1:1;
+}
+
+var BOSSES={
+
+/* ---------------------------------------------------------------- 1 */
+caries:{
+  name:"キング・カリエス", title:"虫歯の王",
+  hp:30, w:52, h:46, top:20,
+  ai:function(b,p){
+    if(b.state==="wait"){
+      b.vx=0; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
+      if(b.t>46){
+        b.t=0;
+        if(b.cycle%3===2 && enemies.length<2){ b.state="summon"; b.mouth=70; }
+        else {
+          b.state="jump"; b.hops=0; b.vy=-9.2;
+          var dir=b.face;
+          if(b.x<arenaL()+30) dir=1; else if(b.x+b.w>arenaR()-30) dir=-1;
+          b.vx=dir*2.2;
+        }
+      }
+    }
+    else if(b.state==="jump"){
+      b.vy=Math.min(MAXFALL,b.vy+GRAV);
+      moveX(b); moveY(b); clampX(b);
+      if(b.wallHit) b.vx=-b.vx;
+      if(b.grounded && b.vy===0){
+        b.hops++; shake=8; part(b.x+26,b.y+46,C.enamel,10,2);
+        if(b.hops>=(b.hp<b.maxhp/2?3:2)){ b.state="shoot"; b.t=0; b.vx=0; b.mouth=80; }
+        else {
+        b.vy=-9.2;
+        var d2=b.face;
+        if(b.x<arenaL()+30) d2=1; else if(b.x+b.w>arenaR()-30) d2=-1;
+        b.vx=d2*2.2;
+      }
+      }
+    }
+    else if(b.state==="shoot"){
+      b.vx=0; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
+      if(b.t===20||b.t===40||b.t===60){
+        var n=(b.hp<b.maxhp/2)?5:3;
+        for(var i=0;i<n;i++){
+          var a=(-0.55)+(i/(n-1))*1.1;
+          eshot({x:b.x+26,y:b.y+26,vx:b.face*2.6*Math.cos(a),vy:2.6*Math.sin(a)-0.8,
+                 dmg:3,kind:"acid",grav:0.045});
+        }
+        SFX.shoot();
+      }
+      if(b.t>82){ b.state="wait"; b.t=0; b.cycle++; }
+    }
+    else if(b.state==="summon"){
+      b.vx=0; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
+      if(b.t===30||b.t===50){
+        enemies.push({sp:null,type:"w",x:b.x+20,y:b.y+30,w:14,h:14,vx:-1.1,vy:-3,hp:2,hurt:0,t:0});
+        SFX.hit();
+      }
+      if(b.t>72){ b.state="wait"; b.t=0; b.cycle++; }
+    }
+  },
+  draw:function(b,x,y,hl){
+    var base=hl?"#ffffff":C.boss;
+    ctx.fillStyle=base;
+    ctx.beginPath();
+    ctx.moveTo(x+2,y+30);
+    ctx.quadraticCurveTo(x+2,y+2,x+26,y+2);
+    ctx.quadraticCurveTo(x+50,y+2,x+50,y+30);
+    ctx.lineTo(x+44,y+46); ctx.lineTo(x+36,y+30);
+    ctx.lineTo(x+26,y+46); ctx.lineTo(x+16,y+30);
+    ctx.lineTo(x+8,y+46);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle=hl?"#ffffff":C.bossLo; ctx.fillRect(x+2,y+28,48,4);
+    ctx.fillStyle=C.bossDark;
+    ctx.beginPath(); ctx.arc(x+10,y+14,4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+43,y+20,3,0,Math.PI*2); ctx.fill();
+    px(x+12,y-8,28,7,C.gold); px(x+12,y-8,28,2,"#fff0b0");
+    px(x+12,y-14,4,6,C.gold); px(x+24,y-16,4,8,C.gold); px(x+36,y-14,4,6,C.gold);
+    px(x+25,y-18,2,2,C.caries);
+    var ex=(b.face<0)?-2:2;
+    px(x+11,y+9,12,7,"#ffffff"); px(x+29,y+9,12,7,"#ffffff");
+    px(x+15+ex,y+11,4,4,C.ink);  px(x+33+ex,y+11,4,4,C.ink);
+    px(x+11,y+7,12,2,C.bossDark); px(x+29,y+7,12,2,C.bossDark);
+    var mo=b.mouth>0?8:2;
+    ctx.fillStyle=C.bossDark; ctx.fillRect(x+18,y+20,18,mo+2);
+    if(b.mouth>0){
+      ctx.fillStyle=C.acid; ctx.fillRect(x+20,y+22+mo-3,14,3);
+      ctx.fillStyle="#ffffff";
+      for(var t=0;t<4;t++) ctx.fillRect(x+19+t*5,y+20,3,3);
+    }
+  }
+},
+
+/* ---------------------------------------------------------------- 2 */
+tank:{
+  name:"タルタル・タンク", title:"歯石戦車",
+  hp:34, w:56, h:40, top:6,
+  init:function(b){ b.rolls=0; b.wheel=0; },
+  ai:function(b,p){
+    b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
+    if(b.state==="wait"){
+      b.vx=0;
+      if(b.t>34){ b.t=0; b.state="roll"; b.rolls=0; b.face=(p.x<b.x)?-1:1; }
+    }
+    else if(b.state==="roll"){
+      b.vx=b.face*3.3; b.wheel+=0.5;
+      moveX(b); clampX(b);
+      if(b.wallHit){ b.face=-b.face; b.rolls++; shake=6; SFX.hit(); }
+      if(b.rolls>=2){ b.state="aim"; b.t=0; b.vx=0; b.mouth=76; }
+    }
+    else if(b.state==="aim"){
+      b.vx=0;
+      if(b.t===22||b.t===48){
+        var d=(p.x+6 < b.x+28)?-1:1;
+        b.face=d;
+        eshot({x:b.x+(d>0?b.w:-8),y:b.y+14,w:10,h:8,vx:d*3.6,vy:0,dmg:3,kind:"shell"});
+        eshot({x:b.x+(d>0?b.w:-8),y:b.y+26,w:10,h:8,vx:d*3.0,vy:0,dmg:3,kind:"shell"});
+        SFX.shoot();
+      }
+      if(b.hp<b.maxhp/2 && b.t===64){
+        eshot({x:b.x+24,y:b.y-6,w:10,h:10,vx:b.face*1.2,vy:-4.2,dmg:3,kind:"cube",grav:0.24,bomb:true});
+      }
+      if(b.t>84){ b.state="wait"; b.t=0; b.cycle++; }
+    }
+  },
+  draw:function(b,x,y,hl){
+    var base=hl?"#ffffff":C.tartar, lo=hl?"#ffffff":C.tartarLo;
+    /* 履帯 */
+    px(x+2,y+28,52,10,"#3a3320");
+    for(var i=0;i<9;i++) px(x+4+i*6,y+30,4,6,((i+Math.floor(b.wheel||0))%2)?"#6b5c33":"#8d7736");
+    /* 車体（歯石の塊） */
+    ctx.fillStyle=base;
+    ctx.beginPath();
+    ctx.moveTo(x+2,y+30); ctx.lineTo(x+6,y+10);
+    ctx.lineTo(x+16,y+6); ctx.lineTo(x+30,y+4); ctx.lineTo(x+44,y+8);
+    ctx.lineTo(x+52,y+14); ctx.lineTo(x+54,y+30);
+    ctx.closePath(); ctx.fill();
+    px(x+6,y+26,46,4,lo);
+    px(x+12,y+10,8,4,"#f0e0a8"); px(x+30,y+8,10,3,"#f0e0a8");
+    /* 砲身 */
+    var d=b.face<0?-1:1;
+    px(x+(d>0?46:-4),y+16,14,7,"#6f6242");
+    px(x+(d>0?52:-6),y+15,8,9,"#8d7736");
+    /* 目 */
+    px(x+18,y+14,10,7,"#ffffff"); px(x+32,y+14,10,7,"#ffffff");
+    px(x+(d>0?24:20),y+16,4,4,C.ink); px(x+(d>0?38:34),y+16,4,4,C.ink);
+    px(x+18,y+12,10,2,"#5a4d22"); px(x+32,y+12,10,2,"#5a4d22");
+    /* 口（開くと弱点） */
+    var mo=b.mouth>0?7:2;
+    px(x+22,y+22,16,mo+2,"#3a2f10");
+    if(b.mouth>0){ px(x+24,y+22,12,2,"#ffffff"); px(x+24,y+22+mo,12,2,"#ffffff"); }
+  }
+},
+
+/* ---------------------------------------------------------------- 3 */
+slime:{
+  name:"プラーク・スライム", title:"歯垢のぬし",
+  hp:30, w:44, h:36, top:4,
+  init:function(b){ b.lands=0; b.squash=0; },
+  ai:function(b,p){
+    if(b.squash>0) b.squash--;
+    b.vy=Math.min(MAXFALL,b.vy+GRAV);
+    moveX(b); moveY(b); clampX(b);
+    if(b.wallHit) b.vx=-b.vx;
+    if(b.grounded && b.vy===0){
+      if(b.state!=="land"){
+        b.state="land"; b.t=0; b.squash=12; shake=6;
+        part(b.x+22,b.y+36,"#cfe9b8",10,2);
+        b.lands++;
+        b.mouth=44;
+        /* 着地のたびに粘液を3つばらまく */
+        var nb=(b.hp<b.maxhp/2)?3:2;
+        for(var i=0;i<nb;i++){
+          var a=-1.75+i*(nb>2?0.55:0.9);
+          eshot({x:b.x+18,y:b.y+10,vx:Math.cos(a)*2.9,vy:Math.sin(a)*2.9,dmg:2,kind:"blob",grav:0.17});
+        }
+        SFX.hit();
+        if(b.lands%4===0 && enemies.length<3){
+          for(var k=0;k<2;k++)
+            enemies.push({sp:null,type:"w",x:b.x+8+k*20,y:b.y+16,w:14,h:14,vx:(k?1.1:-1.1),vy:-3,hp:2,hurt:0,t:0});
+        }
+      }
+      if(b.t>30){
+        b.state="hop"; b.t=0;
+        b.vy=(b.hp<b.maxhp/2)?-9.4:-8.6;
+        var sd=((p.x+6<b.x+22)?-1:1);
+        if(b.x<arenaL()+30) sd=1; else if(b.x+b.w>arenaR()-30) sd=-1;
+        b.vx=sd*(b.hp<b.maxhp/2?2.4:1.9);
+      }
+    }
+  },
+  draw:function(b,x,y,hl){
+    var sq=(b.squash||0)/12;
+    var hh=b.h-sq*8, ww=b.w+sq*8;
+    var cx=x+b.w/2, cy=y+b.h-hh/2;
+    ctx.fillStyle=hl?"#ffffff":"#a8d98a";
+    ctx.beginPath(); ctx.ellipse(cx,cy,ww/2,hh/2,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=hl?"#ffffff":"#7bb35c";
+    ctx.beginPath(); ctx.ellipse(cx,cy+hh*0.22,ww/2*0.92,hh/2*0.6,0,0,Math.PI*2); ctx.fill();
+    /* あわ */
+    ctx.fillStyle="rgba(255,255,255,.45)";
+    for(var i=0;i<5;i++){
+      var a=i*1.3+(b.t||0)*0.02;
+      ctx.beginPath();
+      ctx.arc(cx+Math.cos(a)*ww*0.28, cy+Math.sin(a*1.4)*hh*0.24, 2.4+i%2, 0, Math.PI*2);
+      ctx.fill();
+    }
+    /* 目 */
+    var ex=(b.face<0)?-2:2;
+    px(cx-13,cy-8,10,8,"#ffffff"); px(cx+3,cy-8,10,8,"#ffffff");
+    px(cx-10+ex,cy-6,4,5,C.ink);  px(cx+6+ex,cy-6,4,5,C.ink);
+    /* 口 */
+    if(b.mouth>0){
+      ctx.fillStyle="#3c5e2a";
+      ctx.beginPath(); ctx.ellipse(cx,cy+7,9,5,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#ffffff";
+      for(var t=0;t<3;t++) px(cx-7+t*6,cy+3,4,3,"#ffffff");
+    } else {
+      px(cx-7,cy+6,14,2,"#3c5e2a");
+    }
+  }
+},
+
+/* ---------------------------------------------------------------- 4 */
+queen:{
+  name:"ジンジバ・クイーン", title:"歯周病の女王",
+  hp:26, w:46, h:42, top:14,
+  fly:true, y0:-70,
+  init:function(b){ b.hy=176; b.wing=0; },
+  intro:function(b,p){
+    b.y+=2.6;
+    if(b.y>=b.hy){ b.y=b.hy; b.state="float"; b.t=0; shake=8; }
+  },
+  ai:function(b,p){
+    b.wing+=0.35;
+    if(b.state==="float"){
+      var ty=b.hy+Math.sin(b.t*0.045)*30;
+      b.y+=(ty-b.y)*0.12;
+      var dx=(p.x+6)-(b.x+23);
+      b.x+=Math.max(-1.1,Math.min(1.1,dx*0.02)); clampX(b);
+      if(b.t%96===60){
+        eshot({x:b.x+10,y:b.y+34,vx:-0.5,vy:1.4,dmg:2,kind:"spore",grav:0.07});
+        eshot({x:b.x+32,y:b.y+34,vx:0.5,vy:1.4,dmg:2,kind:"spore",grav:0.07});
+        SFX.shoot();
+      }
+      if(b.t>(b.hp<b.maxhp/2?170:230)){ b.state="scream"; b.t=0; b.mouth=54; }
+    }
+    else if(b.state==="scream"){
+      b.y+=(b.hy-24-b.y)*0.12;
+      if(b.t>46){
+        b.state="dive"; b.t=0;
+        var ddx=(p.x+6)-(b.x+23), ddy=(p.y+10)-(b.y+21);
+        var d=Math.hypot(ddx,ddy)||1;
+        b.vx=ddx/d*4.4; b.vy=ddy/d*4.4;
+        SFX.dash();
+      }
+    }
+    else if(b.state==="dive"){
+      b.x+=b.vx; b.y+=b.vy; clampX(b);
+      if(b.y>15*TS-b.h-2){ b.y=15*TS-b.h-2; shake=10; part(b.x+23,b.y+42,C.caries,12,2.4); b.state="rise"; b.t=0; }
+      if(b.t>44){ b.state="rise"; b.t=0; }
+    }
+    else if(b.state==="rise"){
+      b.y+=(b.hy-b.y)*0.09;
+      if(b.t>40){ b.state="float"; b.t=0; b.cycle++; }
+    }
+  },
+  draw:function(b,x,y,hl){
+    var base=hl?"#ffffff":"#ff8fb4", lo=hl?"#ffffff":"#a83f63";
+    /* はね */
+    var w=Math.sin(b.wing||0)*4;
+    ctx.fillStyle="rgba(255,190,215,.55)";
+    ctx.beginPath(); ctx.ellipse(x+4,y+16+w,12,7,-0.5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x+42,y+16-w,12,7,0.5,0,Math.PI*2); ctx.fill();
+    /* 体（歯ぐきのしずく形） */
+    ctx.fillStyle=base;
+    ctx.beginPath();
+    ctx.moveTo(x+23,y+2);
+    ctx.quadraticCurveTo(x+44,y+12,x+40,y+30);
+    ctx.quadraticCurveTo(x+34,y+42,x+23,y+42);
+    ctx.quadraticCurveTo(x+12,y+42,x+6,y+30);
+    ctx.quadraticCurveTo(x+2,y+12,x+23,y+2);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle=lo; ctx.fillRect(x+8,y+30,30,4);
+    /* 血のしずくの王冠 */
+    px(x+13,y-6,20,5,"#8c1f42");
+    for(var i=0;i<3;i++){
+      ctx.fillStyle=C.caries;
+      ctx.beginPath(); ctx.arc(x+16+i*7,y-9,3.2,0,Math.PI*2); ctx.fill();
+    }
+    /* 目 */
+    var ex=(b.face<0)?-2:2;
+    px(x+10,y+13,11,8,"#ffffff"); px(x+25,y+13,11,8,"#ffffff");
+    px(x+14+ex,y+15,4,5,"#7d1c3c"); px(x+29+ex,y+15,4,5,"#7d1c3c");
+    px(x+10,y+11,11,2,lo); px(x+25,y+11,11,2,lo);
+    /* 口 */
+    if(b.mouth>0){
+      ctx.fillStyle="#5d1730";
+      ctx.beginPath(); ctx.ellipse(x+23,y+29,8,7,0,0,Math.PI*2); ctx.fill();
+      for(var t=0;t<3;t++) px(x+17+t*5,y+24,3,4,"#ffffff");
+    } else {
+      px(x+18,y+28,10,2,"#5d1730");
+    }
+  }
+},
+
+/* ---------------------------------------------------------------- 5 */
+bomber:{
+  name:"シュガー・ボマー", title:"砂糖の爆弾魔",
+  hp:32, w:40, h:40, top:8, start:"bounce",
+  init:function(b){ b.lands=0; b.dropped=false; },
+  ai:function(b,p){
+    b.vy=Math.min(MAXFALL,b.vy+GRAV);
+    moveX(b); moveY(b); clampX(b);
+    if(b.wallHit) b.vx=-b.vx;
+
+    if(b.state==="throw"){
+      b.vx=0;
+      if(b.t===24||b.t===44||b.t===64){
+        var i=(b.t-24)/20;
+        eshot({x:b.x+16,y:b.y+4,w:10,h:10,vx:(i-1)*2.0+b.face*0.8,vy:-4.6,
+               dmg:3,kind:"cube",grav:0.24,bomb:true});
+        SFX.shoot();
+      }
+      if(b.t>86){ b.state="bounce"; b.t=0; b.vy=-10.6; b.vx=bounceDir(b,p)*2.4; b.dropped=false; }
+      return;
+    }
+    /* 跳ねながら頂点で爆弾を落とす */
+    if(!b.dropped && b.vy>0 && b.y<15*TS-b.h-40){
+      b.dropped=true;
+      eshot({x:b.x+15,y:b.y+34,w:10,h:10,vx:0,vy:1.2,dmg:3,kind:"cube",grav:0.26,bomb:true});
+    }
+    if(b.grounded && b.vy===0){
+      b.lands++; shake=7; part(b.x+20,b.y+40,"#ffffff",10,2.2);
+      if(b.lands%3===0){ b.state="throw"; b.t=0; b.mouth=90; }
+      else { b.vy=-10.6; b.vx=bounceDir(b,p)*2.4; b.dropped=false; }
+    }
+  },
+  draw:function(b,x,y,hl){
+    var base=hl?"#ffffff":"#fdf6ff";
+    /* 角砂糖の体 */
+    px(x+2,y+4,36,34,base);
+    px(x+2,y+4,36,3,"#ffffff");
+    px(x+2,y+34,36,4,"#c9b8d6");
+    px(x+2,y+4,3,34,"#ffffff"); px(x+35,y+4,3,34,"#cfc0da");
+    for(var i=0;i<6;i++) px(x+6+(i*6)%30,y+8+((i*11)%24),2,2,"#e6d8f0");
+    /* 導火線 */
+    px(x+18,y-4,3,8,"#7a5c3a");
+    ctx.fillStyle=(Math.floor((b.t||0)/4)%2)?C.gold:C.caries;
+    ctx.beginPath(); ctx.arc(x+19,y-6,3.4,0,Math.PI*2); ctx.fill();
+    /* 顔 */
+    var ex=(b.face<0)?-2:2;
+    px(x+8,y+13,10,8,"#ffffff"); px(x+22,y+13,10,8,"#ffffff");
+    px(x+11,y+11,8,2,"#8a5f2a"); px(x+25,y+11,8,2,"#8a5f2a");   /* つり眉 */
+    px(x+12+ex,y+15,4,5,C.ink); px(x+26+ex,y+15,4,5,C.ink);
+    var mo=b.mouth>0?8:3;
+    px(x+13,y+26,14,mo,"#6b3a52");
+    if(b.mouth>0){
+      for(var t=0;t<3;t++) px(x+14+t*5,y+26,3,3,"#ffffff");
+      px(x+15,y+26+mo-2,10,2,C.caries);
+    }
+  }
+},
+
+/* ---------------------------------------------------------------- 6 */
+dragon:{
+  name:"アシッド・ドラゴン", title:"酸の竜",
+  hp:32, w:56, h:34, top:4,
+  fly:true, y0:-60,
+  init:function(b){ b.hy=142; b.swoops=0; },
+  intro:function(b,p){
+    b.y+=2.4;
+    if(b.y>=b.hy){ b.y=b.hy; b.state="ceil"; b.t=0; shake=8; }
+  },
+  ai:function(b,p){
+    if(b.state==="ceil"){
+      b.y+=(b.hy+Math.sin(b.t*0.06)*5-b.y)*0.16;
+      var dx=(p.x+6)-(b.x+28);
+      b.x+=Math.max(-1.7,Math.min(1.7,dx*0.03)); clampX(b);
+      if(b.t>96){ b.t=0; b.cycle++;
+        if(b.cycle%4===3){ b.state="swoop"; b.vy=0; b.face=(p.x<b.x)?-1:1; b.mouth=30; }
+        else { b.state="breathe"; b.mouth=80; }
+      }
+    }
+    else if(b.state==="breathe"){
+      if(b.t===20||b.t===36||b.t===52){
+        for(var i=0;i<3;i++){
+          var a=1.05+i*0.45;   /* 下向きに扇 */
+          eshot({x:b.x+24,y:b.y+28,vx:Math.cos(a)*2.4*(b.face<0?1:-1)*-1,vy:Math.sin(a)*2.4,
+                 dmg:3,kind:"acid",grav:0.05});
+        }
+        SFX.shoot();
+      }
+      if(b.t>70){ b.state="ceil"; b.t=0; }
+    }
+    else if(b.state==="swoop"){
+      /* 天井から降りて床すれすれを突進 */
+      if(b.t<26){ b.y+=(floorY(b)-6-b.y)*0.16; }
+      else {
+        b.vx=b.face*4.6; moveX(b); clampX(b);
+        if(b.wallHit){ b.face=-b.face; b.swoops++; }
+        if(b.t%6===0) part(b.x+28,b.y+30,C.acid,3,1.4);
+        if(b.t>110||b.swoops>=2){ b.state="up"; b.t=0; b.swoops=0; SFX.dash(); }
+      }
+    }
+    else if(b.state==="up"){
+      b.y+=(b.hy-b.y)*0.11;
+      if(b.t>34){ b.state="ceil"; b.t=0; }
+    }
+  },
+  draw:function(b,x,y,hl){
+    var d=(b.face<0)?1:-1;   /* 顔の向き */
+    var base=hl?"#ffffff":"#5fd6a8", lo=hl?"#ffffff":"#1f7d5e";
+    ctx.save();
+    ctx.translate(x+28,y); ctx.scale(-d,1); ctx.translate(-28,0);
+    /* しっぽ〜胴 */
+    ctx.fillStyle=lo;
+    ctx.beginPath();
+    ctx.moveTo(0,y*0+10); ctx.lineTo(14,4); ctx.lineTo(34,6); ctx.lineTo(34,24); ctx.lineTo(12,22);
+    ctx.closePath(); ctx.fill();
+    /* とげ */
+    ctx.fillStyle="#0f5f47";
+    for(var i=0;i<4;i++){
+      ctx.beginPath();
+      ctx.moveTo(6+i*7,5); ctx.lineTo(9+i*7,-3); ctx.lineTo(12+i*7,5);
+      ctx.closePath(); ctx.fill();
+    }
+    /* 頭 */
+    ctx.fillStyle=base;
+    ctx.beginPath();
+    ctx.moveTo(30,2); ctx.lineTo(52,6); ctx.lineTo(56,18); ctx.lineTo(48,30); ctx.lineTo(30,28);
+    ctx.closePath(); ctx.fill();
+    px(30,24,22,4,lo);
+    /* 目 */
+    px(38,10,10,7,"#ffffff");
+    px(42,12,4,5,"#0b2b1f");
+    px(38,8,10,2,"#0f5f47");
+    /* 口と酸 */
+    var mo=b.mouth>0?9:3;
+    px(40,20,16,mo,"#0b2b1f");
+    if(b.mouth>0){
+      for(var t=0;t<3;t++) px(41+t*5,20,3,3,"#ffffff");
+      px(42,20+mo-2,12,2,C.acid);
+    }
+    ctx.restore();
+    /* 天井にぶら下がる腕 */
+    if(b.state==="ceil"||b.state==="breathe"){
+      px(x+12,0,3,y+6,lo); px(x+40,0,3,y+6,lo);
+      px(x+9,y+2,9,6,lo);  px(x+37,y+2,9,6,lo);
+    }
+  }
+},
+
+/* ---------------------------------------------------------------- 7 */
+wire:{
+  name:"ブレース・ワイヤーマン", title:"矯正ワイヤーの怪人",
+  hp:40, w:36, h:44, top:6, start:"walk",
+  init:function(b){ b.step=0; },
+  ai:function(b,p){
+    b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
+    if(b.state==="walk"){
+      b.vx=b.face*1.5; b.step+=0.2;
+      moveX(b); clampX(b);
+      if(b.t>54){
+        b.t=0; b.cycle++;
+        if(b.cycle%3===2){ b.state="dash"; b.vx=b.face*6.0; b.mouth=20; SFX.dash(); }
+        else { b.state="wall"; b.vx=0; b.mouth=74; b.gap=1+Math.floor(Math.random()*3); }
+      }
+    }
+    else if(b.state==="wall"){
+      b.vx=0;
+      /* 5本のワイヤーを縦にならべて撃つ。1本だけ穴が開いている */
+      if(b.t===30||b.t===58){
+        for(var i=0;i<5;i++){
+          if(i===b.gap) continue;
+          eshot({x:b.x+(b.face>0?b.w:-10),y:38+i*36,w:12,h:6,vx:b.face*4.2,vy:0,dmg:2,kind:"wire"});
+        }
+        SFX.laser();
+      }
+      if(b.t>78){ b.state="walk"; b.t=0; }
+    }
+    else if(b.state==="dash"){
+      moveX(b); clampX(b);
+      if(b.t%4===0) part(b.x+18,b.y+40,"#8fd7ff",2,1.2);
+      if(b.wallHit){ b.face=-b.face; b.vx=b.face*6.0; shake=8; SFX.hit(); }
+      if(b.t>70){ b.state="walk"; b.t=0; b.vx=0; }
+    }
+  },
+  draw:function(b,x,y,hl){
+    var base=hl?"#ffffff":"#c9d8e2", lo=hl?"#ffffff":"#5d7385";
+    var lg=Math.sin(b.step||0)*3;
+    /* 脚 */
+    px(x+7,y+32,7,12,lo); px(x+22,y+32,7,12,lo);
+    px(x+6,y+42+0,9,3,"#2a3a46"); px(x+21,y+42,9,3,"#2a3a46");
+    /* 胴（ブラケット付き） */
+    px(x+4,y+12,28,22,base);
+    px(x+4,y+12,28,3,"#ffffff");
+    px(x+4,y+31,28,3,lo);
+    for(var i=0;i<4;i++) px(x+7+i*6,y+18,4,5,"#2b6284");
+    px(x+4,y+22,28,2,"#8fd7ff");         /* ワイヤー */
+    /* 頭 */
+    px(x+9,y+0,18,13,base);
+    px(x+9,y+0,18,3,"#ffffff");
+    var ex=(b.face<0)?-2:2;
+    px(x+11,y+4,6,5,"#12202c"); px(x+20,y+4,6,5,"#12202c");
+    px(x+13+ex,y+5,3,3,"#8fd7ff"); px(x+22+ex,y+5,3,3,"#8fd7ff");
+    var mo=b.mouth>0?5:2;
+    px(x+13,y+9,11,mo,"#12202c");
+    if(b.mouth>0) for(var t=0;t<3;t++) px(x+14+t*4,y+9,3,2,"#8fd7ff");
+    /* 腕（ワイヤーの束） */
+    var d=b.face<0?-1:1;
+    px(x+(d>0?30:0),y+16+lg,7,5,lo);
+    px(x+(d>0?35:-4),y+17+lg,5,3,"#8fd7ff");
+  }
+},
+
+/* ---------------------------------------------------------------- 8 */
+knight:{
+  name:"ナイト・グラインダー", title:"歯ぎしりの騎士",
+  hp:44, w:44, h:48, top:10, start:"walk",
+  init:function(b){ b.step=0; },
+  ai:function(b,p){
+    b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
+    if(b.state==="walk"){
+      b.vx=b.face*1.3; b.step+=0.18;
+      moveX(b); clampX(b);
+      if(b.t>56){
+        b.t=0; b.cycle++;
+        if(b.cycle%2===0){ b.state="charge"; b.vx=0; b.mouth=34; }
+        else { b.state="slam"; b.vx=b.face*1.6; b.vy=-10.2; }
+      }
+    }
+    else if(b.state==="charge"){
+      /* ぎりぎり…と溜めてから突進 */
+      if(b.t<34){ b.vx=0; if(b.t%6===0){ shake=3; part(b.x+22,b.y+46,"#d78bff",3,1.4);} }
+      else {
+        if(b.t===34){ b.vx=b.face*5.6; SFX.dash(); }
+        moveX(b); clampX(b);
+        if(b.t%4===0) part(b.x+22,b.y+46,C.gold,2,1.6);
+        if(b.wallHit){ shake=12; b.state="walk"; b.t=0; b.vx=0; }
+        if(b.t>96){ b.state="walk"; b.t=0; b.vx=0; }
+      }
+    }
+    else if(b.state==="slam"){
+      moveX(b); clampX(b);
+      if(b.wallHit) b.vx=-b.vx;
+      if(b.grounded && b.vy===0){
+        shake=16; SFX.boom();
+        part(b.x+22,b.y+48,C.enamel,16,3);
+        /* 左右に衝撃波 */
+        var fy=b.y+b.h-10;
+        eshot({x:b.x+10,y:fy,w:14,h:12,vx:-3.2,vy:0,dmg:3,kind:"shock"});
+        eshot({x:b.x+20,y:fy,w:14,h:12,vx:3.2,vy:0,dmg:3,kind:"shock"});
+        b.state="walk"; b.t=0; b.vx=0; b.mouth=40;
+      }
+    }
+  },
+  draw:function(b,x,y,hl){
+    var base=hl?"#ffffff":"#ded0e6", lo=hl?"#ffffff":"#6b5a78", dk="#3a2145";
+    var lg=Math.sin(b.step||0)*3;
+    /* 脚 */
+    px(x+8,y+34,10,14,lo); px(x+26,y+34,10,14,lo);
+    px(x+6,y+45,13,3,dk); px(x+24,y+45,13,3,dk);
+    /* 体（鎧） */
+    px(x+5,y+14,34,22,base);
+    px(x+5,y+14,34,3,"#ffffff");
+    px(x+5,y+33,34,3,lo);
+    px(x+18,y+18,8,14,dk);
+    /* 肩当て */
+    px(x+0,y+13,10,9,lo); px(x+34,y+13,10,9,lo);
+    px(x+0,y+13,10,2,base); px(x+34,y+13,10,2,base);
+    /* かぶと（大臼歯型） */
+    ctx.fillStyle=base;
+    ctx.beginPath();
+    ctx.moveTo(x+9,y+14); ctx.quadraticCurveTo(x+9,y-2,x+22,y-2);
+    ctx.quadraticCurveTo(x+35,y-2,x+35,y+14);
+    ctx.closePath(); ctx.fill();
+    px(x+9,y+11,26,3,lo);
+    px(x+20,y-8,4,8,C.gold); px(x+19,y-11,6,4,C.gold);   /* 角飾り */
+    /* 目 */
+    var ex=(b.face<0)?-2:2;
+    px(x+12,y+4,9,6,dk); px(x+23,y+4,9,6,dk);
+    px(x+15+ex,y+5,4,4,C.caries); px(x+26+ex,y+5,4,4,C.caries);
+    /* 歯ぎしりの口 */
+    var mo=b.mouth>0?7:3;
+    px(x+14,y+16,16,mo,dk);
+    for(var t=0;t<4;t++) px(x+15+t*4,y+16,3,mo>4?3:2,"#ffffff");
+  }
+},
+
+/* ---------------------------------------------------------------- 9 */
+mushiburn:{
+  name:"大魔王ムシバーン", title:"口腔の闇",
+  hp:60, w:64, h:60, top:22,
+  fly:true, y0:-90,
+  init:function(b){ b.hy=150; b.phase=1; b.aura=0; },
+  intro:function(b,p){
+    b.y+=2.2;
+    if(b.y>=b.hy){ b.y=b.hy; b.state="hover"; b.t=0; shake=14; flash=20; }
+  },
+  ai:function(b,p){
+    b.aura+=0.14;
+    if(b.phase===1 && b.hp<=b.maxhp/2){
+      b.phase=2; flash=24; shake=20; SFX.bossDie();
+      b.state="hover"; b.t=0;
+    }
+    var fast=(b.phase===2);
+
+    if(b.state==="hover"){
+      var ty=b.hy+Math.sin(b.t*0.05)*30;
+      b.y+=(ty-b.y)*0.1;
+      var dx=(p.x+6)-(b.x+32);
+      b.x+=Math.max(-1.3,Math.min(1.3,dx*0.02)); clampX(b);
+      if(b.t>(fast?76:104)){
+        b.t=0; b.cycle++;
+        var m=b.cycle%(fast?4:3);
+        if(m===0){ b.state="spread"; b.mouth=80; }
+        else if(m===1){ b.state="summon"; b.mouth=64; }
+        else if(m===2){ b.state="rain"; b.mouth=70; }
+        else { b.state="beam"; b.mouth=60; }
+      }
+    }
+    else if(b.state==="spread"){
+      if(b.t===24||b.t===46||(fast&&b.t===68)){
+        var n=fast?7:5;
+        for(var i=0;i<n;i++){
+          var a=Math.PI*0.5+(-0.75+(i/(n-1))*1.5);
+          eshot({x:b.x+30,y:b.y+40,vx:Math.cos(a)*2.9,vy:Math.sin(a)*2.9-1.0,
+                 dmg:3,kind:"dark",grav:0.05});
+        }
+        SFX.shoot();
+      }
+      if(b.t>86){ b.state="hover"; b.t=0; }
+    }
+    else if(b.state==="summon"){
+      if((b.t===26||b.t===50) && enemies.length<4){
+        enemies.push({sp:null,type:"w",x:b.x+16,y:b.y+44,w:14,h:14,vx:-1.2,vy:-3,hp:2,hurt:0,t:0});
+        enemies.push({sp:null,type:"w",x:b.x+36,y:b.y+44,w:14,h:14,vx:1.2,vy:-3,hp:2,hurt:0,t:0});
+        SFX.hit();
+      }
+      if(b.t>72){ b.state="hover"; b.t=0; }
+    }
+    else if(b.state==="rain"){
+      /* 天井から酸の雨 */
+      if(b.t>16 && b.t<70 && b.t%9===0){
+        var rx=arenaL()+20+Math.random()*(arenaR()-arenaL()-40);
+        eshot({x:rx,y:-10,vx:0,vy:1.6,dmg:2,kind:"acid",grav:0.09});
+      }
+      if(b.t>86){ b.state="hover"; b.t=0; }
+    }
+    else if(b.state==="beam"){
+      /* 主人公をねらって速い弾を連射 */
+      if(b.t>20 && b.t<62 && b.t%7===0){
+        var ddx=(p.x+6)-(b.x+32), ddy=(p.y+10)-(b.y+34);
+        var d=Math.hypot(ddx,ddy)||1;
+        eshot({x:b.x+28,y:b.y+30,w:10,h:6,vx:ddx/d*4.6,vy:ddy/d*4.6,dmg:2,kind:"beam"});
+        SFX.laser();
+      }
+      if(b.t>78){ b.state="hover"; b.t=0; }
+    }
+  },
+  draw:function(b,x,y,hl){
+    var p2=(b.phase===2);
+    var base=hl?"#ffffff":(p2?"#c2143f":"#7a1030");
+    var lo=hl?"#ffffff":(p2?"#7d0a24":"#480a1c");
+    /* オーラ */
+    ctx.globalAlpha=0.28;
+    ctx.fillStyle=p2?"#ff4d80":"#8c1f42";
+    ctx.beginPath(); ctx.arc(x+32,y+30,34+Math.sin(b.aura||0)*3,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+    /* 体（朽ちた巨大な歯） */
+    ctx.fillStyle=base;
+    ctx.beginPath();
+    ctx.moveTo(x+2,y+36);
+    ctx.quadraticCurveTo(x+2,y+2,x+32,y+2);
+    ctx.quadraticCurveTo(x+62,y+2,x+62,y+36);
+    ctx.lineTo(x+54,y+60); ctx.lineTo(x+44,y+38);
+    ctx.lineTo(x+32,y+60); ctx.lineTo(x+20,y+38);
+    ctx.lineTo(x+10,y+60);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle=lo; ctx.fillRect(x+2,y+34,60,5);
+    /* 割れ目 */
+    ctx.strokeStyle=p2?"#ffd447":"#2a0510"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x+14,y+8); ctx.lineTo(x+20,y+22); ctx.lineTo(x+13,y+32); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+52,y+10); ctx.lineTo(x+46,y+24); ctx.stroke();
+    /* 角 */
+    ctx.fillStyle=p2?"#ffd447":"#3a0a18";
+    ctx.beginPath(); ctx.moveTo(x+6,y+4); ctx.lineTo(x-2,y-16); ctx.lineTo(x+16,y-2); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x+58,y+4); ctx.lineTo(x+66,y-16); ctx.lineTo(x+48,y-2); ctx.closePath(); ctx.fill();
+    /* 目3つ */
+    var ex=(b.face<0)?-2:2;
+    px(x+11,y+12,15,9,"#ffffff"); px(x+38,y+12,15,9,"#ffffff");
+    px(x+16+ex,y+14,5,6,p2?"#ff2a5f":C.ink); px(x+43+ex,y+14,5,6,p2?"#ff2a5f":C.ink);
+    px(x+11,y+10,15,2,lo); px(x+38,y+10,15,2,lo);
+    px(x+28,y+4,8,6,"#ffffff"); px(x+30+ex,y+5,4,4,p2?"#ffd447":C.caries);
+    /* 口 */
+    var mo=b.mouth>0?14:5;
+    ctx.fillStyle="#1c0208"; ctx.fillRect(x+20,y+24,24,mo+2);
+    ctx.fillStyle="#ffffff";
+    for(var t=0;t<5;t++) ctx.fillRect(x+21+t*5,y+24,3,4);
+    if(b.mouth>0){
+      ctx.fillStyle=p2?"#ffd447":C.acid;
+      ctx.fillRect(x+22,y+24+mo-3,20,3);
+      for(var t2=0;t2<5;t2++) ctx.fillRect(x+21+t2*5,y+22+mo,3,4);
+    }
+  }
+}
+
+};
+
+/* ---------------------------------------------------------------- 共通処理 */
+function makeBoss(kind){
+  var S=BOSSES[kind];
+  var b={kind:kind,
+    x:BOSS_TRIGGER+300, y:(S.y0===undefined?-60:S.y0),
+    w:S.w, h:S.h, hp:S.hp, maxhp:S.hp,
+    vx:0, vy:0, face:-1, state:"intro", t:0,
+    hops:0, cycle:0, hurt:0, mouth:0, dead:0, grounded:false, phase:1};
+  if(S.init) S.init(b);
+  return b;
+}
+
+function updateBoss(){
+  if(!boss) return;
+  var b=boss, p=player, S=BOSSES[b.kind];
+  if(b.hurt>0) b.hurt--;
+  if(b.mouth>0) b.mouth--;
+  b.t++;
+
+  if(b.dead>0){
+    b.dead--;
+    if(b.dead%6===0){ part(b.x+b.w/2+(Math.random()*30-15),b.y+10+Math.random()*30,C.gold,8,2.4); SFX.hit(); }
+    if(b.dead===0) onBossDown();
+    return;
+  }
+
+  if(b.state==="intro"){
+    if(S.intro) S.intro(b,p);
+    else {
+      b.vy=Math.min(MAXFALL,b.vy+GRAV);
+      moveY(b);
+      if(b.grounded){ b.state=S.start||"wait"; b.t=0; shake=14; part(b.x+b.w/2,b.y+b.h,C.enamel,16,2.4); }
+    }
+    return;
+  }
+
+  b.face = (p.x+6 < b.x+b.w/2) ? -1 : 1;
+  S.ai(b,p);
+
+  /* 被弾（口を開けているあいだは2倍） */
+  for(var k=pbullets.length-1;k>=0;k--){
+    var bl=pbullets[k];
+    if(bl.cd>0) continue;
+    if(overlap(bl,b)){
+      var mult=(b.mouth>0)?2:1;
+      b.hp-=bl.dmg*mult; b.hurt=10; if(bl.big) bl.cd=12;
+      part(bl.x,bl.y,mult>1?C.gold:C.mint,6,2);
+      if(!bl.big) pbullets.splice(k,1);
+      SFX.bossHit();
+      if(b.hp<=0){ b.hp=0; b.dead=(b.kind==="mushiburn")?140:90; shake=30; ebullets=[]; break; }
+    }
+  }
+  if(b.dead===0 && overlap(p,b)) hurtPlayer(3,false,b.x+b.w/2);
+}
+
+/* ===== 40_draw.js ===== */
 /* ============================ 描画 ============================ */
 function px(x,y,w,h,col){ ctx.fillStyle=col; ctx.fillRect(x|0,y|0,w|0,h|0); }
 
@@ -903,9 +2042,8 @@ function draw(){
   var sx=(shake>0)?((Math.random()*2-1)*2.2|0):0;
   var sy=(shake>0)?((Math.random()*2-1)*2.2|0):0;
 
-  /* 背景 */
   var g=ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,C.sky1); g.addColorStop(1,C.sky2);
+  g.addColorStop(0,PAL?PAL.sky1:C.sky1); g.addColorStop(1,PAL?PAL.sky2:C.sky2);
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
 
   ctx.save();
@@ -937,18 +2075,11 @@ function draw(){
 /* --- 背景（奥に巨大な歯のシルエット） --- */
 function drawBg(){
   var f=Math.round(cam.x*0.28);
-  ctx.fillStyle=C.far;
-  for(var i=-1;i<10;i++){
-    var x=i*120-(f%120);
-    toothSil(x,150,70,110);
-  }
+  ctx.fillStyle=PAL?PAL.far:C.far;
+  for(var i=-1;i<10;i++) toothSil(i*120-(f%120),150,70,110);
   var m=Math.round(cam.x*0.55);
-  ctx.fillStyle=C.mid;
-  for(var j=-1;j<14;j++){
-    var x2=j*76-(m%76);
-    toothSil(x2+18,196,44,72);
-  }
-  /* 上部の暗がり */
+  ctx.fillStyle=PAL?PAL.mid:C.mid;
+  for(var j=-1;j<14;j++) toothSil(j*76-(m%76)+18,196,44,72);
   var g2=ctx.createLinearGradient(0,0,0,60);
   g2.addColorStop(0,"rgba(0,0,0,.45)"); g2.addColorStop(1,"rgba(0,0,0,0)");
   ctx.fillStyle=g2; ctx.fillRect(0,0,W,60);
@@ -972,16 +2103,16 @@ function drawTiles(){
     var t=MAP[r][c]; if(t!=="#"&&t!=="="&&t!=="^") continue;
     var x=c*TS,y=r*TS;
     if(t==="#"){
-      px(x,y,16,16,C.enamel);
-      px(x,y,16,2,C.enamelHi);
-      px(x,y+13,16,3,C.enamelLo);
-      px(x,y,1,16,"#d5eaea"); px(x+15,y,1,16,C.enamelEdge);
-      if(((c*7+r*13)%5)===0) px(x+5,y+6,3,3,"#d0e6e6");
+      px(x,y,16,16,PAL.tile);
+      px(x,y,16,2,PAL.tileHi);
+      px(x,y+13,16,3,PAL.tileLo);
+      px(x,y,1,16,PAL.tileHi); px(x+15,y,1,16,PAL.tileEdge);
+      if(((c*7+r*13)%5)===0) px(x+5,y+6,3,3,PAL.tileLo);
     } else if(t==="="){
-      px(x,y,16,4,C.mint);
-      px(x,y,16,1,"#93f2e6");
-      px(x,y+4,16,3,C.mintLo);
-      px(x+2,y+7,2,3,"#0c4b46"); px(x+12,y+7,2,3,"#0c4b46");
+      px(x,y,16,4,PAL.plat);
+      px(x,y,16,1,"#ffffff");
+      px(x,y+4,16,3,PAL.platLo);
+      px(x+2,y+7,2,3,PAL.tileEdge); px(x+12,y+7,2,3,PAL.tileEdge);
     } else {
       px(x,y+12,16,4,C.cariesLo);
       ctx.fillStyle=C.caries;
@@ -992,7 +2123,6 @@ function drawTiles(){
       }
     }
   }
-  /* ゲート */
   if(gateOn){
     for(var yy=0;yy<15*TS;yy+=8){
       px(GATE_X,yy,10,7,(yy/8|0)%2?C.cariesLo:C.caries);
@@ -1007,7 +2137,6 @@ function drawPickups(){
     if(k.x<cam.x-30||k.x>cam.x+W+30) continue;
     var b=Math.sin(k.t*0.11)*2;
     var x=k.x,y=k.y+b;
-    /* 歯ブラシ */
     px(x+1,y+5,11,3,"#f3fbfa");
     px(x+1,y+4,4,2,C.mint);
     px(x+1,y+2,1,2,C.mint); px(x+3,y+2,1,2,C.mint);
@@ -1027,48 +2156,67 @@ function drawPlayerSprite(){
   ctx.scale(f,1);
   ctx.translate(-6,0);
 
+  if(p.slide>0){
+    /* スライディング（横に伸びた姿勢） */
+    px(0,5,6,7,C.pants); px(-2,9,4,3,"#0f2c40");
+    px(3,2,11,9,C.coat);
+    px(3,2,11,1,"#ffffff");
+    px(3,10,11,2,C.coatSh);
+    px(9,0,7,7,C.skin);
+    px(9,0,8,3,C.hair);
+    px(9,3,6,3,"#f7fdfd");
+    px(12,2,2,1,C.ink);
+    px(15,4,4,4,C.glove);
+    ctx.globalAlpha=0.5;
+    px(-6,8,7,3,"#9fe8ff"); px(-11,9,5,2,"#9fe8ff");
+    ctx.globalAlpha=1;
+    ctx.restore();
+    return;
+  }
+
   var run=(p.vx!==0&&p.grounded)?Math.floor(p.anim)%4:0;
   var legA=(run===1)?2:(run===3?-2:0);
 
-  /* 脚 */
   px(2,16,4,5,C.pants); px(7,16,4,5,C.pants);
-  if(p.grounded){ px(2,16+0,4,5,C.pants); px(7+legA*0,16,4,5,C.pantsSh); }
+  if(p.grounded){ px(2,16,4,5,C.pants); px(7+legA*0,16,4,5,C.pantsSh); }
   else { px(1,15,4,5,C.pants); px(8,17,4,4,C.pantsSh); }
   px(1,20,5,2,"#0f2c40"); px(7,20,5,2,"#0f2c40");
 
-  /* 白衣 */
   px(1,7,11,10,C.coat);
   px(1,7,11,1,"#ffffff");
   px(1,15,11,2,C.coatSh);
-  px(5,7,3,6,C.mint);              /* 襟＆ネクタイ */
+  px(5,7,3,6,C.mint);
   px(6,8,1,5,C.mintLo);
 
-  /* 頭 */
   px(3,0,8,7,C.skin);
   px(3,5,8,2,C.skinSh);
   px(2,0,10,3,C.hair);
   px(2,2,1,2,C.hair);
-  px(3,3,7,3,"#f7fdfd");          /* マスク */
+  px(3,3,7,3,"#f7fdfd");
   px(3,3,7,1,"#d3ecec");
-  px(4,2,2,1,C.ink);              /* 目 */
+  px(4,2,2,1,C.ink);
   px(8,2,2,1,C.ink);
-  px(2,-1,9,2,"#173446");         /* ヘッドライト帯 */
+  px(2,-1,9,2,"#173446");
   px(8,-1,3,2,C.visor);
 
-  /* 腕・ブラスター */
   var ext=p.shootAnim>0?3:0;
   px(9,9,4,4,C.coat);
   px(11+ext,9,5,4,"#cfe7e6");
   px(15+ext,9,3,4,C.glove);
   px(16+ext,10,2,2,"#bffff4");
 
-  /* チャージ光 */
-  if(p.charge>=34){
-    var lvl=p.charge>=70?2:1;
-    var rr=(lvl===2?7:4)+Math.sin(frame*0.5)*1.2;
+  /* 溜めの光（4段階） */
+  var lvl=chargeLv(p.charge);
+  if(lvl>0){
+    var cols=[null,C.mint,C.gold,"#ffffff"];
+    var rr=[0,4,6.5,9][lvl]+Math.sin(frame*0.5)*1.2;
     ctx.globalAlpha=0.85;
-    ctx.fillStyle=lvl===2?C.gold:C.mint;
+    ctx.fillStyle=cols[lvl];
     ctx.beginPath(); ctx.arc(18+ext,11,rr,0,Math.PI*2); ctx.fill();
+    if(lvl===3){
+      ctx.globalAlpha=0.5; ctx.fillStyle=C.caries;
+      ctx.beginPath(); ctx.arc(18+ext,11,rr+3+Math.sin(frame*0.9)*1.5,0,Math.PI*2); ctx.fill();
+    }
     ctx.globalAlpha=1;
     ctx.fillStyle="#ffffff";
     ctx.beginPath(); ctx.arc(18+ext,11,rr*0.45,0,Math.PI*2); ctx.fill();
@@ -1094,6 +2242,19 @@ function drawEnemies(){
       px(x+5,y+6+bob,1,2,C.ink); px(x+9,y+6+bob,1,2,C.ink);
       px(x+5,y+10+bob,5,1,C.bossDark);
       px(x+5,y+11+bob,1,1,"#ffffff"); px(x+9,y+11+bob,1,1,"#ffffff");
+    } else if(e.type==="f"){
+      /* 浮遊菌：ひらひらの膜をもつ */
+      var w1=Math.sin(e.t*0.3)*3;
+      ctx.fillStyle=hl?"#ffffff":"#9be8ff";
+      ctx.globalAlpha=0.55;
+      ctx.beginPath(); ctx.ellipse(x+7,y+4,9,4+w1*0.3,0,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=1;
+      ctx.fillStyle=hl?"#ffffff":"#5fb8e6";
+      ctx.beginPath(); ctx.arc(x+7,y+8,5.6,0,Math.PI*2); ctx.fill();
+      px(x+4,y+6,3,3,"#ffffff"); px(x+8,y+6,3,3,"#ffffff");
+      px(x+5,y+7,1,2,C.ink); px(x+9,y+7,1,2,C.ink);
+      ctx.fillStyle=hl?"#ffffff":"#2c7fa8";
+      for(var t2=0;t2<3;t2++) ctx.fillRect(x+3+t2*4,y+12+Math.sin(e.t*0.2+t2)*1.5,2,4);
     } else {
       var warn=e.warn>0 && Math.floor(e.warn/3)%2===0;
       px(x,y+4,14,10,hl?"#ffffff":C.tartar);
@@ -1109,62 +2270,45 @@ function drawEnemies(){
 
 function drawBoss(){
   if(!boss) return;
-  var b=boss;
+  var b=boss, S=BOSSES[b.kind];
   var x=Math.round(b.x), y=Math.round(b.y);
   var hl=b.hurt>0 && Math.floor(b.hurt/2)%2===0;
-  var base=hl?"#ffffff":C.boss;
-
-  /* 影 */
   ctx.fillStyle="rgba(0,0,0,.35)";
-  ctx.beginPath(); ctx.ellipse(x+26,240,26,4,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+b.w/2,240,b.w/2,4,0,0,Math.PI*2); ctx.fill();
+  S.draw(b,x,y,hl);
+}
 
-  /* 本体（巨大な奥歯） */
-  ctx.fillStyle=base;
-  ctx.beginPath();
-  ctx.moveTo(x+2,y+30);
-  ctx.quadraticCurveTo(x+2,y+2,x+26,y+2);
-  ctx.quadraticCurveTo(x+50,y+2,x+50,y+30);
-  ctx.lineTo(x+44,y+46); ctx.lineTo(x+36,y+30);
-  ctx.lineTo(x+26,y+46); ctx.lineTo(x+16,y+30);
-  ctx.lineTo(x+8,y+46);
-  ctx.closePath(); ctx.fill();
-
-  ctx.fillStyle=hl?"#ffffff":C.bossLo;
-  ctx.fillRect(x+2,y+28,48,4);
-  /* 虫歯の穴 */
-  ctx.fillStyle=C.bossDark;
-  ctx.beginPath(); ctx.arc(x+10,y+14,4,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x+43,y+20,3,0,Math.PI*2); ctx.fill();
-
-  /* 王冠 */
-  px(x+12,y-8,28,7,C.gold);
-  px(x+12,y-8,28,2,"#fff0b0");
-  px(x+12,y-14,4,6,C.gold); px(x+24,y-16,4,8,C.gold); px(x+36,y-14,4,6,C.gold);
-  px(x+25,y-18,2,2,C.caries);
-
-  /* 目 */
-  var ex=(b.face<0)?-2:2;
-  px(x+11,y+9,12,7,"#ffffff"); px(x+29,y+9,12,7,"#ffffff");
-  px(x+15+ex,y+11,4,4,C.ink);  px(x+33+ex,y+11,4,4,C.ink);
-  px(x+11,y+7,12,2,C.bossDark); px(x+29,y+7,12,2,C.bossDark);
-
-  /* 口 */
-  var mo=b.mouth>0?8:2;
-  ctx.fillStyle=C.bossDark;
-  ctx.fillRect(x+18,y+20,18,mo+2);
-  if(b.mouth>0){
-    ctx.fillStyle=C.acid;
-    ctx.fillRect(x+20,y+22+mo-3,14,3);
-    ctx.fillStyle="#ffffff";
-    for(var t=0;t<4;t++){ ctx.fillRect(x+19+t*5,y+20,3,3); }
-  }
+/* ボス選択画面用の似顔絵。ゲーム本体と同じ絵を縮めて描く */
+function drawPortrait(kind,g,size){
+  var S=BOSSES[kind], old=ctx;
+  var top=S.top||0;
+  ctx=g;
+  g.clearRect(0,0,size,size);
+  var pad=4;
+  var sc=Math.min((size-pad*2)/S.w,(size-pad*2)/(S.h+top));
+  g.save();
+  g.translate(size/2-S.w*sc/2, pad+top*sc);
+  g.scale(sc,sc);
+  S.draw({x:0,y:0,w:S.w,h:S.h,face:-1,mouth:0,hurt:0,t:0,phase:1,
+          hp:S.hp,maxhp:S.hp,state:"ceil",wing:0,aura:0,squash:0,step:0,wheel:0},0,0,false);
+  g.restore();
+  ctx=old;
 }
 
 function drawBullets(){
   var i,b;
   for(i=0;i<pbullets.length;i++){
     b=pbullets[i];
-    if(b.big===2){
+    if(b.big===3){
+      ctx.globalAlpha=0.55;
+      ctx.fillStyle=C.caries;
+      ctx.beginPath(); ctx.arc(b.x+13,b.y+12,13+Math.sin(frame*0.8)*2,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=1;
+      ctx.fillStyle="#ffffff";
+      ctx.beginPath(); ctx.arc(b.x+13,b.y+12,9,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=C.gold;
+      ctx.beginPath(); ctx.arc(b.x+13,b.y+12,5,0,Math.PI*2); ctx.fill();
+    } else if(b.big===2){
       ctx.fillStyle=C.gold;
       ctx.beginPath(); ctx.arc(b.x+9,b.y+8,8+Math.sin(frame*0.6),0,Math.PI*2); ctx.fill();
       ctx.fillStyle="#fff8d0";
@@ -1181,10 +2325,47 @@ function drawBullets(){
   }
   for(i=0;i<ebullets.length;i++){
     b=ebullets[i];
-    ctx.fillStyle=b.acid?C.acid:C.caries;
-    ctx.beginPath(); ctx.arc(b.x+4,b.y+4,4,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle=b.acid?"#e9ffb8":C.cariesHi;
-    ctx.beginPath(); ctx.arc(b.x+3,b.y+3,1.6,0,Math.PI*2); ctx.fill();
+    var k=b.kind;
+    if(k==="shell"){
+      px(b.x,b.y,10,8,C.tartar); px(b.x,b.y,10,2,"#f0e0a8"); px(b.x+(b.vx>0?8:0),b.y+2,2,4,C.tartarLo);
+    } else if(k==="cube"){
+      px(b.x,b.y,10,10,"#fdf6ff"); px(b.x,b.y,10,2,"#ffffff"); px(b.x,b.y+8,10,2,"#c9b8d6");
+      px(b.x+4,b.y-3,2,3,"#7a5c3a");
+      ctx.fillStyle=(Math.floor(frame/4)%2)?C.gold:C.caries;
+      ctx.beginPath(); ctx.arc(b.x+5,b.y-4,2.2,0,Math.PI*2); ctx.fill();
+    } else if(k==="wire"){
+      px(b.x,b.y+1,12,4,"#8fd7ff"); px(b.x,b.y+2,12,1,"#ffffff");
+    } else if(k==="shock"){
+      ctx.fillStyle=C.gold;
+      ctx.beginPath();
+      ctx.moveTo(b.x,b.y+12); ctx.lineTo(b.x+4,b.y+2); ctx.lineTo(b.x+8,b.y+10); ctx.lineTo(b.x+13,b.y+12);
+      ctx.closePath(); ctx.fill();
+      px(b.x,b.y+11,14,2,"#fff0b0");
+    } else if(k==="beam"){
+      px(b.x,b.y,12,5,"#ff2a5f"); px(b.x,b.y+1,12,2,"#ffd0d8");
+    } else if(k==="dark"){
+      ctx.fillStyle="#2a0510";
+      ctx.beginPath(); ctx.arc(b.x+4,b.y+4,5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=C.caries;
+      ctx.beginPath(); ctx.arc(b.x+3,b.y+3,2.2,0,Math.PI*2); ctx.fill();
+    } else if(k==="blob"){
+      ctx.fillStyle="#7bb35c";
+      ctx.beginPath(); ctx.arc(b.x+4,b.y+4,4.6,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#cfe9b8";
+      ctx.beginPath(); ctx.arc(b.x+3,b.y+3,1.8,0,Math.PI*2); ctx.fill();
+    } else if(k==="spore"){
+      ctx.fillStyle="#ff8fb4";
+      ctx.beginPath(); ctx.arc(b.x+4,b.y+4,4,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#ffd7e2";
+      ctx.beginPath(); ctx.arc(b.x+3,b.y+3,1.6,0,Math.PI*2); ctx.fill();
+    } else if(k==="shard"){
+      px(b.x,b.y,6,6,"#ffffff"); px(b.x+1,b.y+1,4,4,"#e6d8f0");
+    } else {
+      ctx.fillStyle=(k==="acid")?C.acid:C.caries;
+      ctx.beginPath(); ctx.arc(b.x+4,b.y+4,4,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=(k==="acid")?"#e9ffb8":C.cariesHi;
+      ctx.beginPath(); ctx.arc(b.x+3,b.y+3,1.6,0,Math.PI*2); ctx.fill();
+    }
   }
 }
 
@@ -1197,7 +2378,7 @@ function drawParts(){
   ctx.globalAlpha=1;
 }
 
-/* --- HUD（ロックマン風の縦ゲージ） --- */
+/* --- HUD --- */
 function bar(x,y,val,max,col,colLo){
   var seg=Math.round(28*(val/max));
   px(x-1,y-1,10,28*3+2,"rgba(4,18,30,.75)");
@@ -1209,43 +2390,226 @@ function bar(x,y,val,max,col,colLo){
 }
 function drawHud(){
   bar(10,12,player.hp,player.maxhp,C.mint,"#123a4d");
-  if(boss && boss.dead===0) bar(W-18,12,boss.hp,boss.maxhp,C.caries,"#3a1428");
-  /* チャージのゲージ */
-  if(player.charge>0){
-    var w=Math.min(1,player.charge/70)*40;
-    px(9,H-14,42,6,"rgba(4,18,30,.7)");
-    px(10,H-13,w,4,player.charge>=70?C.gold:C.mint);
+  if(boss && boss.dead===0){
+    bar(W-18,12,boss.hp,boss.maxhp,C.caries,"#3a1428");
+    ctx.fillStyle=C.cariesHi;
+    ctx.font='bold 9px system-ui, sans-serif';
+    ctx.textAlign="right";
+    ctx.fillText(BOSSES[boss.kind].name, W-24, 12);
+  }
+  /* 溜めゲージ（4段階） */
+  var lv=chargeLv(player.charge);
+  px(9,H-15,58,8,"rgba(4,18,30,.7)");
+  for(var i=0;i<3;i++){
+    var full=(lv>i);
+    var part2=(!full && player.charge>CHG[i]) ? Math.min(1,(player.charge-CHG[i])/(CHG[i+1]-CHG[i])) : (full?1:0);
+    px(11+i*19,H-13,17*part2,4, [C.mint,C.gold,"#ffffff"][i]);
+    px(11+i*19,H-13,17,1,"rgba(255,255,255,.15)");
   }
   document.getElementById("score").textContent="SCORE "+("000000"+score).slice(-6);
 }
 
-/* ============================ 画面制御 ============================ */
+/* ===== 50_main.js ===== */
+/* ============================ 入力 ============================ */
+var keys={left:false,right:false,jump:false,fire:false,down:false,slide:false};
+var lastJump=false, lastSlide=false;
+var KEYMAP={ArrowLeft:"left",ArrowRight:"right",KeyA:"left",KeyD:"right",
+  ArrowUp:"jump",KeyX:"jump",KeyK:"jump",
+  ArrowDown:"down",KeyS:"down",
+  KeyC:"slide",ShiftLeft:"slide",ShiftRight:"slide",
+  Space:"fire",KeyZ:"fire",KeyJ:"fire"};
+
+window.addEventListener("keydown",function(e){
+  if(e.code==="Space"||e.code.indexOf("Arrow")===0) e.preventDefault();
+  if(e.repeat) return;
+  audioInit();
+  var k=KEYMAP[e.code]; if(k) keys[k]=true;
+  if(e.code==="KeyP") togglePause();
+  if(e.code==="KeyM") setMuted(!muted);
+  if(e.code==="Enter"||e.code==="NumpadEnter"){
+    if(state==="title") gotoSelect();
+    else if(state==="over"||state==="clear") startGame();
+  }
+  if(e.code==="Escape" && (state==="play"||state==="pause")) gotoSelect();
+});
+window.addEventListener("keyup",function(e){
+  var k=KEYMAP[e.code]; if(k) keys[k]=false;
+});
+
+/* 画面のボタン。指を離し損ねて押しっぱなしにならないよう、
+   ポインタを掴んで（setPointerCapture）自分でpointerupを受け取る */
+(function pad(){
+  var btns=document.querySelectorAll("#pad .btn");
+  Array.prototype.forEach.call(btns,function(b){
+    var k=b.getAttribute("data-k");
+    function on(e){
+      e.preventDefault(); audioInit();
+      try{ b.setPointerCapture(e.pointerId); }catch(_){}
+      keys[k]=true; b.classList.add("pressed");
+    }
+    function off(e){ e.preventDefault(); keys[k]=false; b.classList.remove("pressed"); }
+    b.addEventListener("pointerdown",on);
+    b.addEventListener("pointerup",off);
+    b.addEventListener("pointercancel",off);
+    b.addEventListener("lostpointercapture",off);
+    b.addEventListener("pointerleave",function(e){
+      if(b.hasPointerCapture && b.hasPointerCapture(e.pointerId)) return;
+      off(e);
+    });
+    b.addEventListener("contextmenu",function(e){e.preventDefault();});
+  });
+})();
+
+/* 連打しても画面が拡大しないようにする（iOSはuser-scalable=noを無視するため） */
+(function noZoom(){
+  ["gesturestart","gesturechange","gestureend"].forEach(function(ev){
+    document.addEventListener(ev,function(e){ e.preventDefault(); },{passive:false});
+  });
+  document.addEventListener("dblclick",function(e){ e.preventDefault(); },{passive:false});
+  var lastEnd=0;
+  document.addEventListener("touchend",function(e){
+    var now=(new Date()).getTime();
+    if(now-lastEnd<=420) e.preventDefault();
+    lastEnd=now;
+  },{passive:false});
+})();
+
+/* ============================ 進み具合の保存 ============================ */
+var cleared=[];
+function loadProgress(){
+  cleared=[];
+  try{
+    var v=JSON.parse(localStorage.getItem("dentalman_clear")||"[]");
+    if(v instanceof Array) cleared=v;
+  }catch(e){}
+  for(var i=0;i<LEVELS.length;i++) if(cleared[i]!==true) cleared[i]=false;
+}
+function saveProgress(){
+  try{ localStorage.setItem("dentalman_clear",JSON.stringify(cleared)); }catch(e){}
+}
+function finalOpen(){
+  for(var i=0;i<8;i++) if(!cleared[i]) return false;
+  return true;
+}
+
+/* ============================ 画面 ============================ */
+var SCREENS=["s-title","s-select","s-stage","s-over","s-clear","s-pause","s-end"];
 function showScreen(id){
-  ["s-title","s-over","s-clear","s-pause"].forEach(function(s){
+  SCREENS.forEach(function(s){
     document.getElementById(s).classList.toggle("on", s===id);
   });
 }
 function hideScreens(){ showScreen(""); }
+
+function setTag(txt){ document.getElementById("stage-tag").textContent=txt||""; }
+
+/* --- ボス選択 --- */
+var CELL_ORDER=[0,1,2, 3,8,4, 5,6,7];   /* まん中がラスボス */
+function buildGrid(){
+  var g=document.getElementById("grid");
+  g.innerHTML="";
+  CELL_ORDER.forEach(function(i){
+    var lv=LEVELS[i], S=BOSSES[lv.boss];
+    var cell=document.createElement("button");
+    cell.type="button";
+    cell.className="cell"+(cleared[i]?" done":"")+(i===8?" final":"");
+    var lock=(i===8 && !finalOpen());
+    if(lock) cell.className+=" lock";
+    if(i===8 && !lock) cell.className+=" open";
+    var cvp=document.createElement("canvas");
+    cvp.width=64; cvp.height=64;
+    cell.appendChild(cvp);
+    var nm=document.createElement("div"); nm.className="nm"; nm.textContent=lock?"？？？":S.name;
+    var ti=document.createElement("div"); ti.className="ti"; ti.textContent=lock?"8体たおすと開く":lv.name;
+    cell.appendChild(nm); cell.appendChild(ti);
+    if(!lock) drawPortrait(lv.boss,cvp.getContext("2d"),64);
+    else { var c2=cvp.getContext("2d"); c2.fillStyle="#0b2136"; c2.fillRect(0,0,64,64);
+           c2.fillStyle="#3d5a6e"; c2.font="bold 34px system-ui"; c2.textAlign="center"; c2.fillText("?",32,44); }
+    cell.addEventListener("click",function(){
+      audioInit();
+      if(lock){ document.getElementById("sel-msg").textContent="まだ開かない。ほかの8体を先にたおす。"; return; }
+      openStage(i);
+    });
+    g.appendChild(cell);
+  });
+  var done=cleared.filter(function(v){return v;}).length;
+  document.getElementById("sel-msg").textContent=
+    finalOpen()
+      ? (cleared[8] ? "全部たおした。好きなボスと何度でも戦える。" : "8体たおした。まん中の扉が開いている。")
+      : "好きなボスから挑戦できます（"+done+"／8たおした）。8体たおすと、まん中の扉がひらく。";
+}
+function gotoSelect(){
+  audioInit();
+  state="select"; setTag("");
+  loadProgress(); buildGrid();
+  showScreen("s-select");
+}
+
+/* --- ステージ開始前 --- */
+var pendingStage=0;
+function openStage(i){
+  pendingStage=i;
+  var lv=LEVELS[i], S=BOSSES[lv.boss];
+  document.getElementById("stg-kicker").textContent="Stage "+(i===8?"FINAL":("0"+(i+1)))+" — "+lv.sub;
+  document.getElementById("stg-name").textContent=lv.name;
+  document.getElementById("stg-sub").textContent="ボス： "+S.name+"（"+S.title+"）";
+  state="stage"; showScreen("s-stage");
+}
 function startGame(){
   audioInit();
-  if(AC && AC.state==="suspended") AC.resume();
-  reset(); state="play"; hideScreens();
+  loadStage(pendingStage);
+  reset();
+  setTag(LEVELS[pendingStage].name);
+  state="play"; hideScreens();
 }
 function togglePause(){
   if(state==="play"){ state="pause"; showScreen("s-pause"); }
   else if(state==="pause"){ state="play"; hideScreens(); }
 }
-document.getElementById("btn-start").addEventListener("click",startGame);
+
+/* --- ボスを倒したとき --- */
+function onBossDown(){
+  score+=4000+player.hp*100;
+  SFX.bossDie(); flash=30;
+  cleared[stageIdx]=true; saveProgress();
+  var S=BOSSES[boss.kind];
+  if(stageIdx===8){
+    state="ending"; showScreen("s-end");
+    document.getElementById("end-msg").textContent=
+      "大魔王ムシバーンを削り切った。口の中に、しずかな朝が戻った。 SCORE "+score;
+  } else {
+    state="clear"; showScreen("s-clear");
+    document.getElementById("clear-msg").textContent=
+      S.name+"撃破。残りHP "+player.hp+" ／ SCORE "+score+"。"+
+      (finalOpen()?"8体すべて倒した。まん中の扉がひらいた。":"");
+  }
+}
+
+/* ============================ ボタン ============================ */
+document.getElementById("btn-start").addEventListener("click",gotoSelect);
+document.getElementById("btn-go").addEventListener("click",startGame);
+document.getElementById("btn-back").addEventListener("click",gotoSelect);
+document.getElementById("btn-back2").addEventListener("click",gotoSelect);
 document.getElementById("btn-retry").addEventListener("click",startGame);
 document.getElementById("btn-again").addEventListener("click",startGame);
+document.getElementById("btn-next").addEventListener("click",gotoSelect);
+document.getElementById("btn-end").addEventListener("click",gotoSelect);
 document.getElementById("btn-resume").addEventListener("click",togglePause);
-cv.addEventListener("pointerdown",function(){ audioInit(); if(AC&&AC.state==="suspended") AC.resume(); });
+document.getElementById("btn-snd").addEventListener("click",function(){ audioInit(); setMuted(!muted); });
+cv.addEventListener("pointerdown",function(){ audioInit(); });
 document.addEventListener("visibilitychange",function(){
   if(document.hidden && state==="play") togglePause();
 });
 
-/* ============================ ループ ============================ */
+/* ============================ 起動 ============================ */
+try{ muted=(localStorage.getItem("dentalman_mute")==="1"); }catch(e){}
+setMuted(muted);
+loadProgress();
+loadStage(0);
 reset();
+state="title";
+showScreen("s-title");
+
 var acc=0, last=performance.now();
 function loop(now){
   var dt=now-last; last=now;

@@ -2771,7 +2771,7 @@ var END_CREDITS=[
   ""
 ];
 
-var END_LEN=2360;
+var END_LEN=2980;
 
 function startEnding(){
   state="ending"; endT=0; endDone=false;
@@ -2904,7 +2904,7 @@ function drawEnding(){
   }
 
   /* --- 5 スタッフロール --- */
-  if(t>=1330 && t<END_LEN-160){
+  if(t>=1330 && t<END_LEN-200){
     var top=H+10-(t-1330)*0.62;
     for(var c=0;c<END_CREDITS.length;c++){
       var y=top+c*22;
@@ -2932,8 +2932,9 @@ function drawEnding(){
     etext("SCORE "+score,W/2,196,12,"#ffd447",fade(t,END_LEN-100,END_LEN+600,60,600));
   }
 
-  if(t<END_LEN-200){
-    etext("タップ／どれかのキーで最後まで飛ばす",W/2,H-8,9,"rgba(255,255,255,.45)",1);
+  if(t<1300){
+    ctx.globalAlpha=0.35; px(0,H-16,W,16,"#04121e"); ctx.globalAlpha=1;
+    etext("タップ／どれかのキーで最後まで飛ばす",W/2,H-5,9,"rgba(255,255,255,.6)",1);
   }
 }
 

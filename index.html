@@ -3028,21 +3028,30 @@ window.addEventListener("keyup",function(e){
   var btns=document.querySelectorAll("#pad .btn");
   Array.prototype.forEach.call(btns,function(b){
     var k=b.getAttribute("data-k");
+    var pid=null;                     /* このボタンを押している指の番号 */
+
     function on(e){
-      e.preventDefault(); audioInit();
+      if(e.preventDefault) e.preventDefault();
+      audioInit();
+      pid=e.pointerId;
       try{ b.setPointerCapture(e.pointerId); }catch(_){}
       keys[k]=true; b.classList.add("pressed");
     }
-    function off(e){ e.preventDefault(); keys[k]=false; b.classList.remove("pressed"); }
+    /* 離すのは「その指が離れたとき」だけ。
+       ボタンの外へ少しズレただけでは離さない（溜めている途中で暴発しないように） */
+    function off(e){
+      if(e && e.pointerId!==undefined && pid!==null && e.pointerId!==pid) return;
+      if(e && e.preventDefault) e.preventDefault();
+      pid=null; keys[k]=false; b.classList.remove("pressed");
+    }
     b.addEventListener("pointerdown",on);
     b.addEventListener("pointerup",off);
     b.addEventListener("pointercancel",off);
     b.addEventListener("lostpointercapture",off);
-    b.addEventListener("pointerleave",function(e){
-      if(b.hasPointerCapture && b.hasPointerCapture(e.pointerId)) return;
-      off(e);
-    });
     b.addEventListener("contextmenu",function(e){e.preventDefault();});
+    /* 指が画面のどこで離れても、必ず押しっぱなしを解除する */
+    window.addEventListener("pointerup",off);
+    window.addEventListener("pointercancel",off);
   });
 })();
 

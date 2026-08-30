@@ -102,6 +102,8 @@
     display:block;
     width:100%;
     height:100%;
+    /* 枠の縦横比がずれても、絵は比率を保ったまま中に収める（上下か左右に黒帯が出るだけ） */
+    object-fit:contain;
     image-rendering:pixelated;
     image-rendering:crisp-edges;
     touch-action:none;
@@ -249,7 +251,8 @@
   /* ---- touch pad ---- */
   #pad{
     width:100%;
-    max-width:760px;
+    max-width:min(100%, 330px);   /* ヘリではなく中央寄りに */
+    margin:0 auto;
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:14px;
@@ -259,8 +262,13 @@
     -webkit-tap-highlight-color:transparent;
   }
   .cluster{display:flex;gap:12px;}
-  .cluster.right{justify-content:flex-end;gap:6px;}
-  .cluster.right .btn{width:clamp(40px,13vw,74px);}
+  .cluster.right{
+    justify-content:flex-end;
+    gap:8px;
+    flex-wrap:wrap;
+    align-content:flex-end;
+  }
+  .btn.slide{order:2;}          /* SLIDE だけ下の段に回す */
   .btn{
     -webkit-user-select:none;user-select:none;
     touch-action:none;
@@ -294,38 +302,50 @@
     #pad{display:none;}
   }
   @media (max-width:480px){
-    .btn{width:66px;height:66px;}
+    .btn{width:62px;height:62px;}
   }
   /* スマホ横向き：画面の左右にボタンを置く */
   @media (orientation:landscape) and (max-height:600px){
     #app{
       display:grid;
-      grid-template-columns:auto minmax(0,1fr) auto;
-      grid-template-rows:auto minmax(0,1fr) auto;
+      grid-template-columns:auto auto auto;
+      justify-content:center;
+      grid-template-rows:auto minmax(0,1fr);
       align-items:center;
       justify-items:center;
-      gap:6px;
+      gap:3px;
       height:100dvh;
       min-height:0;
-      padding:6px calc(6px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(6px + env(safe-area-inset-left));
+      padding:2px calc(4px + env(safe-area-inset-right)) calc(2px + env(safe-area-inset-bottom)) calc(4px + env(safe-area-inset-left));
     }
-    #bar{grid-column:1/-1;grid-row:1;max-width:none;font-size:11px;}
+    #bar{grid-column:1/-1;grid-row:1;max-width:none;font-size:9px;}
+    #stage-tag{font-size:9px;}
     #frame{
       grid-column:2;grid-row:2;
-      max-width:none;
-      width:min(100%, calc((100dvh - 116px) * 1.765));
-      height:auto;
+      /* 高さを行いっぱいにして、横幅は比率から自動で決める。
+         決め打ちの引き算をやめたので、下に余白が残らない */
+      height:100%;
+      width:auto;
+      max-width:100%;
+      aspect-ratio:480/272;
+      margin:0 auto;
     }
-    #wbar{grid-column:2;grid-row:3;gap:4px;}
-    #wbar .wchip{min-width:46px;font-size:8px;padding:3px 5px 4px;}
-    #wbar .wchip .we{width:34px;height:3px;}
+    #wbar{
+      grid-column:1/-1;grid-row:1;
+      justify-self:center;align-self:center;
+      width:auto;max-width:70%;gap:3px;flex-wrap:nowrap;
+    }
+    #wbar .wchip{min-width:33px;font-size:7px;padding:2px 3px 3px;gap:2px;}
+    #wbar .wchip .we{width:24px;height:3px;}
     #pad{display:contents;}
-    #pad>.cluster{grid-row:2;gap:10px;}
+    #pad>.cluster{grid-row:2;gap:7px;}
+    #app{column-gap:10px;}
+    #pad>.cluster.right{width:113px;}   /* 2つで折り返す幅（枠線ぶん込み） */
     #pad>.cluster:not(.right){grid-column:1;}
     #pad>.cluster.right{grid-column:3;}
-    .btn{width:58px;height:58px;border-radius:14px;font-size:11px;}
-    .btn small{font-size:8px;}
-    .btn.arrow{font-size:20px;}
+    .btn{width:50px;height:50px;border-radius:12px;font-size:9px;}
+    .btn small{font-size:7px;}
+    .btn.arrow{font-size:17px;}
     #tip{display:none;}
   }
 

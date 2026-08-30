@@ -251,8 +251,10 @@
   /* ---- touch pad ---- */
   #pad{
     width:100%;
-    max-width:min(100%, 330px);   /* ヘリではなく中央寄りに */
+    /* ヘリではなく中央寄り。画面が大きいほど少し広げる */
+    max-width:min(100%, calc(300px + 14vw));
     margin:0 auto;
+    touch-action:none;
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:14px;
@@ -273,7 +275,8 @@
     -webkit-user-select:none;user-select:none;
     touch-action:none;
     display:grid;place-items:center;
-    width:74px;height:74px;
+    width:clamp(60px, 15vw, 96px);
+    height:clamp(60px, 15vw, 96px);
     border-radius:16px;
     background:linear-gradient(180deg,var(--panel-2),var(--panel));
     border:1px solid #24597a;
@@ -304,6 +307,17 @@
   @media (max-width:480px){
     .btn{width:62px;height:62px;}
   }
+  @media (min-width:700px){
+    .btn{font-size:14px;}
+    .btn small{font-size:11px;}
+    .btn.arrow{font-size:30px;}
+    #pad{max-width:min(100%, 82%);}          /* 中央に寄せすぎない */
+    #frame{max-width:none;}                  /* 760pxの上限をやめる */
+    #bar,#wbar{max-width:none;}
+    .wchip{min-width:72px;font-size:11px;padding:6px 9px 7px;}
+    .wchip .we{width:56px;height:5px;}
+    #tip{font-size:13px;}
+  }
   /* スマホ横向き：画面の左右にボタンを置く */
   @media (orientation:landscape) and (max-height:600px){
     #app{
@@ -322,11 +336,12 @@
     #stage-tag{font-size:9px;}
     #frame{
       grid-column:2;grid-row:2;
-      /* 高さを行いっぱいにして、横幅は比率から自動で決める。
-         決め打ちの引き算をやめたので、下に余白が残らない */
-      height:100%;
+      /* 実際の大きさは JS（fitFrame）が測って入れる。
+         CSSの決め打ちだと、端末によって黒帯が出たり縦に伸びたりするため */
       width:auto;
+      height:auto;
       max-width:100%;
+      max-height:100%;
       aspect-ratio:480/272;
       margin:0 auto;
     }
@@ -338,14 +353,20 @@
     #wbar .wchip{min-width:33px;font-size:7px;padding:2px 3px 3px;gap:2px;}
     #wbar .wchip .we{width:24px;height:3px;}
     #pad{display:contents;}
-    #pad>.cluster{grid-row:2;gap:7px;}
+    #pad>.cluster{grid-row:2;gap:7px;align-self:end;padding-bottom:1vh;}
     #app{column-gap:10px;}
-    #pad>.cluster.right{width:113px;}   /* 2つで折り返す幅（枠線ぶん込み） */
+    /* 2つで折り返す幅（枠線2px×2 ＋ すき間7px） */
+    #pad>.cluster.right{width:calc(var(--bs) * 2 + 11px);}
     #pad>.cluster:not(.right){grid-column:1;}
     #pad>.cluster.right{grid-column:3;}
-    .btn{width:50px;height:50px;border-radius:12px;font-size:9px;}
-    .btn small{font-size:7px;}
-    .btn.arrow{font-size:17px;}
+    #app{--bs:clamp(48px, 9.5vh, 88px);}
+    .btn{
+      width:var(--bs); height:var(--bs);
+      border-radius:12px;
+      font-size:clamp(9px, 1.5vh, 14px);
+    }
+    .btn small{font-size:clamp(7px, 1.1vh, 11px);}
+    .btn.arrow{font-size:clamp(17px, 3.4vh, 32px);}
     #tip{display:none;}
   }
 
@@ -3033,11 +3054,69 @@ window.addEventListener("keyup",function(e){
   document.addEventListener("dblclick",function(e){ e.preventDefault(); },{passive:false});
   var lastEnd=0;
   document.addEventListener("touchend",function(e){
+    var t=e.target;
+    if(t && t.closest && t.closest("#pad, .btn, .wchip, button, .cell")){ lastEnd=0; return; }
     var now=(new Date()).getTime();
     if(now-lastEnd<=420) e.preventDefault();
     lastEnd=now;
   },{passive:false});
 })();
+
+/* ============================ 画面の大きさ合わせ ============================
+   横向き（スマホ・タブレット）のときは、空いている場所をJSで実測して
+   480:272 のまま最大になる大きさをゲーム画面に入れる。
+   CSSの決め打ちだと、端末によって黒帯が出たり縦に伸びたりするため。 */
+var MQ_LAND=(window.matchMedia
+  ? window.matchMedia("(orientation:landscape) and (max-height:600px)")
+  : {matches:false, addEventListener:function(){}, addListener:function(){}});
+
+function fitFrame(){
+  var f=document.getElementById("frame"), app=document.getElementById("app");
+  if(!f||!app) return;
+  f.style.width="10px"; f.style.height="10px";        /* 一度小さくして周りの実寸を測る */
+  var cs=window.getComputedStyle?window.getComputedStyle(app):null;
+  function n(v){ var x=parseFloat(v); return isNaN(x)?0:x; }
+  function h(id){
+    var el=document.getElementById(id);
+    if(!el) return 0;
+    var r=el.getBoundingClientRect();
+    return (r.width===0 && r.height===0) ? 0 : r.height;   /* 非表示は0 */
+  }
+  var pl=cs?n(cs.paddingLeft):0, pr=cs?n(cs.paddingRight):0;
+  var pt=cs?n(cs.paddingTop):0,  pb=cs?n(cs.paddingBottom):0;
+  var cg=cs?n(cs.columnGap):0,   rg=cs?n(cs.rowGap):0;
+  var vh=(window.innerHeight||app.clientHeight);
+  var availW, availH;
+
+  if(MQ_LAND.matches){
+    /* 左右にボタンを置く配置（横向き） */
+    var cl=document.querySelectorAll("#pad > .cluster");
+    var lw=cl[0]?cl[0].getBoundingClientRect().width:0;
+    var rw=cl[1]?cl[1].getBoundingClientRect().width:0;
+    availW=app.clientWidth - pl - pr - lw - rw - cg*2;
+    availH=vh - pt - pb - h("bar") - rg;
+  } else {
+    /* 上から順に積む配置（縦向き・大きい画面の縦） */
+    availW=app.clientWidth - pl - pr;
+    var used=h("bar")+h("wbar")+h("pad")+h("tip");
+    var kids=app.children?app.children.length:5;
+    availH=vh - pt - pb - used - rg*Math.max(0,kids-1) - 6;   /* はみ出さないよう少し余裕 */
+  }
+  var sc=Math.min(availW/480, availH/272);
+  if(!(sc>0.15)) sc=0.15;
+  f.style.width =Math.floor(480*sc)+"px";
+  f.style.height=Math.floor(272*sc)+"px";
+}
+var fitPending=false;
+function scheduleFit(){
+  if(fitPending) return;
+  fitPending=true;
+  requestAnimationFrame(function(){ fitPending=false; fitFrame(); });
+}
+window.addEventListener("resize",scheduleFit);
+window.addEventListener("orientationchange",scheduleFit);
+if(MQ_LAND.addEventListener) MQ_LAND.addEventListener("change",scheduleFit);
+else if(MQ_LAND.addListener) MQ_LAND.addListener(scheduleFit);
 
 /* ============================ 進み具合の保存 ============================ */
 var cleared=[];
@@ -3094,6 +3173,7 @@ function updateWeaponBar(){
       bar.appendChild(b);
     });
     bar.__owned=owned;
+    scheduleFit();
   } else {
     var fills=bar.querySelectorAll(".we i");
     (bar.__owned||[]).forEach(function(i,k){
@@ -3218,6 +3298,9 @@ else if(location.hash==="#allclear"){
   for(var ci=0;ci<8;ci++) cleared[ci]=true;
   saveProgress(); gotoSelect();
 }
+
+fitFrame();
+scheduleFit();
 
 var acc=0, last=performance.now();
 function loop(now){

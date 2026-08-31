@@ -4127,90 +4127,178 @@ window.addEventListener("keyup",function(e){
   var k=KEYMAP[e.code]; if(k) releaseKey(k);
 });
 
-/* 画面のボタン（スーパーファミコン配置）。
-   指の番号ごとに「いま押しているボタン」を持ち、指が動いたら押し直す。
-   ◀ を押したまま ▶ へ指をずらすと、前は◀を掴んだままで
-   右に進み続けて左に戻れなくなっていた（2026-08-31 院長報告）ため、
-   毎回いまの指の位置でボタンを判定し直す。
-   ボタンとボタンのすき間に指があるあいだは直前のボタンを保つ
-   （Yを溜めている最中に少しズレても暴発しない）。
-   ▲とBのように同じ役目のボタンが2つあるので、キーは数えて管理する。 */
+/* 画面のボタン（スーパーファミコン配置）--------------------------------------
+   考え方：イベントを1つずつ数えて足し引きするのではなく、
+   「いま画面に触れている指の一覧」から押されているボタンを毎回作り直す。
+
+   前の作りは「押した合図」と「離した合図」が必ず1対1で届く前提だった。
+   離した合図を1回でも取りこぼすと ▶ が押しっぱなしになり、
+   右へ進み続けて左に戻れなくなる（院長報告 2026-08-31・2回目）。
+   取りこぼしは実際に起きる：同じ指番号で押した合図が2回続く／
+   指が画面の外へ出る／通知などで一瞬アプリが後ろに回る、など。
+   指の一覧を正にすれば、取りこぼしても次に指が動いた時点で必ず直る。
+
+   持ち替えの決まり
+     十字キー … 指をずらしたら持ち替える（◀ を押したまま ▶ へずらせば右になる）
+     ABXY    … 前のボタンを離さずに足す（実機と同じで親指がYとBにまたがれる）
+     すき間  … 直前のボタンを保つ（Yを溜めている最中に少しズレても暴発しない） */
+var padSync=null, padClear=null, padMeasure=null;
 (function pad(){
   var btns=Array.prototype.slice.call(document.querySelectorAll("#pad .btn"));
-  var own={};      /* 指の番号 → いま押しているボタン */
-  var held={};     /* キー名 → いま押している指の本数 */
+  btns.forEach(function(b,i){ b.__i=i; });
 
-  function press(b){
-    if(!b || b.__on) return;
-    b.__on=true;
-    var k=b.getAttribute("data-k");
-    held[k]=(held[k]||0)+1;
-    if(k==="wnext"){ cycleWeapon(1); }     /* 武器チェンジは押した瞬間に1回だけ */
-    else pressKey(k);
-    b.classList.add("pressed");
-  }
-  function release(b){
-    if(!b || !b.__on) return;
-    b.__on=false;
-    var k=b.getAttribute("data-k");
-    held[k]=Math.max(0,(held[k]||1)-1);
-    if(held[k]===0) releaseKey(k);
-    b.classList.remove("pressed");
-  }
-  function hit(x,y){
+  var rects=[];            /* ボタンの位置。押した見た目のズレを拾わないよう控えておく */
+  var grip={};             /* 指の番号 → {cur:いま乗っているボタン, held:[押しているボタン]} */
+  var on={};               /* いまキーを押した状態にしてあるボタン */
+  var count={};            /* キー名 → そのキーを押しているボタンの数（▲とBは両方ジャンプ） */
+
+  function measure(){
     for(var i=0;i<btns.length;i++){
       var r=btns[i].getBoundingClientRect();
-      if(r.width<=0||r.height<=0) continue;            /* 非表示のときは無視 */
-      if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) return btns[i];
+      rects[i]=(r.width>0&&r.height>0)?{l:r.left,t:r.top,r:r.right,b:r.bottom}:null;
+    }
+  }
+  function hit(x,y){
+    for(var i=0;i<rects.length;i++){
+      var r=rects[i];
+      if(r && x>=r.l && x<=r.r && y>=r.t && y<=r.b) return btns[i];
     }
     return null;
   }
+  function isDpad(b){ return b.parentNode && (b.parentNode.className+"").indexOf("dpad")>=0; }
 
-  window.addEventListener("pointerdown",function(e){
-    var b=hit(e.clientX,e.clientY);
-    if(!b) return;
-    if(e.preventDefault) e.preventDefault();
-    audioInit();
-    own[e.pointerId]={cur:b,held:[b]}; press(b);
-  },{passive:false});
-
-  /* 指がボタンをまたいだとき。
-     十字キーは持ち替える（◀→▶ で向きが変わる）。
-     右のABXYは前のボタンを離さずに足す＝実機と同じで、親指がYとBに
-     またがれる。指を上げたときにまとめて離す。 */
-  function isDpad(b){ return b.parentNode && b.parentNode.className.indexOf("dpad")>=0; }
-
-  window.addEventListener("pointermove",function(e){
-    var st=own[e.pointerId];
-    if(!st) return;
-    var b=hit(e.clientX,e.clientY);
-    if(!b || b===st.cur) return;                       /* すき間では持ち替えない */
-    if(isDpad(st.cur)){
-      release(st.cur);
-      st.held.splice(st.held.indexOf(st.cur),1);
-    }
-    st.cur=b;
-    if(st.held.indexOf(b)<0) st.held.push(b);
-    press(b);
-  },{passive:false});
-
-  function up(e){
-    var st=own[e.pointerId];
-    if(!st) return;
-    delete own[e.pointerId];
-    for(var i=0;i<st.held.length;i++) release(st.held[i]);
+  function keyCount(k,d){
+    var was=count[k]||0, now=Math.max(0,was+d);
+    count[k]=now;
+    if(was===0&&now>0) pressKey(k);
+    else if(was>0&&now===0) releaseKey(k);
   }
-  window.addEventListener("pointerup",up);
-  window.addEventListener("pointercancel",up);
-  /* 指が画面の外へ出たまま離されたとき用の保険 */
-  window.addEventListener("blur",function(){
-    for(var id in own) delete own[id];
-    btns.forEach(release);
-  });
+
+  /* いま押されているべきボタンを grip から作り直し、ズレていたら直す */
+  function sync(){
+    var want={}, id, i, st;
+    for(id in grip){
+      st=grip[id];
+      for(i=0;i<st.held.length;i++) want[st.held[i].__i]=true;
+    }
+    for(i=0;i<btns.length;i++){
+      var yes=!!want[i], was=!!on[i];
+      if(yes===was) continue;
+      on[i]=yes;
+      var b=btns[i], k=b.getAttribute("data-k");
+      if(yes){
+        b.classList.add("pressed");
+        if(k==="wnext") cycleWeapon(1);        /* 武器チェンジは押した瞬間に1回だけ */
+        else keyCount(k,1);
+      } else {
+        b.classList.remove("pressed");
+        if(k!=="wnext") keyCount(k,-1);
+      }
+    }
+  }
+  padSync=sync; padMeasure=measure;
+  padClear=function(){ grip={}; sync(); };
+
+  /* --- 触っている指の一覧から組み直す（これが正） --- */
+  function rebuild(list){
+    var live={}, i, id;
+    for(i=0;i<list.length;i++){
+      var t=list[i];
+      id=t.identifier;
+      var st=grip[id];
+      if(!st) continue;                        /* パッドの外で始まった指は相手にしない */
+      live[id]=1;
+      var b=hit(t.clientX,t.clientY);
+      if(!b || b===st.cur) continue;           /* すき間では持ち替えない */
+      if(isDpad(st.cur)){
+        var k=st.held.indexOf(st.cur);
+        if(k>=0) st.held.splice(k,1);
+      }
+      st.cur=b;
+      if(st.held.indexOf(b)<0) st.held.push(b);
+    }
+    /* 画面から消えた指は捨てる。ここが要で、離した合図を取りこぼしても直る */
+    for(id in grip) if(!live[id]) delete grip[id];
+    sync();
+  }
+
+  if("ontouchstart" in window){
+    document.addEventListener("touchstart",function(e){
+      if(!gripCount()) measure();              /* 何も押していないうちに位置を測り直す */
+      var got=false;
+      for(var i=0;i<e.changedTouches.length;i++){
+        var t=e.changedTouches[i], b=hit(t.clientX,t.clientY);
+        if(b){ grip[t.identifier]={cur:b,held:[b]}; got=true; }
+      }
+      if(got){
+        if(e.cancelable) e.preventDefault();   /* パッドの上だけ。メニューのボタンは邪魔しない */
+        audioInit();
+      }
+      rebuild(e.touches);
+    },{passive:false});
+
+    document.addEventListener("touchmove",function(e){
+      if(gripCount() && e.cancelable) e.preventDefault();
+      rebuild(e.touches);
+    },{passive:false});
+
+    document.addEventListener("touchend",function(e){ rebuild(e.touches); },{passive:true});
+    document.addEventListener("touchcancel",function(e){ rebuild(e.touches); },{passive:true});
+  } else {
+    /* マウス・ペン用。指の一覧が無いので、同じ番号で押し直されたら前のぶんを捨てる */
+    window.addEventListener("pointerdown",function(e){
+      if(!gripCount()) measure();
+      var b=hit(e.clientX,e.clientY);
+      if(!b) return;
+      if(e.preventDefault) e.preventDefault();
+      audioInit();
+      grip[e.pointerId]={cur:b,held:[b]};
+      sync();
+    },{passive:false});
+    window.addEventListener("pointermove",function(e){
+      var st=grip[e.pointerId];
+      if(!st) return;
+      var b=hit(e.clientX,e.clientY);
+      if(!b || b===st.cur) return;
+      if(isDpad(st.cur)){
+        var k=st.held.indexOf(st.cur);
+        if(k>=0) st.held.splice(k,1);
+      }
+      st.cur=b;
+      if(st.held.indexOf(b)<0) st.held.push(b);
+      sync();
+    },{passive:false});
+    function letGo(e){ if(grip[e.pointerId]){ delete grip[e.pointerId]; sync(); } }
+    window.addEventListener("pointerup",letGo);
+    window.addEventListener("pointercancel",letGo);
+    window.addEventListener("pointerout",function(e){
+      if(e.relatedTarget===null) letGo(e);    /* 画面の外へ出た */
+    });
+  }
+
+  function gripCount(){ var n=0; for(var id in grip) n++; return n; }
+
+  /* 画面の大きさが変わったら位置を測り直す */
+  window.addEventListener("resize",measure);
+  window.addEventListener("orientationchange",function(){ setTimeout(measure,120); });
   btns.forEach(function(b){
     b.addEventListener("contextmenu",function(e){e.preventDefault();});
   });
+  measure();
 })();
+
+/* 画面から離れたとき・裏に回ったときは、押しっぱなしを全部解除する。
+   スマホでは blur が来ないことがあるので visibilitychange も見る。 */
+function releaseAllKeys(){
+  for(var k in keys) keys[k]=false;
+  taps.jump=false; taps.slide=false;
+  lastJump=false; lastSlide=false; lastFire=false;
+  if(padClear) padClear();
+}
+window.addEventListener("blur",releaseAllKeys);
+document.addEventListener("visibilitychange",function(){
+  if(document.hidden) releaseAllKeys();
+});
 
 /* 連打しても画面が拡大しないようにする（iOSはuser-scalable=noを無視するため） */
 (function noZoom(){
@@ -4277,7 +4365,7 @@ var fitPending=false;
 function scheduleFit(){
   if(fitPending) return;
   fitPending=true;
-  requestAnimationFrame(function(){ fitPending=false; fitFrame(); });
+  requestAnimationFrame(function(){ fitPending=false; fitFrame(); if(padMeasure) padMeasure(); });
 }
 window.addEventListener("resize",scheduleFit);
 window.addEventListener("orientationchange",scheduleFit);

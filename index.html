@@ -1117,6 +1117,8 @@ var T_END=mkBand({bpm:126, gtr:"chug", drum:"rock", vv:0.31, gv:0.14,
 var curTrack=null, curName="", mStep=0, mNext=0, mTimer=null;
 
 function wantTrack(){
+  if(state==="demo")   return "clear";   /* 武器を手に入れたファンファーレ */
+  if(state==="intro")  return "boss";    /* ボス登場は戦いの曲で盛り上げる */
   if(state==="clear")  return "clear";
   if(state==="over")   return "over";
   if(state==="ending") return "end";
@@ -4087,6 +4089,214 @@ function mixc(a,b,k){
   return "rgb("+r+","+g2+","+bl+")";
 }
 
+/* ===== 47_intro.js ===== */
+/* ============================ ボス登場と武器のお披露目 ============================
+   ・ステージを選んで始めると、まずボスの登場シーンが入る（ロックマン2の見せ方）
+   ・ボスを倒して特殊武器を手に入れたら、その武器を実際に使ってみせる短い実演が入る
+   どちらもボタンか画面タップで飛ばせる。 */
+
+var introT=0, INTRO_LEN=214;
+var demoT=0, demoW=0, DEMO_LEN=340;
+
+/* ---------------------------------------------------------------- ボス登場 */
+function startBossIntro(){
+  state="intro"; introT=0; hideScreens();
+}
+function skipIntro(){
+  if(state==="intro" && introT<INTRO_LEN-26) introT=INTRO_LEN-26;
+}
+function updateIntro(){
+  introT++;
+  if(introT===46){ shake=16; SFX.gate(); }
+  if(introT===58) SFX.bossHit();
+  if(shake>0) shake--;
+  if(flash>0) flash--;
+  frame++;
+  updateParts();
+  if(introT>=INTRO_LEN){ beginStage(); }
+}
+
+/* 落ちてくる高さ。46フレーム目で着地する */
+function introDropY(t){
+  if(t>=46) return 0;
+  var k=Math.max(0,(46-t)/26);
+  return -k*k*300;
+}
+
+function drawIntro(){
+  var S=BOSSES[LV.boss];
+  var sx=(shake>0)?((Math.random()*2-1)*3|0):0;
+  var sy=(shake>0)?((Math.random()*2-1)*3|0):0;
+
+  /* 背景：そのステージの空の色 */
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,PAL.sky1); g.addColorStop(1,PAL.sky2);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  ctx.save();
+  ctx.translate(sx,sy);
+
+  /* 舞台の床と、後ろから当たる光 */
+  var FLOOR=210;
+  var lit=Math.min(1,Math.max(0,(introT-46)/26));
+  ctx.globalAlpha=0.20+lit*0.28;
+  ctx.fillStyle=PAL.accent;
+  ctx.beginPath();
+  ctx.moveTo(W/2-22,30); ctx.lineTo(W/2+22,30);
+  ctx.lineTo(W/2+118,FLOOR); ctx.lineTo(W/2-118,FLOOR);
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha=1;
+  px(0,FLOOR,W,4,PAL.tile);
+  px(0,FLOOR+4,W,10,PAL.tileLo);
+
+  /* ボス本体。46フレーム目まで上から落ちてくる */
+  var S2=BOSSES[LV.boss];
+  var totalH=S2.h+(S2.top||0);
+  var sc=Math.min(3.2, 152/totalH, 330/S2.w);
+  var drop=introDropY(introT);
+  var squash=(introT>=46&&introT<58)?(1-(introT-46)/12)*0.20:0;
+
+  ctx.save();
+  ctx.translate(W/2, FLOOR+drop);
+  ctx.scale(sc*(1+squash), sc*(1-squash));
+  ctx.translate(-S2.w/2, -S2.h);
+  S2.draw({x:0,y:0,w:S2.w,h:S2.h,face:-1,mouth:(introT>110?9:0),hurt:0,
+          t:introT*2,phase:1,hp:S2.hp,maxhp:S2.hp,state:"ceil",
+          wing:1,aura:1,squash:0,step:2,wheel:introT*0.1},0,0,false);
+  ctx.restore();
+
+  /* 着地の土けむり */
+  if(introT===47){
+    for(var k=0;k<18;k++){
+      var a=Math.PI+Math.random()*Math.PI;
+      parts.push({x:W/2+(Math.random()*2-1)*44,y:208,
+        vx:Math.cos(a)*(1+Math.random()*3),vy:-Math.random()*2.4,
+        life:22+Math.random()*18,col:PAL.tileHi,sz:1+(Math.random()*2|0)});
+    }
+  }
+  drawParts();
+
+  /* 暗幕。着地するまでは影絵に見せる */
+  var dark=(introT<46)?0.8:Math.max(0,0.8-(introT-46)/16*0.8);
+  if(dark>0){ ctx.globalAlpha=dark; ctx.fillStyle="#000000"; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
+
+  /* 上下の帯（幕）。開いて閉じる */
+  var band=(introT<16)?(1-introT/16):((introT>INTRO_LEN-18)?(introT-(INTRO_LEN-18))/18:0);
+  if(band>0){
+    var bh2=Math.round(H/2*band);
+    px(0,0,W,bh2,"#000000"); px(0,H-bh2,W,bh2,"#000000");
+  }
+  ctx.restore();
+
+  /* 着地の閃光 */
+  if(introT>=46&&introT<54){
+    ctx.globalAlpha=(54-introT)/8*0.85;
+    ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha=1;
+  }
+
+  /* 名前の帯。下から立ち上がる */
+  if(introT>54){
+    var q=Math.min(1,(introT-54)/16);
+    var oy=(1-q)*(1-q)*62;
+    ctx.save();
+    ctx.translate(0,oy);
+    px(0,224,W,48,"rgba(4,18,30,.88)");
+    px(0,224,W,3,PAL.accent);
+    etext(BOSSES[LV.boss].name, W/2, 250, 24, "#ffffff", 1, "center");
+    etext(BOSSES[LV.boss].title, W/2, 266, 12, PAL.accent, 1, "center");
+    ctx.restore();
+  }
+
+  /* ステージ名。左から差し込む */
+  if(introT>82){
+    var q2=Math.min(1,(introT-82)/16);
+    var ox2=-(1-q2)*(1-q2)*240;
+    ctx.save();
+    ctx.translate(ox2,0);
+    px(0,26,214,38,"rgba(4,18,30,.78)");
+    px(0,26,3,38,PAL.accent);
+    etext("STAGE "+(stageIdx===8?"FINAL":("0"+(stageIdx+1))), 12, 42, 10, PAL.accent, 1, "left");
+    etext(LV.name, 12, 58, 15, "#ffffff", 1, "left");
+    ctx.restore();
+  }
+
+  if(introT>150 && Math.floor(introT/16)%2===0)
+    etext("押すとスキップ", W-8, 20, 10, "#9fc4cb", 0.8, "right");
+}
+
+/* ---------------------------------------------------------------- 武器のお披露目 */
+function startWeaponDemo(wid){
+  demoW=wid; demoT=0;
+  reset();                       /* 平らな出だしの区画に主人公を戻す */
+  ready=0; gateOn=false; boss=null;
+  spawns=[]; pickups=[]; enemies=[]; pbullets=[]; ebullets=[]; parts=[];
+  /* 実演用の的。地上・空中・遠くにひとつずつ置く */
+  /* どのステージでも出だしは平らな区画なので、そこに収まる位置に置く */
+  var set=[["w",190,224],["w",246,224],["f",274,148],["w",300,224]];
+  for(var i=0;i<set.length;i++){
+    var e=makeEnemy({x:set[i][1],y:set[i][2],type:set[i][0]});
+    e.sp=null; e.x=set[i][1]; e.y=set[i][2]; e.y0=set[i][2];
+    enemies.push(e);
+  }
+  curWeapon=wid;
+  state="demo"; hideScreens();
+}
+function skipDemo(){
+  if(state==="demo" && demoT<DEMO_LEN-20) demoT=DEMO_LEN-20;
+}
+function updateDemo(){
+  demoT++;
+  var p=player;
+  p.hp=p.maxhp; p.inv=Math.max(p.inv,4);      /* 実演なのでやられない */
+  wEnergy[demoW]=28;                          /* 弾切れで持ちかえない */
+  if(curWeapon!==demoW) curWeapon=demoW;
+
+  /* 台本どおりに動かす。実際のゲームと同じ処理を通しているので本物の映像になる */
+  var t=demoT;
+  keys.left=false; keys.down=false; keys.slide=false;
+  keys.right = (t>36&&t<86) || (t>210&&t<246);
+  keys.jump  = (t===150) || (t===268);
+  keys.fire  = (t>92 && t<204 && (t%14)<8) || (t>250 && (t%14)<8);
+  update();
+  if(demoT>=DEMO_LEN){ endWeaponDemo(); }
+}
+function drawDemo(){
+  draw();
+  var Wp=WEAPONS[demoW];
+  /* 説明は上にまとめる。下は主人公と的が動いているので空けておく */
+  var x0=54, x1=W-8, cx=(x0+x1)/2;
+  var q=Math.min(1,demoT/16);
+  var oy=(1-q)*(1-q)*-40;
+  ctx.save();
+  ctx.translate(0,oy);
+  ctx.globalAlpha=q;
+  px(x0,14,x1-x0,80,"rgba(4,18,30,.86)");
+  px(x0,14,x1-x0,3,Wp.col);
+  px(x0,91,x1-x0,3,Wp.col);
+  etext("★ とくしゅ武器を手に入れた", cx, 34, 12, "#ffffff", q, "center");
+  etext(Wp.name, cx, 58, 21, Wp.col, q, "center");
+  if(demoT>34){
+    var q2=Math.min(1,(demoT-34)/16);
+    etext(Wp.hint||"", cx, 76, 12, "#eaf7f6", q*q2, "center");
+    etext("持ちかえは Xボタン（パソコンは 1〜9 キー）", cx, 88, 9, "#9fc4cb", q*q2*0.9, "center");
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
+  if(demoT>110 && Math.floor(demoT/16)%2===0)
+    etext("押すとスキップ", W-8, 108, 10, "#9fc4cb", 0.8, "right");
+}
+function endWeaponDemo(){
+  state="clear";
+  showScreen("s-clear");
+  var S=BOSSES[LEVELS[stageIdx].boss], got=WEAPONS[stageIdx+1];
+  document.getElementById("clear-msg").textContent=
+    S.name+"撃破。残りHP "+player.hp+" ／ SCORE "+score+"。\n"+
+    "★ 特殊武器「"+got.name+"」を手に入れた！ "+got.hint+"。"+
+    (finalOpen()?" 8体すべて倒した。まん中の扉がひらいた。":"");
+  updateWeaponBar();
+}
+
 /* ===== 50_main.js ===== */
 /* ============================ 入力 ============================ */
 var keys={left:false,right:false,jump:false,fire:false,down:false,slide:false};
@@ -4095,7 +4305,16 @@ var lastJump=false, lastSlide=false, lastFire=false;
    画面ボタンのタップは押して離すまでが数msのことがあり、
    毎フレーム keys を見るだけだと押した事実ごと消えてしまう。 */
 var taps={jump:false,slide:false};
-function pressKey(k){ keys[k]=true; if(k in taps) taps[k]=true; }
+function pressKey(k){
+  keys[k]=true;
+  if(k in taps) taps[k]=true;
+  skipCutscene();            /* 登場シーン・実演はどのボタンでも飛ばせる */
+}
+function skipCutscene(){
+  if(state==="intro") skipIntro();
+  else if(state==="demo") skipDemo();
+  else if(state==="ending") skipEnding();
+}
 function releaseKey(k){ keys[k]=false; }
 var KEYMAP={ArrowLeft:"left",ArrowRight:"right",KeyA:"left",KeyD:"right",
   ArrowUp:"jump",KeyX:"jump",KeyK:"jump",
@@ -4108,7 +4327,7 @@ window.addEventListener("keydown",function(e){
   if(e.repeat) return;
   audioInit();
   var k=KEYMAP[e.code]; if(k) pressKey(k);
-  if(state==="ending"){ skipEnding(); }
+  skipCutscene();
   if(e.code.indexOf("Digit")===0){
     var dn=parseInt(e.code.slice(5),10);
     if(dn>=1&&dn<=9) setWeapon(dn-1);
@@ -4119,7 +4338,7 @@ window.addEventListener("keydown",function(e){
   if(e.code==="KeyM") setMuted(!muted);
   if(e.code==="Enter"||e.code==="NumpadEnter"){
     if(state==="title") gotoSelect();
-    else if(state==="over"||state==="clear") startGame();
+    else if(state==="over"||state==="clear") startGame(false);
   }
   if(e.code==="Escape" && (state==="play"||state==="pause")) gotoSelect();
 });
@@ -4488,11 +4707,19 @@ function openStage(i){
   document.getElementById("stg-sub").textContent="ボス： "+S.name+"（"+S.title+"）";
   state="stage"; showScreen("s-stage");
 }
-function startGame(){
+/* withIntro を付けたときだけボスの登場シーンを見せる。
+   やり直し（Retry・もう一度）では毎回は出さない。 */
+function startGame(withIntro){
   audioInit();
   loadStage(pendingStage);
   reset();
   setTag(LEVELS[pendingStage].name);
+  if(withIntro===true) startBossIntro();
+  else beginStage();
+}
+/* 登場シーンが終わったら、実際にステージを始める */
+function beginStage(){
+  reset();
   state="play"; hideScreens();
 }
 function togglePause(){
@@ -4509,31 +4736,28 @@ function onBossDown(){
   if(stageIdx===8){
     startEnding();
   } else {
-    state="clear"; showScreen("s-clear");
-    var got=WEAPONS[stageIdx+1];
-    document.getElementById("clear-msg").textContent=
-      S.name+"撃破。残りHP "+player.hp+" ／ SCORE "+score+"。\n"+
-      "★ 特殊武器「"+got.name+"」を手に入れた！ "+got.hint+"。"+
-      (finalOpen()?" 8体すべて倒した。まん中の扉がひらいた。":"");
+    /* 新しい武器を実際に使ってみせてから、クリア画面へ */
     updateWeaponBar();
+    startWeaponDemo(stageIdx+1);
   }
 }
 
 /* ============================ ボタン ============================ */
 document.getElementById("btn-start").addEventListener("click",gotoSelect);
-document.getElementById("btn-go").addEventListener("click",startGame);
+document.getElementById("btn-go").addEventListener("click",function(){ startGame(true); });
 document.getElementById("btn-back").addEventListener("click",gotoSelect);
 document.getElementById("btn-back2").addEventListener("click",gotoSelect);
-document.getElementById("btn-retry").addEventListener("click",startGame);
-document.getElementById("btn-again").addEventListener("click",startGame);
+document.getElementById("btn-retry").addEventListener("click",function(){ startGame(false); });
+document.getElementById("btn-again").addEventListener("click",function(){ startGame(false); });
 document.getElementById("btn-next").addEventListener("click",gotoSelect);
 document.getElementById("btn-end").addEventListener("click",gotoSelect);
 document.getElementById("btn-resume").addEventListener("click",togglePause);
 document.getElementById("btn-snd").addEventListener("click",function(){ audioInit(); setMuted(!muted); });
-cv.addEventListener("pointerdown",function(){ audioInit(); if(state==="ending") skipEnding(); });
+cv.addEventListener("pointerdown",function(){ audioInit(); skipCutscene(); });
 document.addEventListener("visibilitychange",function(){
   if(document.hidden && state==="play") togglePause();
 });
+/* 起動直後に1面を読み込むが、そのときは登場シーンを出さない */
 
 /* ============================ 起動 ============================ */
 try{ muted=(localStorage.getItem("dentalman_mute")==="1"); }catch(e){}
@@ -4563,10 +4787,15 @@ function loop(now){
   while(acc>=16.6667){
     if(state==="play") update();
     else if(state==="ending") updateEnding();
+    else if(state==="intro") updateIntro();
+    else if(state==="demo") updateDemo();
     taps.jump=false; taps.slide=false;
     acc-=16.6667;
   }
-  if(state==="ending") drawEnding(); else draw();
+  if(state==="ending") drawEnding();
+  else if(state==="intro") drawIntro();
+  else if(state==="demo") drawDemo();
+  else draw();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);

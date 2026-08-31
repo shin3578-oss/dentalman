@@ -422,7 +422,7 @@
       <button class="go" id="btn-start">Start</button>
       <p class="keys">
         <kbd>←</kbd><kbd>→</kbd> 移動 ／ <kbd>X</kbd> または <kbd>↑</kbd> ジャンプ ／ <kbd>Space</kbd> ショット<br>
-        溜め撃ちは<b>4段階</b>（長く押すほど強い） ／ <kbd>C</kbd> または <kbd>↓</kbd>+ジャンプ でスライディング<br>
+        溜め撃ちは<b>4段階</b>（長く押すほど強い）。<b>手を離しても溜めたまま</b>なので、もう一度押したときに出る ／ <kbd>C</kbd> または <kbd>↓</kbd>+ジャンプ でスライディング<br>
         ボスを倒すとその技を使える。画面下の武器欄をタップ（PCは <kbd>1</kbd>〜<kbd>9</kbd> か <kbd>Q</kbd><kbd>E</kbd>）で持ちかえ<br>
         <kbd>P</kbd> ポーズ ／ <kbd>M</kbd> 音のオン・オフ ／ スマホは下のボタンで操作<br>
         音が出ないときは右上の 🔊 を押してください
@@ -488,7 +488,7 @@
     </div>
   </div>
 
-  <p id="tip">ボタンはスーパーファミコンと同じ並びです。Y＝ショット（長押しで溜め）／B＝ジャンプ／A＝スライディング／X＝武器チェンジ。<br>
+  <p id="tip">ボタンはスーパーファミコンと同じ並びです。Y＝ショット（長押しで溜め。離しても溜まったままで、次に押したときに発射）／B＝ジャンプ／A＝スライディング／X＝武器チェンジ。<br>
   スマホは横向きにすると画面が大きくなります。音が出るので外では音量にご注意ください。<br>
   進み具合はこの端末に保存されます（次に開いたときは倒したボスがCLEARのまま）。</p>
 </div>
@@ -773,8 +773,9 @@ function audioInit(){
   if(!AC){
     AC=new K();
     master=AC.createGain(); master.gain.value=muted?0:0.55; master.connect(AC.destination);
-    musicGain=AC.createGain(); musicGain.gain.value=0.9; musicGain.connect(master);
+    musicGain=AC.createGain(); musicGain.gain.value=0.80; musicGain.connect(master);
     sfxGain=AC.createGain(); sfxGain.gain.value=1.0; sfxGain.connect(master);
+    buildBand();
     musicStart();
   }
   if(AC.state==="suspended") AC.resume();
@@ -852,157 +853,249 @@ var SFX={
 };
 
 /* ============================ 音楽 ============================
-   全部その場で合成（音源ファイルなし）。step は8分音符。null は休符。
-   曲は state と現在のステージから自動で決まる。 */
+   全部その場で合成（音源ファイルなし）。
+   バンド4人ぶんを別々に鳴らす：
+     ボーカル … メロディ（今までの主旋律をそのまま歌わせている）
+     ギター  … パワーコードの刻み（左）＋弾きまくる方（右）
+     ベース  … 8分で走る
+     ドラム  … キック／スネア／ハイハット／タム／シンバル
+   step は8分音符。null は前の音を伸ばす（歌わせるため）。 */
 function ntof(s){ return 220*Math.pow(2,s/12); }
 
-function mkTrack(o){
-  var t={
-    bpm:o.bpm, len:32, once:!!o.once,
-    lead:o.lead, bass:o.bass,
-    lw:o.lw||"square", bw:o.bw||"triangle",
-    lv:(o.lv===undefined?0.1:o.lv), bv:(o.bv===undefined?0.17:o.bv),
-    ln:(o.ln===undefined?0.92:o.ln),
-    drum:o.drum||"basic",
-    fn:function(i,t2,spb){
-      var l=this.lead[i];
-      if(l!==null&&l!==undefined) voice(ntof(l+12),spb*this.ln,this.lw,this.lv,0,t2,musicGain);
-      if(this.bass){
-        if(this.bass.length>=32) voice(ntof(this.bass[i]-12),spb*0.8,this.bw,this.bv,0,t2,musicGain);
-        else if(i%2===0) voice(ntof(this.bass[i/2]-12),spb*1.7,this.bw,this.bv,0,t2,musicGain);
-      }
-      var d=this.drum;
-      if(d==="basic"){
-        if(i%8===0||i%8===6) kick(t2);
-        if(i%8===4) snare(t2);
-        hat(t2, i%2===0?0.05:0.028);
-      } else if(d==="drive"){
-        if(i%4===0) kick(t2);
-        if(i%8===4) snare(t2,0.26);
-        hat(t2, i%2===0?0.055:0.03);
-      } else if(d==="heavy"){
-        if(i%8===0||i%8===3||i%8===6) kick(t2,0.5);
-        if(i%8===4) snare(t2,0.28);
-        if(i%2===0) hat(t2,0.045);
-      } else if(d==="soft"){
-        if(i%8===0) kick(t2,0.3);
-        if(i%4===0) hat(t2,0.03);
-      }
+/* 主旋律の配列（null＝伸ばす）を「どこで何拍のばすか」に直す */
+function buildVox(arr,len){
+  var out=new Array(len), i, k;
+  for(i=0;i<len;i++) out[i]=null;
+  for(i=0;i<len;i++){
+    if(arr[i]===null||arr[i]===undefined) continue;
+    k=1;
+    while(i+k<len && (arr[i+k]===null||arr[i+k]===undefined) && k<6) k++;
+    out[i]={sem:arr[i],hold:k};
+  }
+  return out;
+}
+
+function rootAt(tr,i){
+  var bar=Math.floor(i/8), r=tr.roots;
+  return (r.length>=32) ? r[(bar*8)%r.length] : r[(bar*4)%r.length];
+}
+function bassAt(tr,i){
+  var r=tr.roots;
+  return (r.length>=32) ? r[i%r.length] : r[Math.floor(i/2)%r.length];
+}
+
+function bandStep(i,t,spb){
+  if(!AC||muted) return;
+  buildBand();
+  var beat=i%8, root=rootAt(this,i), half=spb*0.5;
+
+  /* ---------------- リズムギター ---------------- */
+  var gv=this.gv, gs=this.gtr;
+  if(gs==="chug"){
+    if(beat===0) chord5(root,t,spb*1.9,gv*1.15,false);
+    else chord5(root,t,spb*0.85,gv,true);
+  } else if(gs==="drive"){
+    if(beat===0) chord5(root,t,spb*1.5,gv*1.15,false);
+    else chord5(root,t,half*0.85,gv,true);
+    chord5(root,t+half,half*0.85,gv*0.9,true);
+  } else if(gs==="gallop"){
+    if(i%2===0){
+      if(beat===0) chord5(root,t,spb*1.4,gv*1.15,false);
+      else chord5(root,t,spb*0.8,gv,true);
+    } else {
+      chord5(root,t,half*0.8,gv*0.95,true);
+      chord5(root,t+half,half*0.8,gv*0.95,true);
     }
+  } else if(gs==="power"){
+    if(beat===0||beat===3||beat===6) chord5(root,t,spb*2.6,gv*1.2,false);
+  } else if(gs==="arp"){
+    var arp=[0,7,12,7][i%4];
+    gNote(root+arp,t,spb*1.6,gv*0.8,false);
+  }
+
+  /* ---------------- ベース ---------------- */
+  bNote(bassAt(this,i),t,spb*0.92,this.bv);
+
+  /* ---------------- ドラム ---------------- */
+  var d=this.drum, last=(i>=this.len-4);
+  if(i===0) dCrash(t,0.30);
+  if(last && this.fill!==false){
+    /* 4小節の終わりはタムで回す */
+    var f=[190,160,132,110][i-(this.len-4)];
+    dTom(t,f,0.46); dTom(t+half,f*0.94,0.34);
+    if(i===this.len-1) dCrash(t+half,0.22);
+    return;
+  }
+  if(d==="rock"){
+    if(beat===0||beat===4||beat===5) dKick(t,0.75);
+    if(beat===2||beat===6) dSnare(t,0.5);
+    dHat(t, beat%2===0?0.11:0.06, beat===7);
+  } else if(d==="double"){
+    dKick(t,0.55); dKick(t+half,0.42);
+    if(beat===2||beat===6) dSnare(t,0.55);
+    dHat(t, beat%2===0?0.10:0.055);
+    if(beat===0) dCrash(t,0.16);
+  } else if(d==="gallop"){
+    if(i%2===0) dKick(t,0.72);
+    else { dKick(t,0.5); dKick(t+half,0.5); }
+    if(beat===2||beat===6) dSnare(t,0.52);
+    dRide(t,0.085);
+  } else if(d==="halftime"){
+    if(beat===0||beat===3) dKick(t,0.8);
+    if(beat===4) dSnare(t,0.6);
+    dRide(t, beat%2===0?0.11:0.06);
+  } else if(d==="ballad"){
+    if(beat===0||beat===4) dKick(t,0.5);
+    if(beat===2||beat===6) dSnare(t,0.3);
+    dHat(t,0.06);
+  }
+
+  /* ---------------- ボーカル ---------------- */
+  var n=this.voxSeq[i];
+  if(n){
+    var from=(this.prevEnd===i)?this.prevSem:0;
+    vNote(n.sem+12,t,spb*n.hold*0.96,this.vv,from);
+    if(i>=this.len/2) vNote(n.sem,t,spb*n.hold*0.9,this.vv*0.38,0);   /* サビは1オクターブ下も重ねる */
+    this.prevSem=n.sem+12; this.prevEnd=i+n.hold;
+  }
+
+  /* ---------------- ギターのオブリガート ---------------- */
+  if(this.lead2){
+    var g2=this.lead2[i%this.lead2.length];
+    if(g2!==null&&g2!==undefined) gLead(g2+12,t,spb*0.9,this.g2v);
+  }
+}
+
+function mkBand(o){
+  var t={
+    bpm:o.bpm, len:o.len||32, once:false,
+    roots:o.bass, gtr:o.gtr||"chug", drum:o.drum||"rock",
+    lead2:o.lead2||null,
+    vv:(o.vv===undefined?0.26:o.vv),
+    gv:(o.gv===undefined?0.15:o.gv),
+    bv:(o.bv===undefined?0.30:o.bv),
+    g2v:(o.g2v===undefined?0.11:o.g2v),
+    fill:(o.fill===undefined?true:o.fill),
+    prevSem:0, prevEnd:-9,
+    fn:bandStep
   };
-  if(o.len) t.len=o.len;
+  t.voxSeq=buildVox(o.lead,t.len);
   return t;
 }
 
-/* --- タイトル --- */
-var T_TITLE=mkTrack({bpm:96, lw:"triangle", lv:0.085, ln:1.7, drum:"soft",
+/* --- タイトル：ゆっくり重く、歌が前に出る --- */
+var T_TITLE=mkBand({bpm:88, gtr:"power", drum:"halftime", vv:0.30, gv:0.13,
   lead:[0,null,3,null, 7,null,5,null, 3,null,0,null, -2,null,null,null,
         5,null,8,null, 12,null,10,null, 7,null,3,null, 0,null,null,null],
   bass:[0,0,7,0, -4,-4,3,-4, 3,3,10,3, -2,-2,5,-2]});
 
-/* --- ステージ9曲（1曲ずつ性格を変えてある） --- */
+/* --- ステージ9曲。メロディは各面の性格をそのまま残してある --- */
 var T_STAGE=[
-  /* 1 プラーク洞窟：明るい行進曲 */
-  mkTrack({bpm:138, drum:"basic",
+  /* 1 プラーク洞窟：まっすぐ走る8ビート */
+  mkBand({bpm:150, gtr:"chug", drum:"rock",
     lead:[0,3,7,5, 3,0,null,-5, 3,7,10,7, 5,3,null,0,
           5,8,12,10, 8,5,null,3, 7,10,14,12, 10,7,5,3],
     bass:[0,0,7,0, -4,-4,3,-4, 3,3,10,3, -2,-2,5,-2]}),
-  /* 2 歯石鉱山：重い足踏み */
-  mkTrack({bpm:118, drum:"heavy", lv:0.105, bv:0.19,
+  /* 2 歯石鉱山：重い。ハーフタイムで地面を踏み抜く */
+  mkBand({bpm:132, gtr:"power", drum:"halftime", gv:0.17,
     lead:[5,null,5,8, 10,null,8,5, 3,null,3,5, 7,null,5,3,
           5,null,5,8, 10,12,13,12, 10,8,7,5, 3,null,null,null],
     bass:[5,5,12,5, 1,1,8,1, 3,3,10,3, 0,0,7,0]}),
-  /* 3 酸の谷：不安げで速い */
-  mkTrack({bpm:146, drum:"drive", lv:0.095,
+  /* 3 酸の谷：16分の刻みで前へ前へ */
+  mkBand({bpm:158, gtr:"drive", drum:"double", gv:0.14,
     lead:[0,1,0,-2, 0,1,0,3, 5,6,5,3, 5,6,5,7,
           8,7,5,3, 5,3,1,0, -2,0,1,3, 5,3,1,0],
     bass:[0,0,0,-2, 0,0,0,3, 5,5,5,3, 0,0,-2,0]}),
-  /* 4 歯ぐきの沼：ゆっくり不気味 */
-  mkTrack({bpm:104, drum:"soft", lw:"triangle", lv:0.1, ln:1.6,
+  /* 4 歯ぐきの沼：バラード寄り。歌をたっぷり伸ばす */
+  mkBand({bpm:120, gtr:"arp", drum:"ballad", vv:0.30, gv:0.13,
     lead:[7,null,null,5, null,3,null,null, 2,null,null,3, null,5,null,null,
           7,null,null,10, null,8,null,7, 5,null,3,null, 2,null,null,null],
     bass:[-5,-5,2,-5, -3,-3,4,-3, -5,-5,2,-5, -7,-7,0,-7]}),
-  /* 5 砂糖の街：跳ねる長調 */
-  mkTrack({bpm:152, drum:"basic", lv:0.1,
+  /* 5 砂糖の街：跳ねる長調。明るい疾走 */
+  mkBand({bpm:162, gtr:"chug", drum:"rock",
     lead:[3,7,10,7, 12,10,7,10, 5,8,12,8, 15,12,8,12,
           3,7,10,7, 12,15,17,15, 14,12,10,8, 7,5,3,null],
     bass:[3,3,10,3, -4,-4,3,-4, 5,5,12,5, 0,0,7,0]}),
-  /* 6 酸竜のねぐら：低くうねる */
-  mkTrack({bpm:112, drum:"heavy", lw:"sawtooth", lv:0.085, bv:0.16, ln:1.5,
+  /* 6 酸竜のねぐら：ずるずる引きずる低音 */
+  mkBand({bpm:128, gtr:"gallop", drum:"gallop", gv:0.17, bv:0.33,
     lead:[0,null,-1,null, 0,null,3,null, 2,null,1,null, 0,null,null,null,
           -2,null,-3,null, -2,null,1,null, 0,null,-1,null, -2,null,null,null],
     bass:[0,0,0,0, 0,0,-1,0, 0,0,0,0, 0,0,-1,0,
           -5,-5,-5,-5, -5,-5,-6,-5, -5,-5,-5,-5, -5,-5,-6,-5]}),
-  /* 7 矯正ワイヤー工場：機械の刻み */
-  mkTrack({bpm:158, drum:"drive", lv:0.09, ln:0.6,
+  /* 7 矯正ワイヤー工場：機械の16分。ギターが表を全部埋める */
+  mkBand({bpm:168, gtr:"drive", drum:"double", gv:0.15,
     lead:[0,0,7,0, 3,3,10,3, 5,5,12,5, 3,3,10,3,
           0,0,7,0, -2,-2,5,-2, -4,-4,3,-4, -5,-5,2,-5],
     bass:[0,0,7,0, 3,3,10,3, 5,5,12,5, -2,-2,5,-2]}),
-  /* 8 夜の顎：荘厳な短調 */
-  mkTrack({bpm:128, drum:"heavy", lv:0.1,
+  /* 8 夜の顎：Am-G-F-E の下降。いちばんビジュアル系らしい進行 */
+  mkBand({bpm:144, gtr:"chug", drum:"rock", vv:0.29,
     lead:[0,3,7,12, 10,7,3,0, -2,1,5,10, 8,5,1,-2,
           0,3,7,12, 15,14,12,10, 8,7,5,3, 0,null,null,null],
-    bass:[0,0,7,0, -2,-2,5,-2, -4,-4,3,-4, -5,-5,2,-5]}),
-  /* 9 魔王の口腔：終末 */
-  mkTrack({bpm:168, drum:"drive", lw:"sawtooth", lv:0.09,
+    bass:[0,0,7,0, -2,-2,5,-2, -4,-4,3,-4, -5,-5,2,-5],
+    lead2:[null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,null,
+           null,null,null,null, 19,null,17,null, 15,null,14,null, 12,null,null,null]}),
+  /* 9 魔王の口腔：半音で這い上がる終末の疾走 */
+  mkBand({bpm:180, gtr:"drive", drum:"double", gv:0.16, vv:0.27,
     lead:[0,-1,-2,-1, 0,3,0,-1, -2,-3,-4,-3, -2,1,-2,-3,
           0,-1,-2,-1, 0,5,7,8, 7,5,3,1, 0,-1,-2,null],
     bass:[0,0,0,0, 0,0,-1,0, -5,-5,-5,-5, -5,-5,-6,-5,
           0,0,0,0, 0,0,-1,0, -7,-7,-7,-7, -7,-7,-8,-7]})
 ];
 
-/* --- ボス戦（1〜8共通）と、大魔王戦 --- */
-var T_BOSS=mkTrack({bpm:162, drum:"drive", lv:0.095, ln:0.85,
+/* --- ボス戦（1〜8共通） --- */
+var T_BOSS=mkBand({bpm:176, gtr:"gallop", drum:"gallop", gv:0.17, vv:0.27,
   lead:[0,-1,0,3, 0,-1,0,5, 0,-1,0,3, 7,6,5,3,
         -2,-3,-2,1, -2,-3,-2,3, -2,-3,-2,1, 5,3,1,0],
   bass:[0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,-1,0,
         -2,-2,-2,-2, -2,-2,-2,-2, -3,-3,-3,-3, -3,-3,-4,-3],
-  bw:"sawtooth", bv:0.13});
+  lead2:[null,null,null,null, 12,null,11,null, 12,null,15,null, null,null,null,null,
+         null,null,null,null, 10,null,9,null, 10,null,13,null, null,null,null,null]});
 
-var T_FINAL=mkTrack({bpm:176, drum:"drive", lw:"sawtooth", lv:0.1, ln:0.8,
+/* --- 大魔王戦：速く、ギターが上で泣く --- */
+var T_FINAL=mkBand({bpm:190, gtr:"drive", drum:"double", gv:0.17, vv:0.28,
   lead:[0,12,-1,11, 0,12,3,15, -2,10,-3,9, -2,10,1,13,
         0,12,-1,11, 0,12,7,19, 5,17,3,15, 1,13,0,null],
   bass:[0,0,-1,0, 0,0,-1,0, -5,-5,-6,-5, -5,-5,-6,-5,
         0,0,-1,0, 0,0,-1,0, -7,-7,-8,-7, -7,-7,-8,-7],
-  bw:"sawtooth", bv:0.14});
+  lead2:[24,23,22,21, 20,19,18,17, 16,15,14,13, 12,null,null,null,
+         null,null,null,null, null,null,null,null, 24,22,20,19, 17,15,13,12],
+  g2v:0.13});
 
 /* --- 短い曲（1回だけ鳴る） --- */
 var T_CLEAR={bpm:150, len:16, once:true,
   lead:[12,12,12,null, 10,null,12,null, 15,null,null,null, 19,null,null,null],
   fn:function(i,t,spb){
+    buildBand();
     var l=this.lead[i];
     if(l!==null){
-      voice(ntof(l+12),spb*1.8,"square",0.13,0,t,musicGain);
-      voice(ntof(l+7),spb*1.8,"triangle",0.09,0,t,musicGain);
-      voice(ntof(l-12),spb*1.8,"triangle",0.15,0,t,musicGain);
+      vNote(l+12,t,spb*1.8,0.28,0);
+      chord5(l-12,t,spb*1.8,0.17,false);
+      bNote(l-12,t,spb*1.7,0.30);
     }
-    if(i%4===0) kick(t);
+    if(i%4===0){ dKick(t,0.7); dCrash(t,0.2); }
+    if(i%4===2) dSnare(t,0.5);
   }};
 
 var T_OVER={bpm:92, len:12, once:true,
   lead:[0,null,-2,null, -4,null,-5,null, -7,null,null,null],
   fn:function(i,t,spb){
+    buildBand();
     var l=this.lead[i];
     if(l!==null){
-      voice(ntof(l+12),spb*1.7,"sawtooth",0.11,0,t,musicGain);
-      voice(ntof(l-12),spb*1.7,"triangle",0.13,0,t,musicGain);
+      vNote(l+12,t,spb*1.7,0.24,0);
+      chord5(l-12,t,spb*2.2,0.14,false);
+      bNote(l-12,t,spb*1.7,0.28);
+      if(i===0) dCrash(t,0.24);
     }
   }};
 
-var T_END={bpm:132, len:32, once:false,
+/* --- エンディング：ゆっくり熱い大サビ --- */
+var T_END=mkBand({bpm:126, gtr:"chug", drum:"rock", vv:0.31, gv:0.14,
   lead:[0,3,7,12, 15,12,7,3, 5,8,12,15, 17,15,12,8,
         7,10,14,19, 17,14,10,7, 12,null,null,null, null,null,null,null],
-  fn:function(i,t,spb){
-    var l=this.lead[i];
-    if(l!==null){
-      voice(ntof(l+12),spb*1.6,"square",0.12,0,t,musicGain);
-      voice(ntof(l+3),spb*1.6,"triangle",0.07,0,t,musicGain);
-      voice(ntof(l-12),spb*1.6,"triangle",0.14,0,t,musicGain);
-    }
-    if(i%4===0) kick(t);
-    if(i%8===4) snare(t,0.2);
-    hat(t,0.04);
-  }};
+  bass:[0,0,7,0, -4,-4,3,-4, 5,5,12,5, -2,-2,5,-2],
+  lead2:[null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,null,
+         null,null,null,null, null,null,null,null, 24,null,22,null, 19,null,null,null]});
 
 var curTrack=null, curName="", mStep=0, mNext=0, mTimer=null;
 
@@ -1048,6 +1141,208 @@ function musicTick(){
     mNext+=spb;
   }
 }
+
+/* ===== 22_band.js ===== */
+/* ============================ バンドの音づくり ============================
+   ギター（歪み）・ベース・ドラム・ボーカルを別々のパートとして鳴らす。
+   音源ファイルは使わず、その場で合成している。
+
+   ギターは「弦の音 → 歪み → アンプの箱」の順につなぐ。
+   歪みを1本の共通ラインにしてあるので、音を1つ鳴らすたびに
+   歪ませる装置を作り直さなくてよい（軽い・実機のアンプに近い鳴り方）。 */
+
+var gtrIn=null, gtrLead=null, bassIn=null, voxIn=null, drumIn=null;
+
+function distCurve(k){
+  var n=1024, c=new Float32Array(n);
+  for(var i=0;i<n;i++){
+    var x=i*2/n-1;
+    c[i]=(1+k)*x/(1+k*Math.abs(x));      /* やわらかく潰す＝真空管っぽい歪み */
+  }
+  return c;
+}
+
+function buildBand(){
+  if(gtrIn||!AC) return;
+
+  /* --- リズムギター：低音を削って歪ませ、上を丸める（アンプの箱の代わり） --- */
+  function ampLine(drive,lo,hi,vol,pan){
+    var inp=AC.createGain(); inp.gain.value=1;
+    var pre=AC.createBiquadFilter(); pre.type="highpass"; pre.frequency.value=lo;
+    var ws=AC.createWaveShaper(); ws.curve=distCurve(drive); ws.oversample="4x";
+    var cab=AC.createBiquadFilter(); cab.type="lowpass"; cab.frequency.value=hi; cab.Q.value=0.9;
+    var pres=AC.createBiquadFilter(); pres.type="peaking";
+    pres.frequency.value=2400; pres.gain.value=5; pres.Q.value=1.1;
+    var out=AC.createGain(); out.gain.value=vol;
+    inp.connect(pre); pre.connect(ws); ws.connect(cab); cab.connect(pres); pres.connect(out);
+    if(pan!==undefined && AC.createStereoPanner){
+      var p=AC.createStereoPanner(); p.pan.value=pan;
+      out.connect(p); p.connect(musicGain);
+    } else out.connect(musicGain);
+    return inp;
+  }
+  gtrIn  = ampLine(26, 120, 2900, 0.25, -0.28);   /* 刻みのギター（左） */
+  gtrLead= ampLine(34, 200, 4200, 0.26,  0.30);   /* 弾きまくる方（右） */
+
+  /* --- ベース：歪ませすぎず、芯だけ通す --- */
+  var bi=AC.createGain(); bi.gain.value=1;
+  var bws=AC.createWaveShaper(); bws.curve=distCurve(4); bws.oversample="2x";
+  var blp=AC.createBiquadFilter(); blp.type="lowpass"; blp.frequency.value=1100;
+  var bhp=AC.createBiquadFilter(); bhp.type="highpass"; bhp.frequency.value=45;
+  var bg=AC.createGain(); bg.gain.value=0.42;
+  bi.connect(bws); bws.connect(blp); blp.connect(bhp); bhp.connect(bg); bg.connect(musicGain);
+  bassIn=bi;
+
+  /* --- ボーカル：口の形（フォルマント）を2つの帯で作る --- */
+  var vi=AC.createGain(); vi.gain.value=1;
+  var f1=AC.createBiquadFilter(); f1.type="peaking"; f1.frequency.value=760;  f1.gain.value=11; f1.Q.value=4;
+  var f2=AC.createBiquadFilter(); f2.type="peaking"; f2.frequency.value=1320; f2.gain.value=9;  f2.Q.value=6;
+  var f3=AC.createBiquadFilter(); f3.type="peaking"; f3.frequency.value=2700; f3.gain.value=6;  f3.Q.value=5;
+  var vlp=AC.createBiquadFilter(); vlp.type="lowpass"; vlp.frequency.value=4200;
+  var vg=AC.createGain(); vg.gain.value=0.44;
+  vi.connect(f1); f1.connect(f2); f2.connect(f3); f3.connect(vlp); vlp.connect(vg);
+  vg.connect(musicGain);
+  /* 歌に短い残響を足す（板を1枚かませたくらい） */
+  var dly=AC.createDelay(0.5); dly.delayTime.value=0.16;
+  var fb=AC.createGain(); fb.gain.value=0.22;
+  var wet=AC.createGain(); wet.gain.value=0.20;
+  vg.connect(dly); dly.connect(fb); fb.connect(dly); dly.connect(wet); wet.connect(musicGain);
+  voxIn=vi;
+
+  var di=AC.createGain(); di.gain.value=1.0; di.connect(musicGain);
+  drumIn=di;
+}
+
+/* --- ギターの1音（palm=ブリッジミュートの「ズクッ」） --- */
+function gNote(sem,t,dur,vol,palm,bus){
+  if(!AC||muted) return;
+  var f=ntof(sem);
+  var o=AC.createOscillator(); o.type="sawtooth"; o.frequency.value=f;
+  /* 少しずらしたもう1本で厚みを出す。ただし刻み（palm）は数が多いので1本だけ。
+     古いスマホでも音が途切れないように、鳴らす波の本数を半分に抑える */
+  var o2=palm?null:AC.createOscillator();
+  if(o2){ o2.type="square"; o2.frequency.value=f*1.006; }
+  var g=AC.createGain();
+  var v=vol*(palm?1.05:1);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(v,t+0.004);
+  if(palm){
+    g.gain.exponentialRampToValueAtTime(v*0.25,t+dur*0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  } else {
+    g.gain.setValueAtTime(v,t+dur*0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur*1.05);
+  }
+  var tone=AC.createBiquadFilter();
+  tone.type="lowpass";
+  tone.frequency.setValueAtTime(palm?1500:4000,t);
+  if(palm) tone.frequency.exponentialRampToValueAtTime(700,t+dur);
+  o.connect(g); if(o2) o2.connect(g);
+  g.connect(tone); tone.connect(bus||gtrIn);
+  o.start(t); o.stop(t+dur*1.2);
+  if(o2){ o2.start(t); o2.stop(t+dur*1.2); }
+}
+/* パワーコード（根音＋5度＋オクターブ） */
+function chord5(root,t,dur,vol,palm){
+  gNote(root-12,t,dur,vol,palm);
+  gNote(root-5, t,dur,vol*0.85,palm);
+  gNote(root,   t,dur,vol*0.6, palm);
+}
+/* ギターのオブリガート（右で弾く単音） */
+function gLead(sem,t,dur,vol){ gNote(sem,t,dur,vol,false,gtrLead); }
+
+/* --- ベース --- */
+function bNote(sem,t,dur,vol){
+  if(!AC||muted) return;
+  var f=ntof(sem-24);
+  var o=AC.createOscillator(); o.type="sawtooth"; o.frequency.value=f;
+  var sub=AC.createOscillator(); sub.type="sine"; sub.frequency.value=f/2;
+  var g=AC.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+0.006);
+  g.gain.exponentialRampToValueAtTime(vol*0.5,t+dur*0.5);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  var lp=AC.createBiquadFilter(); lp.type="lowpass";
+  lp.frequency.setValueAtTime(2200,t);
+  lp.frequency.exponentialRampToValueAtTime(600,t+dur);   /* 指ではじいた感じ */
+  o.connect(g); sub.connect(g); g.connect(lp); lp.connect(bassIn);
+  o.start(t); o.stop(t+dur*1.1);
+  sub.start(t); sub.stop(t+dur*1.1);
+}
+
+/* --- ボーカル。ビブラートは少し遅れてかかる（そのほうが歌に聞こえる） --- */
+function vNote(sem,t,dur,vol,from){
+  if(!AC||muted) return;
+  var f=ntof(sem);
+  var o1=AC.createOscillator(); o1.type="sawtooth";
+  var o2=AC.createOscillator(); o2.type="triangle";
+  if(from){                                   /* 前の音から滑らせる＝しゃくり上げ */
+    o1.frequency.setValueAtTime(ntof(from),t);
+    o1.frequency.exponentialRampToValueAtTime(f,t+0.05);
+    o2.frequency.setValueAtTime(ntof(from),t);
+    o2.frequency.exponentialRampToValueAtTime(f,t+0.05);
+  } else {
+    o1.frequency.setValueAtTime(f*0.985,t);
+    o1.frequency.exponentialRampToValueAtTime(f,t+0.04);
+    o2.frequency.setValueAtTime(f*0.985,t);
+    o2.frequency.exponentialRampToValueAtTime(f,t+0.04);
+  }
+  var lfo=AC.createOscillator(); lfo.type="sine"; lfo.frequency.value=5.4;
+  var lg=AC.createGain();
+  lg.gain.setValueAtTime(0.0001,t);
+  lg.gain.linearRampToValueAtTime(f*0.016,t+Math.min(0.3,dur*0.55));
+  lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency);
+  var g=AC.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+0.05);            /* 息が入る立ち上がり */
+  g.gain.setValueAtTime(vol,t+dur*0.75);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur*1.02);
+  var o2g=AC.createGain(); o2g.gain.value=0.7;
+  o1.connect(g); o2.connect(o2g); o2g.connect(g);
+  g.connect(voxIn);
+  o1.start(t); o1.stop(t+dur*1.1);
+  o2.start(t); o2.stop(t+dur*1.1);
+  lfo.start(t); lfo.stop(t+dur*1.1);
+}
+
+/* --- ドラム --- */
+function dKick(t,v){
+  if(!AC||muted) return;
+  var o=AC.createOscillator(), g=AC.createGain();
+  o.type="sine";
+  o.frequency.setValueAtTime(150,t);
+  o.frequency.exponentialRampToValueAtTime(44,t+0.09);
+  g.gain.setValueAtTime(v||0.75,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+  var cl=AC.createGain(); cl.gain.value=1;
+  o.connect(g); g.connect(cl); cl.connect(drumIn);
+  o.start(t); o.stop(t+0.18);
+  noise(0.012,(v||0.75)*0.28,3000,t,drumIn,1);      /* ビーターの当たる音 */
+}
+function dSnare(t,v){
+  v=v||0.5;
+  noise(0.16,v*0.85,1750,t,drumIn,0.6);
+  noise(0.06,v*0.5,320,t,drumIn,1.2);
+  voice(210,0.06,"triangle",v*0.3,120,t,drumIn);
+}
+function dTom(t,f,v){
+  if(!AC||muted) return;
+  var o=AC.createOscillator(), g=AC.createGain();
+  o.type="sine";
+  o.frequency.setValueAtTime(f,t);
+  o.frequency.exponentialRampToValueAtTime(f*0.62,t+0.16);
+  g.gain.setValueAtTime(v||0.42,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.22);
+  o.connect(g); g.connect(drumIn);
+  o.start(t); o.stop(t+0.26);
+  noise(0.05,(v||0.42)*0.25,900,t,drumIn,1);
+}
+function dHat(t,v,open){ noise(open?0.16:0.03,v||0.10,open?7000:9500,t,drumIn,open?0.7:1.1); }
+function dCrash(t,v){
+  noise(0.9,v||0.30,5200,t,drumIn,0.35);
+  noise(0.5,(v||0.30)*0.6,2600,t,drumIn,0.5);
+}
+function dRide(t,v){ noise(0.24,v||0.09,6200,t,drumIn,1.6); }
 
 /* ===== 25_game.js ===== */
 /* ============================ 物理 ============================ */
@@ -1140,7 +1435,7 @@ function headClear(p){
 }
 function startSlide(p){
   p.slide=28; p.h=PH_SLIDE; p.y+=(PH_STAND-PH_SLIDE);
-  p.charge=0; SFX.dash();
+  SFX.dash();
   part(p.x+(p.face>0?0:p.w),p.y+10,"#bffff4",5,1.6);
 }
 function endSlide(p){
@@ -1160,12 +1455,12 @@ function update(){
 
   if(p.dead>0){
     p.dead--;
-    taps.jump=false; taps.slide=false;
+    taps.jump=false; taps.slide=false; lastFire=keys.fire;
     updateParts();
     if(p.dead===0){ state="over"; showScreen("s-over"); }
     return;
   }
-  if(ready>0){ taps.jump=false; taps.slide=false; updateParts(); return; }
+  if(ready>0){ taps.jump=false; taps.slide=false; lastFire=keys.fire; updateParts(); return; }
 
   /* keys の立ち上がりだけでなく taps（1フレームより短いタップ）も拾う。
      画面ボタンのちょん押しがフレームの合間に消えると
@@ -1222,24 +1517,34 @@ function update(){
   p.vy=Math.min(MAXFALL,p.vy+GRAV);
   moveY(p);
 
-  /* --- ショット・チャージ（スライディング中は撃てない） --- */
+  /* --- ショット・チャージ ---------------------------------------------
+     溜めは「離した瞬間に出る」のではなく、離しても溜まったまま残る。
+     次にショットを押したときに発射する＝好きなタイミングで撃てる
+     （ジャンプのために親指を離しても暴発しない。院長指摘 2026-08-31）。
+     スライディング中は撃てないが、溜めは消えない。 */
   if(p.wcd>0) p.wcd--;
+  var fireEdge=(keys.fire && !lastFire);
   if(p.slide>0){
-    p.charge=0;
+    /* 伏せている間は何もしない（溜めはそのまま） */
   } else if(curWeapon>0){
     if(keys.fire && p.wcd<=0){ fireWeapon(); p.wcd=WEAPONS[curWeapon].rate; }
     p.charge=0;
-  } else if(keys.fire){
-    if(p.charge===0){ shoot(0); }
-    p.charge++;
-    if(p.charge===CHG[1]) SFX.charge1();
-    if(p.charge===CHG[2]) SFX.charge2();
-    if(p.charge===CHG[3]){ SFX.charge3(); shake=4; }
   } else {
-    var lv=chargeLv(p.charge);
-    if(lv>0) shoot(lv);
-    p.charge=0;
+    if(fireEdge){
+      var lv=chargeLv(p.charge);
+      shoot(lv);                 /* 溜まっていればその段階、なければ通常弾 */
+      p.charge=0;
+    }
+    if(keys.fire){
+      p.charge++;
+      if(p.charge===CHG[1]) SFX.charge1();
+      if(p.charge===CHG[2]) SFX.charge2();
+      if(p.charge===CHG[3]){ SFX.charge3(); shake=4; }
+    } else if(chargeLv(p.charge)===0){
+      p.charge=0;                /* 溜まりきる前に離したぶんは消す（連打で溜まらないように） */
+    }
   }
+  lastFire=keys.fire;
   if(p.shootAnim>0) p.shootAnim--;
   if(p.inv>0) p.inv--;
 
@@ -3416,7 +3721,7 @@ function mixc(a,b,k){
 /* ===== 50_main.js ===== */
 /* ============================ 入力 ============================ */
 var keys={left:false,right:false,jump:false,fire:false,down:false,slide:false};
-var lastJump=false, lastSlide=false;
+var lastJump=false, lastSlide=false, lastFire=false;
 /* 1フレーム(16ms)より短い「ちょん押し」も取りこぼさないための掛け金。
    画面ボタンのタップは押して離すまでが数msのことがあり、
    毎フレーム keys を見るだけだと押した事実ごと消えてしまう。 */
@@ -3497,23 +3802,34 @@ window.addEventListener("keyup",function(e){
     if(!b) return;
     if(e.preventDefault) e.preventDefault();
     audioInit();
-    own[e.pointerId]=b; press(b);
+    own[e.pointerId]={cur:b,held:[b]}; press(b);
   },{passive:false});
 
+  /* 指がボタンをまたいだとき。
+     十字キーは持ち替える（◀→▶ で向きが変わる）。
+     右のABXYは前のボタンを離さずに足す＝実機と同じで、親指がYとBに
+     またがれる。指を上げたときにまとめて離す。 */
+  function isDpad(b){ return b.parentNode && b.parentNode.className.indexOf("dpad")>=0; }
+
   window.addEventListener("pointermove",function(e){
-    var cur=own[e.pointerId];
-    if(!cur) return;
+    var st=own[e.pointerId];
+    if(!st) return;
     var b=hit(e.clientX,e.clientY);
-    if(!b || b===cur) return;                          /* すき間では持ち替えない */
-    own[e.pointerId]=b;
-    release(cur); press(b);
+    if(!b || b===st.cur) return;                       /* すき間では持ち替えない */
+    if(isDpad(st.cur)){
+      release(st.cur);
+      st.held.splice(st.held.indexOf(st.cur),1);
+    }
+    st.cur=b;
+    if(st.held.indexOf(b)<0) st.held.push(b);
+    press(b);
   },{passive:false});
 
   function up(e){
-    var cur=own[e.pointerId];
-    if(!cur) return;
+    var st=own[e.pointerId];
+    if(!st) return;
     delete own[e.pointerId];
-    release(cur);
+    for(var i=0;i<st.held.length;i++) release(st.held[i]);
   }
   window.addEventListener("pointerup",up);
   window.addEventListener("pointercancel",up);

@@ -346,13 +346,15 @@
     .btn.arrow{font-size:28px;}
     #pad{max-width:min(100%, 82%);}          /* 中央に寄せすぎない */
     #frame{max-width:none;}                  /* 760pxの上限をやめる */
+    #tip{font-size:12px;}                    /* 説明で高さを取りすぎない */
     #bar,#wbar{max-width:none;}
     .wchip{min-width:72px;font-size:11px;padding:6px 9px 7px;}
     .wchip .we{width:56px;height:5px;}
     #tip{font-size:13px;}
   }
-  /* スマホ横向き：画面の左右にボタンを置く */
-  @media (orientation:landscape) and (max-height:600px){
+  /* 指で触る端末の横向きは、画面の左右にボタンを置く。
+     こうしないとタブレットで絵が小さくなる（高さをボタンと説明に取られるため）。 */
+  @media (orientation:landscape) and (pointer:coarse){
     #app{
       display:grid;
       grid-template-columns:auto auto auto;
@@ -390,11 +392,32 @@
     #app{column-gap:8px;}
     #pad>.dpad{grid-column:1;}
     #pad>.abxy{grid-column:3;}
-    #app{--bs:clamp(46px, 11vh, 78px);}
+    #app{--bs:clamp(46px, 8.2vh, 76px);}   /* 絵をできるだけ大きく取る */
     .btn{font-size:clamp(10px, 1.7vh, 16px);}
     .btn small{font-size:clamp(6px, 1vh, 10px);}
     .btn.arrow{font-size:clamp(15px, 3vh, 28px);}
     #tip{display:none;}
+  }
+
+  /* タブレットの横向き（縦に余裕がある）：ボタンは下の左右の隅、絵は横いっぱい。
+     左右に置くと絵の大きさが横幅で決まってしまい、縦が大きく余るため。 */
+  @media (orientation:landscape) and (pointer:coarse) and (min-height:620px){
+    #app{
+      grid-template-columns:auto 1fr auto;
+      grid-template-rows:auto minmax(0,1fr) auto;
+      align-items:center;
+      row-gap:4px;
+      --bs:clamp(56px, 7.6vh, 96px);
+    }
+    #bar{grid-column:1/-1;grid-row:1;}
+    #wbar{grid-column:1/-1;grid-row:1;justify-self:center;align-self:center;}
+    #frame{grid-column:1/-1;grid-row:2;justify-self:center;}
+    #pad{display:contents;}
+    #pad>.dpad{grid-column:1;grid-row:3;justify-self:start;align-self:end;}
+    #pad>.abxy{grid-column:3;grid-row:3;justify-self:end;align-self:end;}
+    .btn{font-size:clamp(12px, 2vh, 20px);}
+    .btn small{font-size:clamp(8px, 1.2vh, 12px);}
+    .btn.arrow{font-size:clamp(20px, 3.6vh, 36px);}
   }
 
   @media (prefers-reduced-motion:reduce){
@@ -422,7 +445,7 @@
       <button class="go" id="btn-start">Start</button>
       <p class="keys">
         <kbd>←</kbd><kbd>→</kbd> 移動 ／ <kbd>X</kbd> または <kbd>↑</kbd> ジャンプ ／ <kbd>Space</kbd> ショット<br>
-        溜め撃ちは<b>4段階</b>（長く押すほど強い）。<b>手を離しても溜めたまま</b>なので、もう一度押したときに出る<br>プールの面は<b>泳げます</b>（ジャンプで水をかく） ／ 公園の緑の台は<b>トランポリン</b> ／ 発電所の<b>電気は消えている隙</b>に通る ／ <kbd>C</kbd> または <kbd>↓</kbd>+ジャンプ でスライディング<br>
+        溜め撃ちは<b>4段階</b>（長く押すほど強い）。<b>手を離しても溜めたまま</b>なので、もう一度押したときに出る。<b>特殊武器も同じように溜められる</b>（エネルギーは3倍使う）<br>プールの面は<b>泳げます</b>（ジャンプで水をかく） ／ 公園の緑の台は<b>トランポリン</b> ／ 発電所の<b>電気は消えている隙</b>に通る ／ <kbd>C</kbd> または <kbd>↓</kbd>+ジャンプ でスライディング<br>
         ボスを倒すとその技を使える。画面下の武器欄をタップ（PCは <kbd>1</kbd>〜<kbd>9</kbd> か <kbd>Q</kbd><kbd>E</kbd>）で持ちかえ<br>
         <kbd>P</kbd> ポーズ ／ <kbd>M</kbd> 音のオン・オフ ／ スマホは下のボタンで操作<br>
         音が出ないときは右上の 🔊 を押してください
@@ -488,7 +511,7 @@
     </div>
   </div>
 
-  <p id="tip">ボタンはスーパーファミコンと同じ並びです。Y＝ショット（長押しで溜め。離しても溜まったままで、次に押したときに発射）／B＝ジャンプ／A＝スライディング／X＝武器チェンジ。<br>
+  <p id="tip">ボタンはスーパーファミコンと同じ並びです。Y＝ショット（長押しで溜め。離しても溜まったままで、次に押したときに発射。特殊武器も溜められる）／B＝ジャンプ／A＝スライディング／X＝武器チェンジ。<br>
   スマホは横向きにすると画面が大きくなります。音が出るので外では音量にご注意ください。<br>
   進み具合はこの端末に保存されます（次に開いたときは倒したボスがCLEARのまま）。</p>
 </div>
@@ -1488,6 +1511,9 @@ function reset(){
     hp:28,maxhp:28,inv:0,charge:0,shootAnim:0,coyote:0,buf:0,anim:0,jumpCut:0,
     slide:0,crawl:false,slideCool:0,wcd:0,cpx:48,cpy:200,dead:0};
   cam.x=0; ready=110;
+  /* ボタンを押しっぱなしのままステージが変わっても、押し直しを要らなくする */
+  lastJump=false; lastSlide=false; lastFire=false;
+  taps.jump=false; taps.slide=false;
   curWeapon=0; refillWeapons(); updateWeaponBar();
 }
 
@@ -1666,14 +1692,17 @@ function update(){
   var fireEdge=(keys.fire && !lastFire);
   if(p.slide>0){
     /* 伏せている間は何もしない（溜めはそのまま） */
-  } else if(curWeapon>0){
-    if(keys.fire && p.wcd<=0){ fireWeapon(); p.wcd=WEAPONS[curWeapon].rate; }
-    p.charge=0;
   } else {
+    /* 特殊武器も同じ作法で溜められる（院長要望 2026-08-31）。
+       押した瞬間に発射。溜まっていればその武器の溜め技が出る。 */
     if(fireEdge){
       var lv=chargeLv(p.charge);
-      shoot(lv);                 /* 溜まっていればその段階、なければ通常弾 */
-      p.charge=0;
+      if(curWeapon>0){
+        if(p.wcd<=0 && fireWeapon(lv)) p.charge=0;
+      } else {
+        shoot(lv);
+        p.charge=0;
+      }
     }
     if(keys.fire){
       p.charge++;
@@ -1688,11 +1717,9 @@ function update(){
   if(p.shootAnim>0) p.shootAnim--;
   if(p.inv>0) p.inv--;
 
-  /* --- 落下・トゲ --- */
-  if(p.y>H+20){
-    if(p.inv>0){ p.x=p.cpx; p.y=p.cpy; p.vx=0; p.vy=0; }
-    else hurtPlayer(4,true);
-  }
+  /* --- 落下・トゲ ---
+     穴に落ちたら一発でアウト（院長方針 2026-08-31）。体力に関係なくその場で終わり */
+  if(p.y>H+20) killPlayer();
   if(hazardPx(p.x+p.w/2,p.y+p.h-3)) hurtPlayer(4,true);
 
   /* --- チェックポイント --- */
@@ -1983,6 +2010,16 @@ function updateParts(){
   }
 }
 
+/* 穴に落ちたとき。体力を残さず、その場でやられる */
+function killPlayer(){
+  var p=player;
+  if(p.dead>0) return;
+  p.hp=0; p.dead=86; p.vx=0; p.vy=0;
+  burstDeath(p.x+p.w/2, Math.min(p.y+p.h/2, H-24));   /* 画面の中で爆発させる */
+  flash=6; shake=12;
+  SFX.bossDie();
+}
+
 function hurtPlayer(dmg,respawn,srcX){
   var p=player;
   if(p.inv>0||p.dead>0) return;
@@ -2041,6 +2078,14 @@ var WEAPONS=[
                dmg:2,grav:0.06,kind:"wCaries"});
       }
       SFX.shoot();
+    },
+    charged:function(p,x,y,lv){
+      for(var i=0;i<5;i++){
+        var a=-0.52+i*0.26;
+        pshot({x:x,y:y-4,w:13,h:13,vx:p.face*5.2*Math.cos(a),vy:5.2*Math.sin(a),
+               dmg:4,grav:0.05,kind:"wCaries",wbig:lv});
+      }
+      SFX.charge2(); shake=5;
     } },
 
   { id:2, name:"タルタルシェル", short:"TARTAR", col:"#d8c07a", cost:4, rate:34,
@@ -2048,6 +2093,11 @@ var WEAPONS=[
     fire:function(p,x,y){
       pshot({x:x,y:y-3,w:14,h:10,vx:p.face*3.8,dmg:6,kind:"wShell",pierce:false});
       SFX.charge1(); shake=4;
+    },
+    charged:function(p,x,y,lv){
+      pshot({x:x,y:y-9,w:26,h:22,vx:p.face*4.4,dmg:16,kind:"wShell",
+             ghost:true,wbig:lv});
+      SFX.charge3(); shake=10; flash=6;
     } },
 
   { id:3, name:"プラークブロブ", short:"PLAQUE", col:"#a8d98a", cost:3, rate:30,
@@ -2056,6 +2106,11 @@ var WEAPONS=[
       pshot({x:x,y:y-4,w:10,h:10,vx:p.face*3.4,vy:-3.4,dmg:3,grav:0.2,
              kind:"wBlob",split:true});
       SFX.shoot();
+    },
+    charged:function(p,x,y,lv){
+      pshot({x:x,y:y-8,w:20,h:20,vx:p.face*3.6,vy:-4.2,dmg:7,grav:0.2,
+             kind:"wBlob",split:true,split4:true,wbig:lv});
+      SFX.charge2(); shake=5;
     } },
 
   { id:4, name:"ジンジババースト", short:"GINGIVA", col:"#ff8fb4", cost:3, rate:30,
@@ -2063,6 +2118,12 @@ var WEAPONS=[
     fire:function(p,x,y){
       pshot({x:x,y:y-2,w:9,h:9,vx:p.face*2.4,vy:-1.2,dmg:3,kind:"wHome",homing:0.16,life:150});
       SFX.pick();
+    },
+    charged:function(p,x,y,lv){
+      for(var i=0;i<3;i++)
+        pshot({x:x,y:y-10+i*10,w:13,h:13,vx:p.face*2.6,vy:-1.6+i*1.6,
+               dmg:3,kind:"wHome",homing:0.22,life:200,wbig:lv});
+      SFX.charge2();
     } },
 
   { id:5, name:"シュガーボム", short:"SUGAR", col:"#fdf6ff", cost:4, rate:36,
@@ -2071,6 +2132,11 @@ var WEAPONS=[
       pshot({x:x,y:y-4,w:11,h:11,vx:p.face*3.0,vy:-4.0,dmg:3,grav:0.22,
              kind:"wCube",boom:true});
       SFX.shoot();
+    },
+    charged:function(p,x,y,lv){
+      pshot({x:x,y:y-8,w:20,h:20,vx:p.face*3.2,vy:-4.6,dmg:10,grav:0.22,
+             kind:"wCube",boom:true,boom8:true,wbig:lv});
+      SFX.charge2(); shake=6;
     } },
 
   { id:6, name:"アシッドブレス", short:"ACID", col:"#b6ff4d", cost:1, rate:6,
@@ -2080,6 +2146,16 @@ var WEAPONS=[
       pshot({x:x,y:y-2+(Math.random()*8-4),w:8,h:8,vx:p.face*sp,vy:(Math.random()*1.2-0.6),
              dmg:1,kind:"wBreath",pierce:true,life:26});
       if(frame%3===0) SFX.hit();
+    },
+    charged:function(p,x,y,lv){
+      /* 溜めると息が太く、遠くまで届く（通常は近距離だけ） */
+      for(var i=0;i<12;i++){
+        var sp=4.0+Math.random()*2.6;
+        pshot({x:x,y:y-2+(Math.random()*22-11),w:13,h:13,
+               vx:p.face*sp,vy:(Math.random()*2.2-1.1),
+               dmg:2,kind:"wBreath",pierce:true,life:46,wbig:lv});
+      }
+      SFX.charge3(); shake=6;
     } },
 
   { id:7, name:"ワイヤーウォール", short:"WIRE", col:"#8fd7ff", cost:4, rate:34,
@@ -2088,6 +2164,12 @@ var WEAPONS=[
       for(var i=0;i<3;i++)
         pshot({x:x,y:y-26+i*26,w:14,h:6,vx:p.face*6.4,dmg:2,kind:"wWire",pierce:true});
       SFX.laser();
+    },
+    charged:function(p,x,y,lv){
+      for(var i=0;i<5;i++)
+        pshot({x:x,y:y-46+i*23,w:22,h:9,vx:p.face*7.0,dmg:4,
+               kind:"wWire",pierce:true,ghost:true,wbig:lv});
+      SFX.charge3(); shake=6;
     } },
 
   { id:8, name:"グラインドショック", short:"GRIND", col:"#ffd447", cost:3, rate:32,
@@ -2096,6 +2178,12 @@ var WEAPONS=[
       pshot({x:p.x+(p.face>0?p.w:-14),y:p.y+p.h-12,w:14,h:12,vx:p.face*4.0,
              dmg:4,kind:"wShock",pierce:true,ground:true});
       SFX.boom(); shake=5;
+    },
+    charged:function(p,x,y,lv){
+      for(var d=-1;d<=1;d+=2)
+        pshot({x:p.x+(d>0?p.w:-22),y:p.y+p.h-20,w:22,h:20,vx:d*5.0,
+               dmg:12,kind:"wShock",pierce:true,ground:true,wbig:lv});
+      SFX.charge3(); shake=12; flash=6;
     } }
 ];
 
@@ -2120,16 +2208,24 @@ function cycleWeapon(dir){
     if(weaponOwned(i) && (i===0||wEnergy[i]>0)){ setWeapon(i); return; }
   }
 }
-function fireWeapon(){
+/* 特殊武器を撃つ。lv は溜めの段階（0＝普通）。
+   溜め技はエネルギーを3倍使う。足りないときは普通の技になる。
+   撃てたら true を返す（撃てなければ溜めは残しておく）。 */
+function fireWeapon(lv){
   var p=player, Wp=WEAPONS[curWeapon];
-  if(!Wp.fire) return;
-  if(wEnergy[curWeapon]<Wp.cost){ setWeapon(0); return; }
-  wEnergy[curWeapon]-=Wp.cost;
+  if(!Wp.fire) return false;
+  var big=(lv>0 && Wp.charged)?lv:0;
+  var use=big?Wp.cost*3:Wp.cost;
+  if(big && wEnergy[curWeapon]<use){ big=0; use=Wp.cost; }   /* 足りなければ普通に */
+  if(wEnergy[curWeapon]<use){ setWeapon(0); return false; }
+  wEnergy[curWeapon]-=use;
   var y=p.y+(p.h===PH_SLIDE?4:9), x=p.x+(p.face>0?p.w:-6);
-  Wp.fire(p,x,y);
+  if(big) Wp.charged(p,x,y,big); else Wp.fire(p,x,y);
   p.shootAnim=12;
+  p.wcd=big?Wp.rate:Math.max(7,Math.round(Wp.rate*0.5));    /* 溜め技のあとは長めに待つ */
   if(wEnergy[curWeapon]<=0){ wEnergy[curWeapon]=0; setWeapon(0); }
   updateWeaponBar();
+  return true;
 }
 
 /* --- 特殊弾の動き --- */
@@ -2144,12 +2240,26 @@ function homeTarget(){
   return best;
 }
 function splitBlob(b){
-  for(var i=0;i<2;i++)
-    pshot({x:b.x,y:b.y-2,w:8,h:8,vx:(i?1:-1)*2.6,vy:-2.4,dmg:2,grav:0.2,kind:"wBlob",life:90});
-  part(b.x+4,b.y+4,"#a8d98a",8,2);
+  var n=b.split4?4:2;
+  for(var i=0;i<n;i++){
+    var sp=(n===4)?(i-1.5)*1.9:((i?1:-1)*2.6);
+    pshot({x:b.x,y:b.y-2,w:b.split4?11:8,h:b.split4?11:8,vx:sp,vy:-2.6,
+           dmg:b.split4?3:2,grav:0.2,kind:"wBlob",life:110});
+  }
+  part(b.x+4,b.y+4,"#a8d98a",b.split4?14:8,2);
   SFX.hit();
 }
 function boomCube(b){
+  if(b.boom8){                       /* 溜め技の角砂糖は8方向へ破裂する */
+    SFX.boom(); shake=10; flash=5;
+    part(b.x+8,b.y+8,C.gold,26,3.4);
+    for(var q=0;q<8;q++){
+      var qa=q/8*Math.PI*2;
+      pshot({x:b.x+5,y:b.y+5,w:10,h:10,vx:Math.cos(qa)*3.6,vy:Math.sin(qa)*3.6,
+             dmg:4,kind:"wShard",life:60});
+    }
+    return;
+  }
   SFX.boom(); shake=7;
   part(b.x+5,b.y+5,"#ffffff",16,3);
   for(var k=0;k<4;k++){
@@ -3725,7 +3835,8 @@ function drawPlayerSprite(){
   /* 溜めの光（4段階） */
   var lvl=chargeLv(p.charge);
   if(lvl>0){
-    var cols=[null,C.mint,C.gold,"#ffffff"];
+    var wcol=(curWeapon>0)?WEAPONS[curWeapon].col:null;
+    var cols=[null, wcol||C.mint, wcol||C.gold, "#ffffff"];
     var rr=[0,4,6.5,9][lvl]+Math.sin(frame*0.5)*1.2;
     ctx.globalAlpha=0.85;
     ctx.fillStyle=cols[lvl];
@@ -3954,6 +4065,14 @@ function drawBullets(){
 
 function drawWeaponShot(b){
   var k=b.kind, col=WEAPONS[b.wid].col;
+  if(b.wbig){                       /* 溜め技の弾。まわりに光をまとう */
+    ctx.globalAlpha=0.30+Math.sin(frame*0.5)*0.08;
+    ctx.fillStyle=col;
+    ctx.beginPath();
+    ctx.arc(b.x+b.w/2,b.y+b.h/2,Math.max(b.w,b.h)*0.85,0,Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha=1;
+  }
   if(k==="wShell"){
     px(b.x,b.y,14,10,C.tartar); px(b.x,b.y,14,2,"#f0e0a8"); px(b.x,b.y+8,14,2,C.tartarLo);
     px(b.x+(b.vx>0?11:0),b.y+2,3,6,"#6f6242");
@@ -4773,9 +4892,15 @@ document.addEventListener("visibilitychange",function(){
    横向き（スマホ・タブレット）のときは、空いている場所をJSで実測して
    480:272 のまま最大になる大きさをゲーム画面に入れる。
    CSSの決め打ちだと、端末によって黒帯が出たり縦に伸びたりするため。 */
-var MQ_LAND=(window.matchMedia
-  ? window.matchMedia("(orientation:landscape) and (max-height:600px)")
-  : {matches:false, addEventListener:function(){}, addListener:function(){}});
+/* どの配置に入っているか。CSSの条件と必ずそろえる。
+   MQ_TALL … タブレットの横向き（ボタンは下の隅・絵は横いっぱい）
+   MQ_LAND … スマホの横向き（ボタンは左右） */
+function mq(q){
+  return window.matchMedia ? window.matchMedia(q)
+    : {matches:false, addEventListener:function(){}, addListener:function(){}};
+}
+var MQ_LAND=mq("(orientation:landscape) and (pointer:coarse)");
+var MQ_TALL=mq("(orientation:landscape) and (pointer:coarse) and (min-height:620px)");
 
 function fitFrame(){
   var f=document.getElementById("frame"), app=document.getElementById("app");
@@ -4795,9 +4920,15 @@ function fitFrame(){
   var vh=(window.innerHeight||app.clientHeight);
   var availW, availH;
 
-  if(MQ_LAND.matches){
-    /* 左右にボタンを置く配置（横向き） */
-    var cl=document.querySelectorAll("#pad > .cluster");
+  var cl=document.querySelectorAll("#pad > .cluster");
+  if(MQ_TALL.matches){
+    /* ボタンは下の左右の隅。絵は横いっぱい使えるので、高さで決まる */
+    var ph=0;
+    for(var ci=0;ci<cl.length;ci++) ph=Math.max(ph,cl[ci].getBoundingClientRect().height);
+    availW=app.clientWidth - pl - pr;
+    availH=vh - pt - pb - h("bar") - ph - rg*2 - 4;
+  } else if(MQ_LAND.matches){
+    /* 左右にボタンを置く配置（スマホの横向き） */
     var lw=cl[0]?cl[0].getBoundingClientRect().width:0;
     var rw=cl[1]?cl[1].getBoundingClientRect().width:0;
     availW=app.clientWidth - pl - pr - lw - rw - cg*2;
@@ -4822,8 +4953,10 @@ function scheduleFit(){
 }
 window.addEventListener("resize",scheduleFit);
 window.addEventListener("orientationchange",scheduleFit);
-if(MQ_LAND.addEventListener) MQ_LAND.addEventListener("change",scheduleFit);
-else if(MQ_LAND.addListener) MQ_LAND.addListener(scheduleFit);
+[MQ_LAND,MQ_TALL].forEach(function(q){
+  if(q.addEventListener) q.addEventListener("change",scheduleFit);
+  else if(q.addListener) q.addListener(scheduleFit);
+});
 
 /* ============================ 進み具合の保存 ============================ */
 var cleared=[];

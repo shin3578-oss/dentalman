@@ -1078,6 +1078,47 @@ var T_FINAL=mkBand({bpm:190, gtr:"drive", drum:"double", gv:0.17, vv:0.28,
          null,null,null,null, null,null,null,null, 24,22,20,19, 17,15,13,12],
   g2v:0.13});
 
+/* --- ボス登場シーン（全ボス共通） ---------------------------------------
+   16歩 × bpm134 ＝ 約3.6秒。登場シーンの長さとぴったり合わせてある。
+   1〜4歩目は刻みだけで「ため」、5歩目（ボスが着地する瞬間）に
+   シンバルとパワーコードが全部そろって入る。
+   そのあとは Am→G→F→E の下降で、ギターが上で泣く。 */
+var T_INTRO={bpm:134, len:16, once:false,
+  root:[0,0,0,0,  0,0,0,0,  -2,-2,-4,-4,  -5,-5,-5,-5],
+  lead:[null,null,null,null,  19,null,17,null,  15,null,14,null,  12,14,15,17],
+  vox: [null,null,null,null,  12,null,null,null,  10,null,8,null,  7,null,null,null],
+  voxLen:[0,0,0,0, 4,0,0,0, 2,0,2,0, 4,0,0,0],
+  fn:function(i,t,spb){
+    buildBand();
+    var half=spb*0.5, R=this.root[i];
+
+    if(i<4){
+      /* ためる。刻みと低音だけが小さく走る */
+      chord5(0,t,half*0.8,0.075,true);
+      chord5(0,t+half,half*0.8,0.075,true);
+      bNote(0,t,spb*0.9,0.20);
+      dHat(t,0.05);
+      if(i===3){ dTom(t,170,0.5); dTom(t+half,138,0.5); }   /* 落ちてくる合図 */
+      return;
+    }
+
+    if(i===4) dCrash(t,0.42);
+    chord5(R,t,spb*1.9,0.21,false);          /* 伸ばすパワーコード */
+    chord5(R,t+half,half*0.9,0.15,true);
+    bNote(R,t,spb*0.95,0.34);
+    bNote(R,t+half,half*0.9,0.26);
+
+    if(i===4||i===8||i===9||i===12||i===13) dKick(t,0.85);
+    if(i===6||i===10||i===14) dSnare(t,0.62);
+    dHat(t, (i%2===0)?0.11:0.06);
+    if(i===15){ dTom(t,200,0.52); dTom(t+half,160,0.52); }
+
+    var L=this.lead[i];
+    if(L!==null) gLead(L+12,t,spb*1.15,0.16);
+    var V=this.vox[i];
+    if(V!==null) vNote(V+12,t,spb*this.voxLen[i]*0.95,0.31,0);
+  }};
+
 /* --- 短い曲（1回だけ鳴る） --- */
 var T_CLEAR={bpm:150, len:16, once:true,
   lead:[12,12,12,null, 10,null,12,null, 15,null,null,null, 19,null,null,null],
@@ -1118,7 +1159,7 @@ var curTrack=null, curName="", mStep=0, mNext=0, mTimer=null;
 
 function wantTrack(){
   if(state==="demo")   return "clear";   /* 武器を手に入れたファンファーレ */
-  if(state==="intro")  return "boss";    /* ボス登場は戦いの曲で盛り上げる */
+  if(state==="intro")  return "intro";   /* ボス登場は専用の曲（全ボス共通） */
   if(state==="clear")  return "clear";
   if(state==="over")   return "over";
   if(state==="ending") return "end";
@@ -1130,6 +1171,7 @@ function wantTrack(){
 }
 function trackByName(n){
   if(n==="title") return T_TITLE;
+  if(n==="intro") return T_INTRO;
   if(n==="boss")  return T_BOSS;
   if(n==="final") return T_FINAL;
   if(n==="clear") return T_CLEAR;
@@ -4107,8 +4149,8 @@ function skipIntro(){
 }
 function updateIntro(){
   introT++;
-  if(introT===46){ shake=16; SFX.gate(); }
-  if(introT===58) SFX.bossHit();
+  if(introT===54){ shake=16; SFX.gate(); }   /* 曲のシンバルと同じ瞬間に着地する */
+  if(introT===66) SFX.bossHit();
   if(shake>0) shake--;
   if(flash>0) flash--;
   frame++;
@@ -4116,11 +4158,11 @@ function updateIntro(){
   if(introT>=INTRO_LEN){ beginStage(); }
 }
 
-/* 落ちてくる高さ。46フレーム目で着地する */
+/* 落ちてくる高さ。54フレーム目＝曲の決めの一発と同じ瞬間に着地する */
 function introDropY(t){
-  if(t>=46) return 0;
-  var k=Math.max(0,(46-t)/26);
-  return -k*k*300;
+  if(t>=54) return 0;
+  var k=Math.max(0,(54-t)/28);
+  return -k*k*320;
 }
 
 function drawIntro(){
@@ -4138,7 +4180,7 @@ function drawIntro(){
 
   /* 舞台の床と、後ろから当たる光 */
   var FLOOR=210;
-  var lit=Math.min(1,Math.max(0,(introT-46)/26));
+  var lit=Math.min(1,Math.max(0,(introT-54)/26));
   ctx.globalAlpha=0.20+lit*0.28;
   ctx.fillStyle=PAL.accent;
   ctx.beginPath();
@@ -4154,7 +4196,7 @@ function drawIntro(){
   var totalH=S2.h+(S2.top||0);
   var sc=Math.min(3.2, 152/totalH, 330/S2.w);
   var drop=introDropY(introT);
-  var squash=(introT>=46&&introT<58)?(1-(introT-46)/12)*0.20:0;
+  var squash=(introT>=54&&introT<66)?(1-(introT-54)/12)*0.20:0;
 
   ctx.save();
   ctx.translate(W/2, FLOOR+drop);
@@ -4166,7 +4208,7 @@ function drawIntro(){
   ctx.restore();
 
   /* 着地の土けむり */
-  if(introT===47){
+  if(introT===55){
     for(var k=0;k<18;k++){
       var a=Math.PI+Math.random()*Math.PI;
       parts.push({x:W/2+(Math.random()*2-1)*44,y:208,
@@ -4177,7 +4219,7 @@ function drawIntro(){
   drawParts();
 
   /* 暗幕。着地するまでは影絵に見せる */
-  var dark=(introT<46)?0.8:Math.max(0,0.8-(introT-46)/16*0.8);
+  var dark=(introT<54)?0.8:Math.max(0,0.8-(introT-54)/16*0.8);
   if(dark>0){ ctx.globalAlpha=dark; ctx.fillStyle="#000000"; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
 
   /* 上下の帯（幕）。開いて閉じる */
@@ -4189,15 +4231,15 @@ function drawIntro(){
   ctx.restore();
 
   /* 着地の閃光 */
-  if(introT>=46&&introT<54){
-    ctx.globalAlpha=(54-introT)/8*0.85;
+  if(introT>=54&&introT<62){
+    ctx.globalAlpha=(62-introT)/8*0.85;
     ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,W,H);
     ctx.globalAlpha=1;
   }
 
   /* 名前の帯。下から立ち上がる */
-  if(introT>54){
-    var q=Math.min(1,(introT-54)/16);
+  if(introT>62){
+    var q=Math.min(1,(introT-62)/16);
     var oy=(1-q)*(1-q)*62;
     ctx.save();
     ctx.translate(0,oy);
@@ -4209,8 +4251,8 @@ function drawIntro(){
   }
 
   /* ステージ名。左から差し込む */
-  if(introT>82){
-    var q2=Math.min(1,(introT-82)/16);
+  if(introT>90){
+    var q2=Math.min(1,(introT-90)/16);
     var ox2=-(1-q2)*(1-q2)*240;
     ctx.save();
     ctx.translate(ox2,0);

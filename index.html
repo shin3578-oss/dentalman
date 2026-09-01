@@ -423,6 +423,50 @@
   @media (prefers-reduced-motion:reduce){
     button.go:active{transform:none;}
   }
+
+  /* ---- タイトル：キャンバスの一枚絵を見せる（帯で隠さない） ---- */
+  #s-title.art{
+    background:none;
+    backdrop-filter:none;
+    justify-content:flex-end;
+    padding:0 4% 2%;
+    gap:5px;
+  }
+  #s-title .t-btns{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;}
+  /* 絵を隠さないよう、タイトルのボタンはひとまわり小さくする */
+  #s-title button.go{font-size:clamp(11px,1.9vw,15px);padding:8px 18px;letter-spacing:.16em;}
+  #s-title button.go.ghost{font-size:clamp(9px,1.5vw,12px);padding:6px 12px;}
+  .how{
+    width:min(100%,560px);
+    font-size:clamp(10px,1.8vw,13px);
+    color:var(--steel);
+    text-align:left;
+  }
+  .how summary{
+    list-style:none;
+    display:inline-block;
+    margin:0 auto;
+    padding:6px 14px;
+    border-radius:6px;
+    background:rgba(11,33,54,.82);
+    border:1px solid #235c78;
+    color:var(--enamel);
+    font-family:var(--font-disp);
+    letter-spacing:.14em;
+    font-size:clamp(10px,1.8vw,12px);
+    cursor:pointer;
+  }
+  .how summary::-webkit-details-marker{display:none;}
+  .how[open]{
+    background:rgba(4,18,30,.94);
+    border:1px solid #235c78;
+    border-radius:8px;
+    padding:8px 12px;
+    max-height:60%;
+    overflow:auto;
+  }
+  .how[open] summary{margin-bottom:6px;background:none;border:0;padding:0;}
+  .how .keys{margin:0;}
 </style>
 
 <div id="app">
@@ -438,24 +482,28 @@
   <div id="frame">
     <canvas id="cv" width="480" height="272"></canvas>
 
-    <div class="screen on" id="s-title">
-      <p class="kicker">Stage 01 — Plaque Cavern</p>
-      <h1>デンタル<span>マン</span></h1>
-      <p class="sub">白衣のヒーローがフッ素ブラスターで虫歯菌を撃ち抜く。8体のボスを好きな順に倒し、最後に待つ大魔王ムシバーンを削り切れ。</p>
-      <button class="go" id="btn-start">Start</button>
-      <p class="keys">
-        <kbd>←</kbd><kbd>→</kbd> 移動 ／ <kbd>X</kbd> または <kbd>↑</kbd> ジャンプ ／ <kbd>Space</kbd> ショット<br>
-        溜め撃ちは<b>4段階</b>（長く押すほど強い）。<b>手を離しても溜めたまま</b>なので、もう一度押したときに出る。<b>特殊武器も同じように溜められる</b>（エネルギーは3倍使う）<br>プールの面は<b>泳げます</b>（ジャンプで水をかく） ／ 公園の緑の台は<b>トランポリン</b> ／ 発電所の<b>電気は消えている隙</b>に通る ／ <kbd>C</kbd> または <kbd>↓</kbd>+ジャンプ でスライディング<br>
-        ボスを倒すとその技を使える。画面下の武器欄をタップ（PCは <kbd>1</kbd>〜<kbd>9</kbd> か <kbd>Q</kbd><kbd>E</kbd>）で持ちかえ<br>
-        <kbd>P</kbd> ポーズ ／ <kbd>M</kbd> 音のオン・オフ ／ スマホは下のボタンで操作<br>
-        音が出ないときは右上の 🔊 を押してください
-      </p>
+    <div class="screen on art" id="s-title">
+      <div class="t-btns">
+        <button class="go" id="btn-start">Start</button>
+        <button class="go ghost" id="btn-op">▶ オープニング</button>
+      </div>
+      <details class="how" id="how">
+        <summary>あそびかた</summary>
+        <p class="keys">
+          <kbd>←</kbd><kbd>→</kbd> 移動 ／ <kbd>X</kbd> または <kbd>↑</kbd> ジャンプ ／ <kbd>Space</kbd> ショット<br>
+          溜め撃ちは<b>4段階</b>（長く押すほど強い）。<b>手を離しても溜めたまま</b>なので、もう一度押したときに出る。<b>特殊武器も同じように溜められる</b>（エネルギーは3倍使う）<br>プールの面は<b>泳げます</b>（ジャンプで水をかく） ／ 公園の緑の台は<b>トランポリン</b> ／ 発電所の<b>電気は消えている隙</b>に通る ／ <kbd>C</kbd> または <kbd>↓</kbd>+ジャンプ でスライディング<br>
+          ボスを倒すとその技を使える。画面下の武器欄をタップ（PCは <kbd>1</kbd>〜<kbd>9</kbd> か <kbd>Q</kbd><kbd>E</kbd>）で持ちかえ<br>
+          <kbd>P</kbd> ポーズ ／ <kbd>M</kbd> 音のオン・オフ ／ スマホは下のボタンで操作<br>
+          音が出ないときは右上の 🔊 を押してください
+        </p>
+      </details>
     </div>
 
     <div class="screen" id="s-select">
       <p class="kicker">Select Boss</p>
       <div id="grid"></div>
       <p class="sub" id="sel-msg">好きなボスから挑戦できます。8体たおすと、まん中の扉がひらく。</p>
+      <button class="go ghost" id="btn-title">タイトルへ</button>
     </div>
 
     <div class="screen" id="s-stage">
@@ -1173,6 +1221,72 @@ var T_CLEAR={bpm:150, len:16, once:true,
     if(i%4===2) dSnare(t,0.5);
   }};
 
+/* --- オープニングの前奏（あらすじ〜ビルのなめ上げ） -----------------------
+   32歩 × bpm96 ＝ 約10秒でひと回り。静かに始めて、後半で太鼓が入って高まる。
+   題字が飛び込む瞬間に T_TITLE へ切り替わるので、この曲は主役を張らない。 */
+var T_OP={bpm:96, len:32, once:false,
+  root:[0,0,0,0, 0,0,0,0, -3,-3,-3,-3, -3,-3,-3,-3,
+        -5,-5,-5,-5, -5,-5,-5,-5, -7,-7,-7,-7, -7,-7,-7,-7],
+  arp:[0,7,12,16, 12,7,12,19, 0,7,12,15, 12,7,12,19,
+       0,7,12,16, 16,12,7,12, 0,7,12,14, 19,16,12,7],
+  vox:[null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,null,
+       12,null,null,null, 15,null,14,null, 12,null,null,null, 10,null,null,null],
+  fn:function(i,t,spb){
+    buildBand();
+    var R=this.root[i], late=(i>=16);
+    if(i%4===0){                                  /* 長く伸ばす和音とベース */
+      chord5(R,t,spb*4.2,late?0.13:0.10,false);
+      bNote(R-12,t,spb*4.0,late?0.30:0.24);
+    }
+    gLead(R+this.arp[i]+12,t,spb*1.4,late?0.11:0.085);   /* 分散和音 */
+    var V=this.vox[i];
+    if(V!==null) vNote(R+V+12,t,spb*3.6,0.26,0);
+    if(late){                                     /* 後半だけ太鼓が入る */
+      if(i%4===0) dKick(t,0.55);
+      if(i%8===4) dSnare(t,0.34);
+      dHat(t,(i%2===0)?0.07:0.04);
+      if(i===31){ dTom(t,190,0.42); dTom(t+spb*0.5,150,0.40); dCrash(t+spb*0.5,0.16); }
+    } else if(i===0) dCrash(t,0.10);
+  }};
+
+/* --- ボス撃破のファンファーレ（16歩×bpm132＝約3.64秒。BRAVO画面と同じ長さ） ---
+   1〜3歩目の同じ音の連打で「タタタ・ター」の合図を作り、
+   13歩目の一番高い音で決める。決めの瞬間に画面の BRAVO! が出る。 */
+var T_WIN={bpm:132, len:16, once:true,
+  lead:[7,7,7,12, null,null,12,14, 16,null,19,null, 24,null,null,null],
+  llen:[0.9,0.9,0.9,2.6, 0,0,0.9,0.9, 1.8,0,1.8,0, 4.2,0,0,0],
+  root:[0,0,0,0, 0,0,5,5, 7,7,7,7, 0,0,0,0],
+  fn:function(i,t,spb){
+    buildBand();
+    var R=this.root[i], half=spb*0.5, L=this.lead[i];
+
+    /* 伴奏は音の変わり目だけ鳴らす（鳴らしっぱなしにすると音が濁る） */
+    if(i===0||i===6||i===8||i===12){
+      var hold=(i===12)?spb*4.0:spb*1.9;
+      chord5(R,t,hold,(i===12)?0.21:0.18,false);
+      bNote(R-12,t,hold,0.34);
+    }
+    if(i===3){ chord5(R,t,spb*2.4,0.19,false); bNote(R-12,t,spb*2.4,0.32); }
+
+    if(L!==null){
+      vNote(L+12,t,spb*this.llen[i],0.30,0);      /* 主旋律 */
+      gLead(L+12,t,spb*this.llen[i]*0.9,0.15);    /* ギターで重ねて輝かせる */
+      if(i===12) gLead(L+16,t,spb*4.0,0.11);      /* 決めの音だけ三度を足す */
+    }
+
+    /* 太鼓 */
+    if(i===0){ dCrash(t,0.32); dKick(t,0.85); }
+    if(i===1||i===2) dKick(t,0.55);
+    if(i===3){ dKick(t,0.80); dSnare(t,0.48); dCrash(t,0.18); }
+    if(i===6){ dKick(t,0.70); dSnare(t+half,0.40); }
+    if(i===8){ dKick(t,0.75); dCrash(t,0.20); }
+    if(i===10||i===11){                            /* 決めの前の連打 */
+      for(var k=0;k<4;k++) dSnare(t+spb*k/4, 0.22+((i-10)*4+k)*0.045);
+    }
+    if(i===12){ dCrash(t,0.42); dKick(t,0.90); dTom(t+half,180,0.45); dTom(t+spb,150,0.40); }
+    if(i===14) dKick(t,0.45);
+  }};
+
 var T_OVER={bpm:92, len:12, once:true,
   lead:[0,null,-2,null, -4,null,-5,null, -7,null,null,null],
   fn:function(i,t,spb){
@@ -1197,7 +1311,9 @@ var T_END=mkBand({bpm:126, gtr:"chug", drum:"rock", vv:0.31, gv:0.14,
 var curTrack=null, curName="", mStep=0, mNext=0, mTimer=null;
 
 function wantTrack(){
-  if(state==="demo")   return "clear";   /* 武器を手に入れたファンファーレ */
+  if(state==="opening") return (openT>=OP_LOGO)?"title":"op";  /* 題字で曲が変わる */
+  if(state==="win")    return "win";     /* ボスを倒した瞬間のファンファーレ */
+  if(state==="demo")   return "clear";   /* 武器を手に入れたときの短い曲 */
   if(state==="intro")  return "intro";   /* ボス登場は専用の曲（全ボス共通） */
   if(state==="clear")  return "clear";
   if(state==="over")   return "over";
@@ -1213,6 +1329,8 @@ function trackByName(n){
   if(n==="intro") return T_INTRO;
   if(n==="boss")  return T_BOSS;
   if(n==="final") return T_FINAL;
+  if(n==="op")    return T_OP;
+  if(n==="win")   return T_WIN;
   if(n==="clear") return T_CLEAR;
   if(n==="over")  return T_OVER;
   if(n==="end")   return T_END;
@@ -4398,6 +4516,132 @@ function mixc(a,b,k){
   return "rgb("+r+","+g2+","+bl+")";
 }
 
+/* ===== 46_win.js ===== */
+/* ============================ ボスを倒した瞬間 ============================
+   ボスが砕けたあと、特殊武器のお披露目に入る前に
+   ファンファーレ（T_WIN）と「BRAVO!」の一枚を挟む。
+   曲の長さ（16歩×bpm132＝約3.64秒）と画面の合図をそろえてある。
+     0フレーム   … 1発目のシンバル＝BRAVO! が飛び込んでくる
+     41フレーム  … 4歩目の決め＝倒したボスの名前が出る
+     164フレーム … 13歩目の一番高い音＝紙吹雪がはじけてスコアが出る
+   長さを変えるときは曲（20_audio.js の T_WIN）と両方直すこと。 */
+
+var winT=0, WIN_LEN=250, winKind="caries", winConf=[];
+var WIN_HIT1=41, WIN_HIT2=164;      /* 曲の決めの音と同じ瞬間 */
+
+function startVictory(kind){
+  winKind=kind; winT=0; winConf=[];
+  state="win"; hideScreens();
+  /* ボスは砕け終わっている。画面に残るものを片づけて主人公だけにする */
+  boss=null; ebullets=[]; pbullets=[]; enemies=[]; spawns=[];
+  player.inv=0; player.charge=0; player.vx=0;
+  keys.left=keys.right=keys.jump=keys.fire=keys.down=keys.slide=false;
+  flash=26; shake=14;
+}
+function skipWin(){
+  if(state==="win" && winT<WIN_LEN-18) winT=WIN_LEN-18;
+}
+
+/* 紙吹雪。画面の座標で持つ（カメラの外なので本編の parts とは別にする） */
+function winConfetti(n,fromTop){
+  var cols=["#ffd447","#2fd6c2","#ff4d80","#ffffff","#7fe3ff"];
+  for(var i=0;i<n;i++){
+    var a=Math.random()*Math.PI*2, sp=1.4+Math.random()*3.2;
+    winConf.push({
+      x: fromTop ? Math.random()*W : W/2+(Math.random()*80-40),
+      y: fromTop ? -6-Math.random()*40 : 96,
+      vx: fromTop ? (Math.random()*2-1)*0.7 : Math.cos(a)*sp,
+      vy: fromTop ? 0.8+Math.random()*1.2 : Math.sin(a)*sp-1.2,
+      sz: 2+(Math.random()*2|0), sp: 0.6+Math.random()*0.9,
+      col: cols[(Math.random()*cols.length)|0], t: Math.random()*10});
+  }
+}
+
+function updateWin(){
+  winT++;
+  var p=player;
+  p.inv=0; p.charge=0;
+  /* 主人公は勝ちどきに1回だけ跳ぶ。ほかの入力は切っておく */
+  keys.left=keys.right=keys.fire=keys.down=keys.slide=false;
+  keys.jump=(winT===WIN_HIT1-6);
+  update();
+
+  if(winT===1){ winConfetti(26,false); }
+  if(winT===WIN_HIT1){ flash=12; shake=8; winConfetti(22,false); }
+  if(winT===WIN_HIT2){ flash=18; shake=10; winConfetti(40,false); winConfetti(30,true); }
+  if(winT>WIN_HIT2 && winT%4===0) winConfetti(2,true);
+
+  for(var i=winConf.length-1;i>=0;i--){
+    var c=winConf[i];
+    c.t+=0.22; c.x+=c.vx+Math.sin(c.t)*0.35; c.y+=c.vy; c.vy+=0.07;
+    if(c.vy>c.sp*2.2) c.vy=c.sp*2.2;               /* ひらひら落ちる速さの上限 */
+    if(c.y>H+8) winConf.splice(i,1);
+  }
+  if(winT>=WIN_LEN) endVictory();
+}
+
+function drawWin(){
+  draw();                                   /* 本編の画面をそのまま下敷きにする */
+  var t=winT, S=BOSSES[winKind];
+
+  /* 後ろで回る光の筋 */
+  var ra=Math.min(1,t/26)*(t>WIN_HIT2?0.26:0.17);
+  ctx.save();
+  ctx.translate(W/2,96); ctx.rotate(t*0.005);
+  ctx.globalAlpha=ra; ctx.fillStyle="#ffd447";
+  for(var i=0;i<12;i++){
+    ctx.rotate(Math.PI*2/12);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(400,-30); ctx.lineTo(400,30);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore(); ctx.globalAlpha=1;
+
+  /* 画面を横切る帯。文字を読みやすくする */
+  var bq=Math.min(1,t/10);
+  ctx.globalAlpha=0.80*bq;
+  px(0,62,W,58,"rgba(4,18,30,.88)");
+  ctx.globalAlpha=1;
+  px(0,62,W*bq,3,"#ffd447");
+  px(W-W*bq,117,W*bq,3,"#ffd447");
+
+  /* BRAVO! ＝ 1発目のシンバルと同時に、大きく出てすぼまる */
+  var k=Math.min(1,t/11), sc=1+(1-k)*(1-k)*1.6;
+  ctx.save();
+  ctx.translate(W/2,104); ctx.scale(sc,sc);
+  etext("B R A V O !",0,7,33,"#8c1f42",k,"center");
+  etext("B R A V O !",0,3,33,"#0d3247",k,"center");
+  etext("B R A V O !",0,0,33,"#ffd447",k,"center");
+  ctx.restore();
+
+  /* 倒したボスの名前（曲の4歩目の決めと同時） */
+  if(t>WIN_HIT1){
+    var k2=Math.min(1,(t-WIN_HIT1)/12);
+    var oy=(1-k2)*(1-k2)*14;
+    etext(S.name+" を たおした！", W/2, 146+oy, 16, "#ffffff", k2, "center");
+    etext(S.title, W/2, 164+oy, 11, "#9fc4cb", k2*0.9, "center");
+  }
+  /* スコア（曲の決めの一番高い音と同時） */
+  if(t>WIN_HIT2){
+    var k3=Math.min(1,(t-WIN_HIT2)/10);
+    etext("SCORE  "+score, W/2, 192, 13, "#2fd6c2", k3, "center");
+  }
+
+  /* 紙吹雪は文字より前に降らせる */
+  for(var c2=0;c2<winConf.length;c2++){
+    var c=winConf[c2];
+    var wsz=Math.abs(Math.cos(c.t))*c.sz+1;      /* くるくる回って見える */
+    px(c.x,c.y,wsz,c.sz,c.col);
+  }
+
+  if(t>120 && Math.floor(t/16)%2===0)
+    etext("押すとスキップ", W-8, 210, 10, "#9fc4cb", 0.8, "right");
+}
+
+function endVictory(){
+  winConf=[];
+  startWeaponDemo(stageIdx+1);
+}
+
 /* ===== 47_intro.js ===== */
 /* ============================ ボス登場と武器のお披露目 ============================
    ・ステージを選んで始めると、まずボスの登場シーンが入る（ロックマン2の見せ方）
@@ -4650,6 +4894,352 @@ function endWeaponDemo(){
   updateWeaponBar();
 }
 
+/* ===== 48_title.js ===== */
+/* ============================ タイトルの一枚絵 ============================
+   ロックマンの箱絵のように、主人公を真ん中に9体のボスがぐるりと並ぶ集合絵を
+   キャンバスに描く。HTML側のタイトル画面（#s-title）は文字を持たず、
+   この絵の上にスタートボタンだけを重ねる。
+   絵はゲーム本体とまったく同じドット絵を使い回している（別素材を持たない）。 */
+
+var titleT=0;
+var TITLE_BACK=[                     /* 後ろの列：小さく・夜に沈める */
+  {k:"dragon", x: 66, y:196, s:0.66},
+  {k:"queen",  x:150, y:190, s:0.70},
+  {k:"tank",   x:330, y:192, s:0.68},
+  {k:"slime",  x:414, y:196, s:0.72}
+];
+var TITLE_FRONT=[                    /* 前の列：大きく・手前で重なる */
+  {k:"caries", x:110, y:222, s:0.98},
+  {k:"knight", x:186, y:214, s:0.92},
+  {k:"bomber", x:298, y:216, s:0.94},
+  {k:"wire",   x:370, y:222, s:0.98}
+];
+
+function updateTitle(){
+  titleT++;
+  /* しばらく触らずにいると、勝手にオープニングが流れる（ゲームセンターのデモと同じ）。
+     一度でも触って音が出せるようになったあとだけ。あそびかたを開いている間は出さない */
+  if(titleT>1200 && AC && !howOpen()) startOpening();
+}
+function howOpen(){
+  var d=document.getElementById("how");
+  return !!(d && d.open);
+}
+function gotoTitle(){
+  state="title"; titleT=0; setTag("");
+  var d=document.getElementById("how"); if(d) d.open=false;
+  showScreen("s-title");
+}
+
+/* ボス1体を「足元の位置」で置く。縮尺と上下のゆれを指定できる。
+   dim は奥行き＝薄く描くほど夜に沈んで見える（四角い影で塗らないこと） */
+function titleBoss(kind,cx,by,sc,dim,bob){
+  var S=BOSSES[kind];
+  ctx.save();
+  ctx.globalAlpha=1-(dim||0);
+  ctx.translate(cx-S.w*sc/2, by-S.h*sc+bob);
+  ctx.scale(sc,sc);
+  S.draw({x:0,y:0,w:S.w,h:S.h,face:(cx<240?1:-1),mouth:0,hurt:0,t:titleT,phase:1,
+          hp:S.hp,maxhp:S.hp,state:"ceil",wing:0,aura:0,squash:0,step:0,wheel:0},0,0,false);
+  ctx.restore();
+  ctx.globalAlpha=1;
+}
+
+function drawTitle(){
+  var t=titleT;
+
+  /* --- 夜空 --- */
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,"#0a2946"); g.addColorStop(0.55,"#0a2135"); g.addColorStop(1,"#04121e");
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  /* 星（決まった位置で瞬く） */
+  for(var i=0;i<46;i++){
+    var sx=(i*97)%W, sy=(i*53)%150;
+    var tw=0.35+0.65*Math.abs(Math.sin(t*0.02+i));
+    ctx.globalAlpha=tw*0.8;
+    px(sx,sy,1,1,(i%7===0)?"#ffd447":"#eaf7f6");
+  }
+  ctx.globalAlpha=1;
+
+  /* --- 後光 --- */
+  ctx.save();
+  ctx.translate(240,150); ctx.rotate(t*0.0016);
+  ctx.globalAlpha=0.085; ctx.fillStyle="#2fd6c2";
+  for(var r=0;r<14;r++){
+    ctx.rotate(Math.PI*2/14);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(430,-22); ctx.lineTo(430,22);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore(); ctx.globalAlpha=1;
+
+  /* --- 奥の城（大魔王の口腔）のシルエット --- */
+  ctx.fillStyle="#0b2740";
+  ctx.beginPath();
+  ctx.moveTo(150,200); ctx.lineTo(150,110);
+  ctx.quadraticCurveTo(240,44,330,110); ctx.lineTo(330,200);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#0e3050";
+  for(var w2=0;w2<5;w2++) px(168+w2*30,124+((w2%2)*10),16,26,"#0e3050");
+  px(236,86,8,26,"#0b2740");
+  /* 城のてっぺんの尖塔＝奥歯 */
+  ctx.fillStyle="#0b2740";
+  ctx.beginPath(); ctx.moveTo(214,88); ctx.quadraticCurveTo(240,40,266,88); ctx.closePath(); ctx.fill();
+
+  /* --- 地面（砂丘） --- */
+  ctx.fillStyle="#123049";
+  ctx.beginPath();
+  ctx.moveTo(0,H); ctx.lineTo(0,214);
+  ctx.quadraticCurveTo(120,182,240,196);
+  ctx.quadraticCurveTo(360,210,W,188); ctx.lineTo(W,H);
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha=0.5; ctx.fillStyle="#1a4260";
+  ctx.beginPath();
+  ctx.moveTo(0,H); ctx.lineTo(0,226);
+  ctx.quadraticCurveTo(160,206,300,218);
+  ctx.quadraticCurveTo(400,226,W,210); ctx.lineTo(W,H);
+  ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
+
+  /* --- 大魔王（いちばん奥・いちばん大きい） --- */
+  titleBoss("mushiburn",240,166,1.20,0.22,Math.sin(t*0.022)*2);
+
+  /* --- 後ろの列 --- */
+  for(var b=0;b<TITLE_BACK.length;b++){
+    var o=TITLE_BACK[b];
+    titleBoss(o.k,o.x,o.y,o.s,0.28,Math.sin(t*0.03+b)*1.6);
+  }
+  /* --- 前の列 --- */
+  for(var b2=0;b2<TITLE_FRONT.length;b2++){
+    var o2=TITLE_FRONT[b2];
+    titleBoss(o2.k,o2.x,o2.y,o2.s,0,Math.sin(t*0.035+b2*1.7)*1.8);
+  }
+
+  /* --- 主人公（真ん中の手前） --- */
+  var hb=Math.sin(t*0.04)*1.2;
+  var sp=ctx.createRadialGradient(240,176,10,240,176,96);   /* 主人公だけ光を当てる */
+  sp.addColorStop(0,"rgba(127,227,255,.20)"); sp.addColorStop(1,"rgba(127,227,255,0)");
+  ctx.fillStyle=sp; ctx.fillRect(144,86,192,150);
+  ctx.fillStyle="rgba(4,18,30,.45)";
+  ctx.beginPath(); ctx.ellipse(240,215,36,7,0,0,Math.PI*2); ctx.fill();
+  endHero(240-12*3.3/2-5, 214-21*3.3+hb, 1, 0, 3.3);
+
+  /* 足元の砂ぼこり */
+  for(var d=0;d<7;d++){
+    var dt=(t*0.6+d*29)%160;
+    ctx.globalAlpha=Math.max(0,0.28-dt/560);
+    px(150+((d*67)%180)+dt*0.35, 215-dt*0.10, 2+(d%2), 1, "#7d9bb0");
+  }
+  ctx.globalAlpha=1;
+
+  /* --- 題字 --- */
+  drawLogo(240, 46, 1, 1);
+
+  /* 四隅を落とす（ポスターらしく見せる） */
+  var vg=ctx.createRadialGradient(240,130,110,240,130,300);
+  vg.addColorStop(0,"rgba(4,18,30,0)"); vg.addColorStop(1,"rgba(4,18,30,.55)");
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+
+  /* 下を暗くして、上に重ねるボタンを読みやすくする */
+  var gd=ctx.createLinearGradient(0,196,0,H);
+  gd.addColorStop(0,"rgba(4,18,30,0)"); gd.addColorStop(0.55,"rgba(4,18,30,.55)");
+  gd.addColorStop(1,"rgba(4,18,30,.90)");
+  ctx.fillStyle=gd; ctx.fillRect(0,196,W,H-196);
+}
+
+/* --- 題字（オープニングでも使う） -----------------------------------------
+   「デンタル」＝白、「マン」＝ピンク。下に影を2枚敷いて厚みを出す。
+   sc は大きさ、a は濃さ。 */
+function drawLogo(cx,cy,sc,a){
+  var s1="デンタル", s2="マン", size=40*sc;
+  ctx.save();
+  ctx.font='bold '+size+'px "Arial Black", Impact, system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif';
+  ctx.textAlign="left";
+  var w1=ctx.measureText(s1).width, w2=ctx.measureText(s2).width;
+  var x0=cx-(w1+w2)/2;
+  ctx.globalAlpha=a;
+  var lay=[[0,7*sc,"#062432","#062432"],[0,4*sc,"#12796f","#8c1f42"],[0,0,"#ffffff","#ff4d80"]];
+  for(var i=0;i<lay.length;i++){
+    ctx.fillStyle=lay[i][2]; ctx.fillText(s1,x0+lay[i][0],cy+lay[i][1]);
+    ctx.fillStyle=lay[i][3]; ctx.fillText(s2,x0+w1+lay[i][0],cy+lay[i][1]);
+  }
+  ctx.restore(); ctx.globalAlpha=1;
+  etext("D E N T A L   M A N", cx, cy-30*sc, 11*sc, "#2fd6c2", a*0.95, "center");
+  etext("フッ素ブラスターで、むし歯を撃ちぬけ。", cx, cy+24*sc, 11*sc, "#cfe6e4", a*0.9, "center");
+}
+
+/* ===== 49_opening.js ===== */
+/* ============================ オープニング ============================
+   ロックマン2のタイトルOPと同じ運び。
+     1 あらすじの文章がゆっくり流れる（星空）
+     2 夜の街のビルを下から上へなめる
+     3 屋上に立つデンタルマン。風が吹き、題字が飛び込んでくる
+   曲は 1〜2 が T_OP（静かな前奏）、題字の瞬間に T_TITLE へ切り替わる。
+   どのボタンでも飛ばせる。飛ばすとタイトル画面へ。 */
+
+var openT=0;
+var OP_TEXT_END=820;          /* あらすじの終わり */
+var OP_PAN_END=1240;          /* ビルをなめ終わる */
+var OP_LOGO=1350;             /* 題字が入る瞬間（ここで曲が変わる） */
+var OP_LEN=1620;
+var OP_LINES=[
+  "西暦 20XX年。",
+  "あまい物と みがき残しがあふれ、",
+  "街じゅうの歯が むし歯菌におそわれた。",
+  "",
+  "白衣をまとい、たったひとりで立ち上がった",
+  "ヒーローがいる。",
+  "",
+  "その名は ―― デンタルマン。",
+  "",
+  "フッ素ブラスターを片手に、",
+  "8体の魔物が待つ街へ 走り出す。"
+];
+
+function startOpening(){
+  audioInit();
+  state="opening"; openT=0; hideScreens();
+}
+/* 1回目に押したら題字まで飛ぶ（曲もそこで変わる）。もう一度押すとタイトルへ */
+function skipOpening(){
+  if(state!=="opening") return;
+  if(openT<OP_LOGO-1) openT=OP_LOGO-1;
+  else endOpening();
+}
+function updateOpening(){
+  openT++;
+  if(openT>=OP_LEN) endOpening();
+}
+function endOpening(){
+  state="title"; titleT=0; showScreen("s-title");
+}
+
+/* 星空。1と3で使う */
+function opStars(t,n,drift){
+  for(var i=0;i<n;i++){
+    var sx=((i*97)+(drift?t*0.12:0))%W, sy=(i*61)%H;
+    ctx.globalAlpha=(0.3+0.7*Math.abs(Math.sin(t*0.02+i)))*0.85;
+    px(sx,sy,1,1,(i%9===0)?"#ffd447":"#eaf7f6");
+  }
+  ctx.globalAlpha=1;
+}
+
+function drawOpening(){
+  var t=openT;
+  ctx.fillStyle="#04121e"; ctx.fillRect(0,0,W,H);
+
+  /* ---------------- 1 あらすじ ---------------- */
+  if(t<OP_TEXT_END){
+    opStars(t,60,false);
+    var top=H+10-(t-40)*0.62;                 /* 下から上へゆっくり流れる */
+    for(var i=0;i<OP_LINES.length;i++){
+      var y=top+i*22;
+      if(y<-10||y>H+10) continue;
+      var a=1;
+      if(y<58) a=Math.max(0,(y-24)/34);       /* 上と下でうすくなる */
+      if(y>H-46) a=Math.max(0,(H-4-y)/42);
+      etext(OP_LINES[i], W/2, y, 15, "#eaf7f6", a*Math.min(1,t/40), "center");
+    }
+    if(t>60 && Math.floor(t/24)%2===0)
+      etext("押すとスキップ", W-8, H-10, 10, "#5d8d99", 0.9, "right");
+    return;
+  }
+
+  /* ---------------- 2 夜の街をなめ上げる ----------------
+     カメラが地上から屋上へ上がっていく。近いもの（ビル）ほど速く下へ流れ、
+     遠いもの（街並み・月・星）はゆっくり流す＝高さが出る。 */
+  var panT=Math.min(1,(t-OP_TEXT_END)/(OP_PAN_END-OP_TEXT_END));
+  var e=panT<0.86 ? panT/0.86 : 1;
+  var ease=e*e*(3-2*e);                       /* ゆっくり動きだして、すっと止まる */
+
+  /* 星と月：上がるほど濃く・高くなる */
+  ctx.globalAlpha=0.35+0.65*ease; opStars(t,50,false); ctx.globalAlpha=1;
+  var moonY=34+(1-ease)*150;
+  ctx.globalAlpha=0.16; ctx.fillStyle="#f6f0d0";
+  ctx.beginPath(); ctx.arc(400,moonY,27,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=0.95;
+  ctx.beginPath(); ctx.arc(400,moonY,17,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
+
+  /* 遠くの街並み（ゆっくり沈む） */
+  var cityY=232+ease*200;
+  for(var b=0;b<10;b++){
+    var bx=b*52-8, bw=34+((b*13)%16), bh=90+((b*37)%130);
+    px(bx, cityY-bh, bw, bh+60, "#0a2338");
+    for(var k=0;k<7;k++){
+      if(((b*7+k*3)%4)===0) continue;
+      var wy=cityY-bh+10+k*16;
+      if(wy>cityY-6) break;
+      px(bx+5+((k%3)*11), wy, 5, 7, (k%5===0)?"#ffd447":"#17496b");
+    }
+  }
+  /* 通り（始まりは地上にいる） */
+  var stY=250+ease*430;
+  if(stY<H+20){
+    px(0,stY,W,H-stY+20,"#071c2c");
+    px(0,stY,W,2,"#17496b");
+    for(var l=0;l<6;l++){ px(28+l*86,stY-26,3,26,"#17496b"); px(24+l*86,stY-30,11,4,"#ffd447"); }
+  }
+
+  /* 手前の大きなビル＝この屋上に主人公が立つ（速く沈む＝近い） */
+  var roofY=176+(1-ease)*860;
+  var TX=150, TW=180;
+  px(TX,roofY,TW,1300,"#123049");
+  px(TX,roofY,TW,4,"#2fd6c2");
+  px(TX-12,roofY-7,TW+24,9,"#0e3050");
+  px(TX-12,roofY-7,TW+24,2,"#5d8d99");
+  for(var fy=0;fy<34;fy++){
+    var yy=roofY+22+fy*32;
+    if(yy>H+40) break;
+    if(yy<-40) continue;
+    for(var fx=0;fx<5;fx++){
+      var lit=((fy*5+fx*3+((fy*fx)%7))%4)!==0;
+      px(TX+18+fx*32, yy, 18, 20, lit?"#7fe3ff":"#0b2740");
+      if(lit){ ctx.globalAlpha=0.22; px(TX+15+fx*32, yy-3, 24, 26, "#7fe3ff"); ctx.globalAlpha=1; }
+    }
+  }
+  /* 医院の看板 */
+  var sgY=roofY+66;
+  if(sgY>-60 && sgY<H+40){
+    px(TX+34,sgY,112,48,"#0a2946");
+    px(TX+36,sgY+2,108,44,"#123049");
+    etext("DENTAL", TX+90, sgY+22, 14, "#2fd6c2", 0.95, "center");
+    etext("CLINIC", TX+90, sgY+40, 14, "#ffd447", 0.95, "center");
+  }
+
+  /* 屋上に立つ主人公（上がりきる手前から見えてくる） */
+  var heroA=Math.max(0,Math.min(1,(ease-0.55)/0.3));
+  if(heroA>0){
+    ctx.globalAlpha=heroA;
+    endHero(240-12*2.8/2-5, roofY-7-21*2.8, 1, 0, 2.8);
+    ctx.globalAlpha=1;
+    /* 屋上の風 */
+    for(var w=0;w<14;w++){
+      var wt=(t*3.6+w*37)%(W+140);
+      ctx.globalAlpha=heroA*(0.18+0.14*Math.sin(t*0.1+w));
+      px(W+60-wt, 40+((w*29)%120), 14+((w*7)%18), 1, "#7fe3ff");
+    }
+    ctx.globalAlpha=1;
+  }
+
+  /* ---------------- 3 題字 ---------------- */
+  if(t>=OP_LOGO){
+    var lt=t-OP_LOGO;
+    if(lt<6){ ctx.fillStyle="rgba(255,255,255,"+(1-lt/6)*0.85+")"; ctx.fillRect(0,0,W,H); }
+    ctx.globalAlpha=Math.min(0.72,lt/10*0.72);
+    px(0,0,W,H,"#04121e");
+    ctx.globalAlpha=1;
+    var k=Math.min(1,lt/9), sc=1+(1-k)*(1-k)*2.2;
+    drawLogo(240, 116, sc, k);
+    if(lt>52){
+      ctx.globalAlpha=1;
+      if(Math.floor(lt/20)%2===0)
+        etext("PRESS  START", W/2, 214, 17, "#ffd447", 1, "center");
+    }
+  } else if(t>OP_TEXT_END+40 && Math.floor(t/24)%2===0){
+    etext("押すとスキップ", W-8, H-10, 10, "#5d8d99", 0.9, "right");
+  }
+}
+
 /* ===== 50_main.js ===== */
 /* ============================ 入力 ============================ */
 var keys={left:false,right:false,jump:false,fire:false,down:false,slide:false};
@@ -4664,7 +5254,9 @@ function pressKey(k){
   skipCutscene();            /* 登場シーン・実演はどのボタンでも飛ばせる */
 }
 function skipCutscene(){
-  if(state==="intro") skipIntro();
+  if(state==="opening") skipOpening();
+  else if(state==="intro") skipIntro();
+  else if(state==="win") skipWin();
   else if(state==="demo") skipDemo();
   else if(state==="ending") skipEnding();
 }
@@ -5103,14 +5695,16 @@ function onBossDown(){
   if(stageIdx===8){
     startEnding();
   } else {
-    /* 新しい武器を実際に使ってみせてから、クリア画面へ */
+    /* ファンファーレと BRAVO! → 新しい武器のお披露目 → クリア画面 */
     updateWeaponBar();
-    startWeaponDemo(stageIdx+1);
+    startVictory(boss.kind);
   }
 }
 
 /* ============================ ボタン ============================ */
 document.getElementById("btn-start").addEventListener("click",gotoSelect);
+document.getElementById("btn-op").addEventListener("click",startOpening);
+document.getElementById("btn-title").addEventListener("click",gotoTitle);
 document.getElementById("btn-go").addEventListener("click",function(){ startGame(true); });
 document.getElementById("btn-back").addEventListener("click",gotoSelect);
 document.getElementById("btn-back2").addEventListener("click",gotoSelect);
@@ -5138,7 +5732,8 @@ showScreen("s-title");
 updateWeaponBar();
 
 /* 動作確認用の入口（#ending でエンディング、#allclear で8体クリア済みに） */
-if(location.hash==="#ending"){ audioInit(); startEnding(); }
+if(location.hash==="#opening"){ startOpening(); }
+else if(location.hash==="#ending"){ audioInit(); startEnding(); }
 else if(location.hash==="#allclear"){
   for(var ci=0;ci<8;ci++) cleared[ci]=true;
   saveProgress(); gotoSelect();
@@ -5153,14 +5748,20 @@ function loop(now){
   acc+=Math.min(dt,100);
   while(acc>=16.6667){
     if(state==="play") update();
+    else if(state==="opening") updateOpening();
+    else if(state==="title") updateTitle();
     else if(state==="ending") updateEnding();
     else if(state==="intro") updateIntro();
+    else if(state==="win") updateWin();
     else if(state==="demo") updateDemo();
     taps.jump=false; taps.slide=false;
     acc-=16.6667;
   }
-  if(state==="ending") drawEnding();
+  if(state==="opening") drawOpening();
+  else if(state==="title") drawTitle();
+  else if(state==="ending") drawEnding();
   else if(state==="intro") drawIntro();
+  else if(state==="win") drawWin();
   else if(state==="demo") drawDemo();
   else draw();
   requestAnimationFrame(loop);

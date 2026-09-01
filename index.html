@@ -467,6 +467,29 @@
   }
   .how[open] summary{margin-bottom:6px;background:none;border:0;padding:0;}
   .how .keys{margin:0;}
+
+  /* ---- ボスを選んだ瞬間の演出 ---- */
+  #pickflash{
+    position:absolute;inset:0;pointer-events:none;z-index:5;
+    background:radial-gradient(60% 60% at 50% 45%, rgba(255,255,255,.9), rgba(255,212,71,.35) 45%, rgba(255,255,255,0) 70%);
+    opacity:0;
+  }
+  #pickflash.on{animation:pickflash .62s ease-out;}
+  @keyframes pickflash{
+    0%{opacity:0;} 22%{opacity:.55;} 100%{opacity:0;}
+  }
+  #grid.picking .cell{transition:opacity .16s, filter .16s;}
+  #grid.picking .cell:not(.picked){opacity:.28;filter:grayscale(.7);}
+  .cell.picked{
+    z-index:3;
+    animation:pickcell .62s ease-out;
+    border-color:var(--gold) !important;
+  }
+  @keyframes pickcell{
+    0%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,212,71,.9);}
+    35%{transform:scale(1.16);box-shadow:0 0 0 6px rgba(255,212,71,.55),0 0 24px rgba(255,212,71,.8);}
+    100%{transform:scale(1.05);box-shadow:0 0 0 22px rgba(255,212,71,0);}
+  }
 </style>
 
 <div id="app">
@@ -481,6 +504,8 @@
 
   <div id="frame">
     <canvas id="cv" width="480" height="272"></canvas>
+
+    <div id="pickflash"></div>
 
     <div class="screen on art" id="s-title">
       <div class="t-btns">
@@ -506,13 +531,7 @@
       <button class="go ghost" id="btn-title">タイトルへ</button>
     </div>
 
-    <div class="screen" id="s-stage">
-      <p class="kicker" id="stg-kicker">Stage</p>
-      <p class="big" id="stg-name">STAGE</p>
-      <p class="sub" id="stg-sub"></p>
-      <button class="go" id="btn-go">Start</button>
-      <button class="go ghost" id="btn-back">ボス選択にもどる</button>
-    </div>
+    
 
     <div class="screen" id="s-end">
       <p class="kicker">All Clear</p>
@@ -939,7 +958,14 @@ var SFX={
   boom:function(){noise(0.3,0.34,300); beep(90,0.3,"sawtooth",0.2,40);},
   dash:function(){noise(0.18,0.14,600);},
   laser:function(){beep(1200,0.3,"sawtooth",0.16,180);},
-  charge3:function(){beep(220,0.34,"sawtooth",0.26,1800); setTimeout(function(){beep(1600,0.16,"square",0.18,600);},90);}
+  charge3:function(){beep(220,0.34,"sawtooth",0.26,1800); setTimeout(function(){beep(1600,0.16,"square",0.18,600);},90);},
+  /* ボスを選んだ瞬間の決定音（ピロリロリン → ドン） */
+  select:function(){
+    beep(660,0.07,"square",0.20);
+    setTimeout(function(){beep(880,0.07,"square",0.20);},70);
+    setTimeout(function(){beep(1320,0.09,"square",0.22);},140);
+    setTimeout(function(){beep(1760,0.22,"triangle",0.26); noise(0.35,0.22,900);},230);
+  }
 };
 
 /* ============================ 音楽 ============================
@@ -5095,13 +5121,18 @@ var OP_LINES=[
   "8体の魔物が待つ街へ 走り出す。"
 ];
 
-function startOpening(){
-  audioInit();
-  state="opening"; openT=0; hideScreens();
+/* silent を付けて呼ぶと、音を出す許可を求めずにそのまま流し始める
+   （ページを開いた瞬間の自動再生。ブラウザは1回触るまで音を鳴らせない決まりのため） */
+var opSoundHint=false;
+function startOpening(silent){
+  if(!silent) audioInit();
+  state="opening"; openT=0; opSoundHint=(!!silent && !AC); hideScreens();
 }
-/* 1回目に押したら題字まで飛ぶ（曲もそこで変わる）。もう一度押すとタイトルへ */
+/* 自動再生のときだけ、最初のひと押しは「音を出す合図」に使う（飛ばさない）。
+   そのあとは 1回目で題字まで飛び、もう一度押すとタイトルへ。 */
 function skipOpening(){
   if(state!=="opening") return;
+  if(opSoundHint){ opSoundHint=false; audioInit(); return; }
   if(openT<OP_LOGO-1) openT=OP_LOGO-1;
   else endOpening();
 }
@@ -5139,8 +5170,7 @@ function drawOpening(){
       if(y>H-46) a=Math.max(0,(H-4-y)/42);
       etext(OP_LINES[i], W/2, y, 15, "#eaf7f6", a*Math.min(1,t/40), "center");
     }
-    if(t>60 && Math.floor(t/24)%2===0)
-      etext("押すとスキップ", W-8, H-10, 10, "#5d8d99", 0.9, "right");
+    opHint(t);
     return;
   }
 
@@ -5235,9 +5265,16 @@ function drawOpening(){
       if(Math.floor(lt/20)%2===0)
         etext("PRESS  START", W/2, 214, 17, "#ffd447", 1, "center");
     }
-  } else if(t>OP_TEXT_END+40 && Math.floor(t/24)%2===0){
-    etext("押すとスキップ", W-8, H-10, 10, "#5d8d99", 0.9, "right");
+  } else if(t>OP_TEXT_END+40){
+    opHint(t);
   }
+}
+
+/* 画面のすみの案内。まだ音が出せないときは、それを先に伝える */
+function opHint(t){
+  if(t<60 || Math.floor(t/24)%2!==0) return;
+  if(opSoundHint) etext("画面を1回押すと音が出ます", W-8, H-10, 12, "#ffd447", 1, "right");
+  else            etext("押すとスキップ", W-8, H-10, 10, "#5d8d99", 0.9, "right");
 }
 
 /* ===== 50_main.js ===== */
@@ -5569,7 +5606,7 @@ function finalOpen(){
 }
 
 /* ============================ 画面 ============================ */
-var SCREENS=["s-title","s-select","s-stage","s-over","s-clear","s-pause","s-end"];
+var SCREENS=["s-title","s-select","s-over","s-clear","s-pause","s-end"];
 function showScreen(id){
   SCREENS.forEach(function(s){
     document.getElementById(s).classList.toggle("on", s===id);
@@ -5639,7 +5676,7 @@ function buildGrid(){
     cell.addEventListener("click",function(){
       audioInit();
       if(lock){ document.getElementById("sel-msg").textContent="まだ開かない。ほかの8体を先にたおす。"; return; }
-      openStage(i);
+      openStage(i,cell);
     });
     g.appendChild(cell);
   });
@@ -5656,15 +5693,27 @@ function gotoSelect(){
   showScreen("s-select");
 }
 
-/* --- ステージ開始前 --- */
-var pendingStage=0;
-function openStage(i){
+/* --- ボスを選んだとき ---------------------------------------------------
+   説明の画面は挟まない（院長指示 2026-09-01）。
+   選んだ絵が大きく光り、ほかが沈み、決定音が鳴ってから、そのまま登場シーンへ。 */
+var pendingStage=0, picking=false;
+function openStage(i,cell){
+  if(picking) return;
+  picking=true;
   pendingStage=i;
-  var lv=LEVELS[i], S=BOSSES[lv.boss];
-  document.getElementById("stg-kicker").textContent="Stage "+(i===8?"FINAL":("0"+(i+1)))+" — "+lv.sub;
-  document.getElementById("stg-name").textContent=lv.name;
-  document.getElementById("stg-sub").textContent="ボス： "+S.name+"（"+S.title+"）";
-  state="stage"; showScreen("s-stage");
+  SFX.select();
+  var g=document.getElementById("grid");
+  if(g) g.classList.add("picking");
+  if(cell) cell.classList.add("picked");
+  var fl=document.getElementById("pickflash");
+  if(fl){ fl.classList.remove("on"); void fl.offsetWidth; fl.classList.add("on"); }
+  setTimeout(function(){
+    picking=false;
+    if(g) g.classList.remove("picking");
+    if(cell) cell.classList.remove("picked");
+    if(fl) fl.classList.remove("on");
+    startGame(true);
+  },620);
 }
 /* withIntro を付けたときだけボスの登場シーンを見せる。
    やり直し（Retry・もう一度）では毎回は出さない。 */
@@ -5705,8 +5754,6 @@ function onBossDown(){
 document.getElementById("btn-start").addEventListener("click",gotoSelect);
 document.getElementById("btn-op").addEventListener("click",startOpening);
 document.getElementById("btn-title").addEventListener("click",gotoTitle);
-document.getElementById("btn-go").addEventListener("click",function(){ startGame(true); });
-document.getElementById("btn-back").addEventListener("click",gotoSelect);
 document.getElementById("btn-back2").addEventListener("click",gotoSelect);
 document.getElementById("btn-retry").addEventListener("click",function(){ startGame(false); });
 document.getElementById("btn-again").addEventListener("click",function(){ startGame(false); });
@@ -5727,9 +5774,9 @@ loadProgress();
 refillWeapons();
 loadStage(0);
 reset();
-state="title";
-showScreen("s-title");
 updateWeaponBar();
+/* 開いた瞬間からオープニングを流す（音は最初のひと押しで出る） */
+startOpening(true);
 
 /* 動作確認用の入口（#ending でエンディング、#allclear で8体クリア済みに） */
 if(location.hash==="#opening"){ startOpening(); }

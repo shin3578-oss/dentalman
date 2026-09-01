@@ -1429,6 +1429,7 @@ function wantTrack(){
   if(state==="clear")  return "clear";
   if(state==="over")   return "over";
   if(state==="ending") return "end";
+  if(state==="select") return "select";   /* ボスを選ぶ画面 */
   if(state==="play"||state==="pause"){
     if(boss && boss.dead===0) return (stageIdx===8)?"final":"boss";
     return "s"+stageIdx;
@@ -1445,6 +1446,7 @@ function trackByName(n){
   if(n==="clear") return T_CLEAR;
   if(n==="over")  return T_OVER;
   if(n==="end")   return T_END;
+  if(n==="select") return T_SELECT;
   if(n.charAt(0)==="s") return T_STAGE[parseInt(n.slice(1),10)];
   return null;
 }
@@ -1704,6 +1706,26 @@ var T_END=mkSong({bpm:126, gtr:"chug", drum:"rock", vv:0.31, gv:0.14, bass:"run8
              22,null,19,null, 17,null,15,null, 14,null,15,null, 15,null,null,null],
        lead2:[null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,null,
               null,null,null,null, null,null,null,null, 24,null,22,null, 19,null,null,null]}
+  }});
+
+/* --- ボス選択の画面（ロックマン2のステージセレクトの雰囲気） ------------
+   明るく速い行進曲。同じ音を刻む頭のひと押しでぐいぐい進む感じにしてある。
+   選ぶ画面は長く眺めるので、ほかの曲と同じ 20小節（約24秒）でひと回りする。 */
+var T_SELECT=mkSong({bpm:158, gtr:"drive", drum:"double", gv:0.16, vv:0.29, bass:"oct",
+  sec:{
+    I:{chord:[3,3], gtr:"arp", drum:"lite", bass:"run8", inst:true, crash:false, fill:false,
+       lead:[3,7,10,15, 19,15,10,7, 5,10,14,17, 22,19,17,15]},
+    A:{chord:[3,0,-4,-2],
+       lead:[15,15,15,14, 12,null,10,null, 12,12,12,10, 12,null,15,null,
+             17,17,17,15, 12,null,10,null, 14,14,12,10, 12,null,null,null]},
+    B:{chord:[-4,-2,7,0], gtr:"chug", drum:"rock", bass:"run8",
+       lead:[12,null,15,null, 17,null,15,null, 14,null,17,null, 19,null,17,null,
+             19,null,17,15, 14,null,12,null, 12,null,10,null, 7,null,null,null]},
+    C:{chord:[-4,-2,3,3], sabi:true, vv:0.31,
+       lead:[20,null,20,19, 20,null,22,null, 22,null,22,20, 19,null,17,null,
+             19,null,17,19, 22,null,19,null, 15,null,17,null, 15,null,null,null],
+       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,null,
+              null,null,null,null, null,null,null,null, 22,null,24,null, 22,null,null,null]}
   }});
 
 /* ===== 22_band.js ===== */

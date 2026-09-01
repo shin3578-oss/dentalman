@@ -885,8 +885,13 @@ function audioInit(){
     buildBand();
     musicStart();
   }
-  if(AC.state==="suspended") AC.resume();
+  if(AC.state==="suspended"){
+    var r=AC.resume();                 /* 触る前に呼ぶと断られることがある。断られても落とさない */
+    if(r && r.catch) r.catch(function(){});
+  }
 }
+/* いま実際に音が出せるか。開いた瞬間の自動再生が通ったかどうかの判定に使う */
+function audioReady(){ return !!(AC && AC.state==="running"); }
 function setMuted(v){
   muted=!!v;
   if(master) master.gain.value=muted?0:0.55;
@@ -5121,12 +5126,14 @@ var OP_LINES=[
   "8体の魔物が待つ街へ 走り出す。"
 ];
 
-/* silent を付けて呼ぶと、音を出す許可を求めずにそのまま流し始める
-   （ページを開いた瞬間の自動再生。ブラウザは1回触るまで音を鳴らせない決まりのため） */
+/* 開いた瞬間から曲も鳴らしにいく。
+   ただしブラウザによっては「1回も触っていないページ」の音を止める決まりがあるので、
+   止められたときだけ「押すと音が出ます」と出し、最初のひと押しで鳴らす（そのひと押しでは飛ばさない）。
+   パソコンのChromeは、何度か音つきで開いたページなら自動再生を許すようになる。 */
 var opSoundHint=false;
 function startOpening(silent){
-  if(!silent) audioInit();
-  state="opening"; openT=0; opSoundHint=(!!silent && !AC); hideScreens();
+  audioInit();
+  state="opening"; openT=0; opSoundHint=(!!silent && !audioReady()); hideScreens();
 }
 /* 自動再生のときだけ、最初のひと押しは「音を出す合図」に使う（飛ばさない）。
    そのあとは 1回目で題字まで飛び、もう一度押すとタイトルへ。 */
@@ -5138,6 +5145,8 @@ function skipOpening(){
 }
 function updateOpening(){
   openT++;
+  /* 自動再生の許可が遅れて下りることがある。鳴り出したら案内を引っこめる */
+  if(opSoundHint && audioReady()) opSoundHint=false;
   if(openT>=OP_LEN) endOpening();
 }
 function endOpening(){

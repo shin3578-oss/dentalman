@@ -959,6 +959,28 @@ var SFX={
                       setTimeout(function(){beep(1480,0.12,"square",0.2);},140);},
   bossHit:function(){noise(0.09,0.24,700);},
   bossDie:function(){noise(1.1,0.38,420);},
+  /* やられたとき（穴に落ちた・体力が尽きた の両方）。
+     曲をその場で止めて「バン バン バン バン」と4発、だんだん小さく低くなって消えていく。
+     曲は場面が変わったとき（＝GAME OVER画面）に musicTick が自動で戻す */
+  playerDie:function(){
+    hushMusic();
+    if(!AC) return;
+    var t0=AC.currentTime+0.01, i, t, v, f, o, g;
+    for(i=0;i<4;i++){
+      t=t0+i*0.17;
+      v=0.42*Math.pow(0.72,i);        /* 1発ごとに小さく＝フェードアウト */
+      f=150*Math.pow(0.84,i);         /* 音程も1発ごとに下がる */
+      o=AC.createOscillator(); g=AC.createGain();
+      o.type="sine";
+      o.frequency.setValueAtTime(f*2.2,t);
+      o.frequency.exponentialRampToValueAtTime(f*0.6,t+0.22);
+      g.gain.setValueAtTime(v,t);
+      g.gain.exponentialRampToValueAtTime(0.0008,t+0.30);
+      o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t+0.32);
+      noise(0.09,v*0.55,1200,t,sfxGain,0.8);   /* 打撃の芯 */
+    }
+    noise(0.9,0.10,300,t0+0.68,sfxGain,0.6);   /* 最後に尾を引いて消える */
+  },
   gate:function(){beep(120,0.5,"square",0.24,60);},
   boom:function(){noise(0.3,0.34,300); beep(90,0.3,"sawtooth",0.2,40);},
   dash:function(){noise(0.18,0.14,600);},
@@ -1421,6 +1443,27 @@ var T_OVER={bpm:92, len:12, once:true,
 
 var curTrack=null, curName="", mStep=0, mNext=0, mTimer=null;
 
+/* やられたときに曲だけを黙らせる。
+   musicTick は最大0.3秒先まで音を予約しているので、tick を止めるだけでは
+   予約ぶんが鳴り残る。musicGain を0.06秒で落として尾も消す。 */
+var musicHush=false;
+function hushMusic(){
+  musicHush=true;
+  if(!AC||!musicGain) return;
+  var t=AC.currentTime;
+  musicGain.gain.cancelScheduledValues(t);
+  musicGain.gain.setValueAtTime(musicGain.gain.value,t);
+  musicGain.gain.linearRampToValueAtTime(0,t+0.06);
+}
+function unhushMusic(){
+  musicHush=false;
+  if(!AC||!musicGain) return;
+  var t=AC.currentTime;
+  musicGain.gain.cancelScheduledValues(t);
+  musicGain.gain.setValueAtTime(0,t);
+  musicGain.gain.linearRampToValueAtTime(0.80,t+0.15);
+}
+
 function wantTrack(){
   if(state==="opening") return (openT>=OP_LOGO)?"title":"op";  /* 題字で曲が変わる */
   if(state==="win")    return "win";     /* ボスを倒した瞬間のファンファーレ */
@@ -1461,8 +1504,9 @@ function musicTick(){
   if(want!==curName){
     curName=want; curTrack=trackByName(want); mStep=0;
     mNext=Math.max(mNext, AC.currentTime+0.05);
+    if(musicHush) unhushMusic();   /* 場面が変わったら（＝GAME OVER画面など）曲を戻す */
   }
-  if(!curTrack||muted){ mNext=Math.max(mNext,AC.currentTime+0.05); return; }
+  if(!curTrack||muted||musicHush){ mNext=Math.max(mNext,AC.currentTime+0.05); return; }
   var spb=30/curTrack.bpm;                 /* 8分音符の長さ（秒） */
   var guard=0;
   while(mNext < AC.currentTime+0.3 && guard++<64){
@@ -2503,7 +2547,7 @@ function killPlayer(){
   p.hp=0; p.dead=86; p.vx=0; p.vy=0;
   burstDeath(p.x+p.w/2, Math.min(p.y+p.h/2, H-24));   /* 画面の中で爆発させる */
   flash=6; shake=12;
-  SFX.bossDie();
+  SFX.playerDie();                                   /* 曲を止めて「バンバンバンバン」 */
 }
 
 function hurtPlayer(dmg,respawn,srcX){
@@ -2519,7 +2563,7 @@ function hurtPlayer(dmg,respawn,srcX){
     p.hp=0; p.dead=86;
     burstDeath(p.x+p.w/2,p.y+p.h/2);      /* 中心から放射状に飛び散る */
     flash=6; shake=10;
-    SFX.bossDie();
+    SFX.playerDie();                      /* 落ちたときと同じ。曲を止めて「バンバンバンバン」 */
   }
 }
 

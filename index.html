@@ -516,7 +516,7 @@
         <summary>あそびかた</summary>
         <p class="keys">
           <kbd>←</kbd><kbd>→</kbd> 移動 ／ <kbd>X</kbd> ジャンプ ／ <kbd>Space</kbd> ショット ／ <kbd>↑</kbd><kbd>↓</kbd> <b>はしごの上り下り</b><br>
-          溜め撃ちは<b>4段階</b>（長く押すほど強い）。<b>手を離しても溜めたまま</b>なので、もう一度押したときに出る。<b>特殊武器も同じように溜められる</b>（エネルギーは3倍使う）<br>プールの面は<b>泳げます</b>（ジャンプで水をかく） ／ 公園の緑の台は<b>トランポリン</b> ／ 発電所の<b>電気は消えている隙</b>に通る ／ <kbd>C</kbd> または <kbd>↓</kbd>+ジャンプ でスライディング ／ <b>はしご</b>は▲でつかまり、ジャンプで手を離す<br>
+          溜め撃ちは<b>4段階</b>（長く押すほど強い）。<b>手を離しても溜めたまま</b>なので、もう一度押したときに出る。<b>特殊武器も同じように溜められる</b>（エネルギーは3倍使う）<br>プールの面は<b>泳げます</b>（ジャンプで水をかく） ／ 公園の緑の台は<b>トランポリン</b> ／ 発電所の<b>電気は消えている隙</b>に通る ／ <kbd>C</kbd> または <kbd>↓</kbd>+ジャンプ でスライディング ／ <kbd>↑</kbd>+<kbd>C</kbd> で<b>上空ダッシュ</b>（まっすぐ上へ。空中では1回） ／ 特殊武器は <kbd>↑</kbd>+ショットで<b>真上</b>、<kbd>↑</kbd>+<kbd>←→</kbd>+ショットで<b>斜め上</b>に撃てる ／ <b>はしご</b>は▲でつかまり、ジャンプで手を離す<br>
           ボスを倒すとその技を使える。画面下の武器欄をタップ（PCは <kbd>1</kbd>〜<kbd>9</kbd> か <kbd>Q</kbd><kbd>E</kbd>）で持ちかえ<br>
           <kbd>P</kbd> ポーズ ／ <kbd>M</kbd> 音のオン・オフ ／ スマホは下のボタンで操作<br>
           音が出ないときは右上の 🔊 を押してください
@@ -578,7 +578,7 @@
     </div>
   </div>
 
-  <p id="tip">ボタンはスーパーファミコンと同じ並びです。Y＝ショット（長押しで溜め。離しても溜まったままで、次に押したときに発射。特殊武器も溜められる）／B＝ジャンプ／A＝スライディング／X＝武器チェンジ。十字の▲▼で<b>はしご</b>を上り下り。<br>
+  <p id="tip">ボタンはスーパーファミコンと同じ並びです。Y＝ショット（長押しで溜め。離しても溜まったままで、次に押したときに発射。特殊武器も溜められる）／B＝ジャンプ／A＝スライディング（<b>▲を押しながらAで上空ダッシュ</b>＝まっすぐ上へ。空中でも1回）／X＝武器チェンジ。特殊武器は<b>▲を押しながらYで真上、▲＋←→で斜め上</b>に撃てる。十字の▲▼で<b>はしご</b>を上り下り。<br>
   スマホは横向きにすると画面が大きくなります。音が出るので外では音量にご注意ください。<br>
   進み具合はこの端末に保存されます（次に開いたときは倒したボスがCLEARのまま）。</p>
 </div>
@@ -2169,7 +2169,7 @@ function reset(){
   var sx0=48, sy;
   if(LV.route&&LV.route.length){ sx0=LV.route[0][0]*TS+2; sy=LV.route[0][1]*TS-PH_STAND; }
   else sy=groundTop(54)-PH_STAND;
-  player={x:sx0,y:sy,w:12,h:PH_STAND,vx:0,vy:0,face:1,grounded:false,
+  player={x:sx0,y:sy,w:12,h:PH_STAND,vx:0,vy:0,face:1,grounded:false,udash:0,udashUsed:false,
     hp:28,maxhp:28,inv:0,charge:0,shootAnim:0,coyote:0,buf:0,anim:0,jumpCut:0,
     slide:0,crawl:false,slideCool:0,wcd:0,climb:false,cpx:sx0,cpy:sy,dead:0};
   cam.x=Math.max(0,Math.min(LVW-W,sx0-W/2));
@@ -2251,6 +2251,17 @@ function startSlide(p){
   p.slide=28; p.h=PH_SLIDE; p.y+=(PH_STAND-PH_SLIDE);
   SFX.dash();
   part(p.x+(p.face>0?0:p.w),p.y+10,"#bffff4",5,1.6);
+}
+/* ============================ 上空ダッシュ ============================
+   ▲＋A で、まっすぐ上へ一気に上がる（院長指示 2026-09-04）。
+   地上でも空中でも出せるが、空中では着地（またははしご・トランポリン）まで1回だけ。
+   UDASH_F フレームのあいだ重力を無視して UDASH_V で上がる＝約85px（5マス強）。
+   ふつうのジャンプ（72px）の頂点で出せば、合わせて約10マス上がれる。 */
+var UDASH_F=9, UDASH_V=-9.2;
+function startUpDash(p){
+  p.udash=UDASH_F; p.udashUsed=true; p.grounded=false; p.coyote=0; p.buf=0; p.jumpCut=0;
+  SFX.dash(); shake=2;
+  part(p.x+p.w/2,p.y+p.h,"#bffff4",8,2.2);
 }
 function endSlide(p){
   if(!headClear(p)){ p.slide=1; p.crawl=true; return false; }   /* 天井が低いあいだは伏せたまま */
@@ -2335,7 +2346,7 @@ function update(){
       if(ax!==0){ p.face=ax; p.anim+=0.22; }
     } else if(ax!==0){ p.face=ax; p.vx=ax*run; p.anim+=0.22; } else { p.vx=0; }
 
-    if(p.grounded) p.coyote=6; else if(p.coyote>0) p.coyote--;
+    if(p.grounded){ p.coyote=6; p.udashUsed=false; } else if(p.coyote>0) p.coyote--;
     if(p.buf>0) p.buf--;
     if(jumpEdge) p.buf=8;
     /* 水の中では何度でも水をかいて浮き上がれる（泳ぐ） */
@@ -2349,7 +2360,9 @@ function update(){
     if(p.jumpCut>0) p.jumpCut--;
     else if(!keys.jump && p.vy<-3) p.vy=-3;
 
-    if(slideEdge && p.grounded && p.slideCool<=0){ startSlide(p); p.slideCool=10; }
+    /* ▲を押しながらのAは上空ダッシュ。押していなければ地上でスライディング */
+    if(slideEdge && keys.up && !p.udashUsed && p.udash<=0){ startUpDash(p); }
+    else if(slideEdge && !keys.up && p.grounded && p.slideCool<=0){ startSlide(p); p.slideCool=10; }
     moveX(p);
   }
   lastJump=keys.jump;
@@ -2357,9 +2370,16 @@ function update(){
 
   var wasFalling=0;
   if(!p.climb){                       /* 梯子につかまっている間は落ちない */
-    p.vy=Math.min(fallOf(),p.vy+gravOf());
+    if(p.udash>0){                    /* 上空ダッシュ中は重力を無視してまっすぐ上へ */
+      p.udash--; p.vy=UDASH_V;
+      part(p.x+p.w/2,p.y+p.h-2,"#9fe8ff",2,1.4);
+      if(p.udash===0) p.vy=-2.5;      /* 終わりは少し余韻を残して自然に落ちる */
+    } else {
+      p.vy=Math.min(fallOf(),p.vy+gravOf());
+    }
     wasFalling=p.vy;
     moveY(p);
+    if(p.udash>0 && p.vy===0) p.udash=0;   /* 天井に頭をぶつけたら終わり */
     ridePlatforms(p);
   }
 
@@ -2368,7 +2388,7 @@ function update(){
      落ちてきた勢いがあるほど高い。▼を押していると跳ねずに止まれる。 */
   if(!p.climb && p.grounded && !keys.down && trampPx(p.x+p.w/2,p.y+p.h+2)){
     p.vy=-11.4-Math.min(2.2,Math.max(0,wasFalling-2)*0.35);
-    p.grounded=false; p.jumpCut=16;
+    p.grounded=false; p.jumpCut=16; p.udashUsed=false;
     SFX.jump(); shake=3;
     part(p.x+6,p.y+p.h,"#9dffca",8,2);
   }
@@ -2744,7 +2764,7 @@ function groundTop(px){
 
 function grabLadder(p,px){
   var cx=Math.floor(px/TS);
-  p.climb=true; p.vx=0; p.vy=0; p.grounded=false; p.jumpCut=0; p.buf=0;
+  p.climb=true; p.udash=0; p.udashUsed=false; p.vx=0; p.vy=0; p.grounded=false; p.jumpCut=0; p.buf=0;
   p.x=cx*TS+(TS-p.w)/2;               /* 梯子の中心に寄せる */
 }
 
@@ -3002,12 +3022,41 @@ function fireWeapon(lv){
   if(wEnergy[curWeapon]<use){ setWeapon(0); return false; }
   wEnergy[curWeapon]-=use;
   var y=p.y+(p.h===PH_SLIDE?4:9), x=p.x+(p.face>0?p.w:-6);
+  /* ▲を押しながら撃つと真上、▲＋←→なら斜め上へ（院長指示 2026-09-04）。
+     武器ごとの fire はそのまま使い、出てきた弾の向きと並びをまとめて回す */
+  var aim=aimDir(), n0=pbullets.length;
+  if(aim===2){ x=p.x+p.w/2; y=p.y-2; }
+  else if(aim===1){ x=p.x+p.w/2+p.face*p.w/2; y=p.y+2; }
   if(big) Wp.charged(p,x,y,big); else Wp.fire(p,x,y);
+  if(aim) aimBullets(n0,x,y,aim);
   p.shootAnim=12;
   p.wcd=big?Wp.rate:Math.max(7,Math.round(Wp.rate*0.5));    /* 溜め技のあとは長めに待つ */
   if(wEnergy[curWeapon]<=0){ wEnergy[curWeapon]=0; setWeapon(0); }
   updateWeaponBar();
   return true;
+}
+
+/* 撃つ向き。0＝いつもどおり横、1＝斜め上（▲＋←→）、2＝真上（▲だけ）。
+   はしごにつかまっている間は▲が「登る」なので向きを変えない */
+function aimDir(){
+  var p=player;
+  if(!keys.up || p.climb || p.h===PH_SLIDE) return 0;
+  return (keys.left||keys.right) ? 1 : 2;
+}
+/* n0 番目以降の弾（いま撃ったぶん）を、口もと (ox,oy) を中心に回す。
+   地面を這う弾（ground）は回さない。弾の並び（ワイヤーの縦3本など）も一緒に回す */
+function aimBullets(n0,ox,oy,aim){
+  var p=player, th=-p.face*(aim===2?Math.PI/2:Math.PI/4);
+  var c=Math.cos(th), s=Math.sin(th);
+  for(var i=n0;i<pbullets.length;i++){
+    var b=pbullets[i];
+    if(b.ground) continue;
+    var vx=b.vx, vy=b.vy||0;
+    b.vx=vx*c-vy*s; b.vy=vx*s+vy*c;
+    var dx=b.x-ox, dy=b.y-oy;
+    b.x=ox+(dx*c-dy*s)-b.w/2; b.y=oy+(dx*s+dy*c)-b.h/2;
+    b.aimed=aim;
+  }
 }
 
 /* --- 特殊弾の動き --- */

@@ -799,6 +799,7 @@ var stageIdx=0, LV=null, PAL=null, WATER=false;
 var MAP=[], COLSN=0, LVW=0, BOSS_TRIGGER=0, GATE_X=0;
 var ENEMY_CHARS="wtfjrdue";
 
+var ROOF=0;
 function loadStage(i){
   stageIdx=i;
   LV=LEVELS[i];
@@ -819,6 +820,15 @@ function loadStage(i){
   }
   COLSN=MAP[0].length;
   LVW=COLSN*TS;
+  /* ROOF＝岩がいちばん上に現れる行。ここより上は「空」で地形が1つも無いので、
+     水中の面（3面 うがい水のプール）はそのまま泳いで外へ出られてしまい、
+     主人公が画面から消えていた（2026-09-06 院長報告）。
+     見えない天井としてこの行を使い、空へは出られないようにする。
+     見た目は変わらない（岩を足すわけではない）。 */
+  ROOF=0;
+  for(var rr=0;rr<ROWS;rr++){
+    if(/[#=Ib]/.test(MAP[rr])){ ROOF=rr; break; }
+  }
   BOSS_TRIGGER=(COLSN-40)*TS;   /* 最後の2チャンク＝ボス部屋 */
   GATE_X=BOSS_TRIGGER-8;
 }
@@ -2425,6 +2435,18 @@ function update(){
     ridePlatforms(p);
   }
 
+  /* --- ステージの外へ出さない（2026-09-06 院長報告） --------------------
+     マップの一番上の行より上には地形が無いので、そこまで上がると
+     何にもぶつからないまま外へ出てしまい、主人公が画面から消えていた。
+     水中の面（3面 うがい水のプール）は何度でも水をかいて浮けるので特に起きやすく、
+     上空ダッシュ・トランポリンでも同じことが起きる。
+     天井と左右の端に「見えない壁」を置いて、必ず中に留める。
+     下（穴に落ちる）は今までどおり killPlayer に任せる。 */
+  var roofY=ROOF*TS;
+  if(p.y<roofY){ p.y=roofY; if(p.vy<0){ p.vy=0; p.udash=0; } }
+  if(p.x<0) p.x=0;
+  else if(p.x>LVW-p.w) p.x=LVW-p.w;
+
   /* --- トランポリン ---
      乗ったら必ず高く跳ねる（走って渡るだけで大穴を越えられる）。
      落ちてきた勢いがあるほど高い。▼を押していると跳ねずに止まれる。 */
@@ -2496,6 +2518,12 @@ function update(){
   if(gateOn) tx=Math.max(BOSS_TRIGGER,Math.min(LVW-W,tx));
   cam.x += (Math.max(0,Math.min(LVW-W,tx))-cam.x)*0.16;
   if(cam.x<0) cam.x=0;
+  /* 横も安全網。ボス戦中はカメラを BOSS_TRIGGER より左へ動かさない作りなので、
+     ボス部屋の上の通路を左へ進むと主人公が画面の左端から消えていた
+     （2026-09-06 院長報告：プールのボス戦「上の通路をずっと進むとそうなる」）。 */
+  var scrX=p.x-cam.x;
+  if(scrX<12) cam.x=Math.max(0,Math.min(LVW-W,p.x-12));
+  else if(scrX+p.w>W-12) cam.x=Math.max(0,Math.min(LVW-W,p.x+p.w-(W-12)));
   /* 縦のカメラ。17行のステージ（LVH===H）では maxY が0になり、今までどおり動かない。
      主人公を画面の少し下寄り（0.58）に置くと、上を見上げる余裕ができる。
      ボス部屋では一番下に固定して、戦いの見え方を毎回そろえる。 */
@@ -2505,10 +2533,26 @@ function update(){
     /* ボス部屋では床が画面の下に来るように止める。
        いちばん下（maxY）に固定していたのは、昔ボス部屋が必ずマップの一番下に
        あったころの名残り。迷路になってからは部屋の高さが面ごとに違う（2026-09-04） */
-    var ty=gateOn ? (bossFloorY()+TS-H) : (p.y+p.h/2-H*0.58);
+    var ty;
+    if(gateOn){
+      ty=bossFloorY()+TS-H;
+      /* ボス部屋は24行（384px）あるが画面は272px。床を下に固定したままだと
+         上の112pxは映らない。水中の面（プール）は自由に浮き上がれるので、
+         そこまで上がると主人公が画面から消えていた（2026-09-06 院長報告）。
+         上空ダッシュでも同じことが起きる。頭が上のふちに近づいたら
+         カメラも一緒に上げる（下がるときは元の固定位置まで戻る）。 */
+      var head=p.y-36;
+      if(head<ty) ty=head;
+    } else ty=p.y+p.h/2-H*0.58;
     ty=Math.max(0,Math.min(maxY,ty));
     cam.y += (ty-cam.y)*0.16;
     if(cam.y<0) cam.y=0; else if(cam.y>maxY) cam.y=maxY;
+    /* 最後の安全網：どんな場合でも主人公を画面の外に出さない。
+       上のなめらかな追従が間に合わない速さ（水中の浮き上がり・上空ダッシュ・
+       トランポリン）でも、ここで必ず画面の中に入れる（2026-09-06）。 */
+    var scr=p.y-cam.y;
+    if(scr<8) cam.y=Math.max(0,Math.min(maxY,p.y-8));
+    else if(scr+p.h>H-8) cam.y=Math.max(0,Math.min(maxY,p.y+p.h-(H-8)));
   }
 
   /* --- ボス開始 --- */

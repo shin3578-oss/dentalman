@@ -1345,8 +1345,25 @@ var BASSPAT={
   /* --- 2026-09-06追加：低音そのものが「リフ」になる型（FF5の戦闘曲の走り方） --- */
   riff  :[0,0,7,0, 12,0,7,0],         /* 根音→5度→オクターブ。跳ねて前へ出る */
   pump  :[0,0,0,7, 10,7,0,0],         /* 上へ押し上げてから根音へ落ちる */
-  sync  :[0,null,0,7, null,0,7,null]  /* 食って入る（表拍を抜く）＝疾走感 */
+  sync  :[0,null,0,7, null,0,7,null], /* 食って入る（表拍を抜く）＝疾走感 */
+  /* --- 2026-09-08追加：L'Arc〜en〜Ciel風（tetsuyaのよく動く低音） --- */
+  tetsu :[0,0,12,0, 10,0,7,0],        /* オクターブと♭7を行き来して歌う */
+  walk4 :[0,0,7,7, 10,10,12,12],      /* 5度・♭7・オクターブと登る */
+  drop  :[12,12,7,7, 0,0,0,0],        /* 上から根音へ落ちてくる */
+  pedal :[0,null,0,null, 0,null,0,null], /* 4分で根音を踏む（Aメロを静かに） */
+  eight :[0,0,0,0, 0,0,7,10]          /* 8分で押し切って最後だけ動く（サビ） */
 };
+
+/* 調（キー）の音階。ハモリを何度上に重ねるかを決めるのに使う（2026-09-08）。
+   minor＝自然短音階、major＝長音階。数字は主音からの半音 */
+var SCALES={minor:[0,2,3,5,7,8,10], major:[0,2,4,5,7,9,11], dorian:[0,2,3,5,7,9,10], mixo:[0,2,4,5,7,9,10]};
+/* 旋律の音 sem に、音階の2つ上（3度上）の音を返す。音階に無い音なら半音3つ上 */
+function harmonyOf(sem,key,scale){
+  var sc=SCALES[scale]||SCALES.minor, d=((sem-key)%12+12)%12, idx=sc.indexOf(d);
+  if(idx<0) return sem+3;
+  var up=sc[(idx+2)%sc.length]-d; if(up<0) up+=12;
+  return sem+up;
+}
 
 /* null の並びを「どこで何歩のばすか」に直す（歌わせるため） */
 function seqHold(arr,max){
@@ -1390,6 +1407,23 @@ function songStep(i,t,spb){
   } else if(gs==="hush"){                       /* イントロ用。小さく刻むだけ */
     chord5(root,t,half*0.8,gv*0.55,true);
     chord5(root,t+half,half*0.8,gv*0.5,true);
+  } else if(gs==="clean"){                      /* クリーンのアルペジオ（Aメロ・Dメロ。L'Arc風） */
+    var ca=[0,7,12,15,19,15,12,7][i%8];
+    if(this.scale[i]==="major"||this.scale[i]==="mixo") ca=[0,7,12,16,19,16,12,7][i%8];
+    cNote(root+ca,t,spb*1.5,gv*1.0);
+  } else if(gs==="cleanlow"){                   /* 低いアルペジオ＋根音を長く */
+    if(beat===0) cNote(root-12,t,spb*6,gv*0.9);
+    var cb=[null,7,12,null,7,12,null,7][i%8];
+    if(cb!==null) cNote(root+cb,t,spb*1.2,gv*0.8);
+  } else if(gs==="ring"){                       /* 開放的にジャーンと鳴らす（サビ） */
+    if(beat===0||beat===4){ chord5(root,t,spb*3.6,gv*1.2,false); gNote(root+12,t,spb*3.4,gv*0.5,false); }
+    else if(beat===6) chord5(root,t,spb*1.6,gv*0.9,false);
+  } else if(gs==="trem"){                       /* 16分の同音刻み（緊張） */
+    gLead(root+12,t,half*0.9,gv*0.7); gLead(root+12,t+half,half*0.9,gv*0.6);
+    if(beat===0) chord5(root,t,spb*1.2,gv*0.8,true);
+  } else if(gs==="stab"){                       /* 裏で刺す（Bメロの助走） */
+    if(beat===1||beat===3||beat===6) chord5(root,t,spb*0.7,gv*1.1,false);
+    else chord5(root,t,half*0.6,gv*0.45,true);
   }
 
   /* ---------------- ベース ---------------- */
@@ -1427,6 +1461,20 @@ function songStep(i,t,spb){
   } else if(d==="lite"){                        /* イントロ用。ハイハットだけで待つ */
     if(beat===0) dKick(t,0.5);
     dHat(t, beat%2===0?0.08:0.045);
+  } else if(d==="halfrock"){                    /* サビの後半・Dメロ：半分のテンポで大きく（ライドで） */
+    if(beat===0||beat===3||beat===5) dKick(t,0.8);
+    if(beat===4) dSnare(t,0.62);
+    dRide(t, beat%2===0?0.12:0.07);
+    if(beat===7) dHat(t,0.09,true);
+  } else if(d==="drive8"){                      /* 8ビートの王道（スネアが強い） */
+    if(beat===0||beat===3||beat===4||beat===7) dKick(t,0.72);
+    if(beat===2||beat===6) dSnare(t,0.6);
+    dHat(t, beat%2===0?0.12:0.07, beat===7);
+  } else if(d==="tight16"){                     /* 16分のハイハットで走る（Bメロ） */
+    if(beat===0||beat===4||beat===5) dKick(t,0.7);
+    if(beat===2||beat===6) dSnare(t,0.55);
+    dHat(t,0.10); dHat(t+half,0.06);
+  } else if(d==="none"){
   }
 
   /* ---------------- 歌（イントロはギターが代わりに弾く） ---------------- */
@@ -1438,6 +1486,8 @@ function songStep(i,t,spb){
       var from=(this.prevEnd===i)?this.prevSem:0;
       vNote(n.sem+12,t,spb*n.hold*0.96,this.vv[i],from);
       if(this.sabi[i]) vNote(n.sem,t,spb*n.hold*0.9,this.vv[i]*0.40,0);  /* サビは1オクターブ下も重ねる */
+      /* ハモリ（3度上を小さく）。長くのばす音だけ（短い音に重ねるとにごる） */
+      if(this.harm[i] && n.hold>=2) vNote(harmonyOf(n.sem,this.key,this.scale[i])+12,t,spb*n.hold*0.9,this.vv[i]*0.38,0);
       this.prevSem=n.sem+12; this.prevEnd=i+n.hold;
     }
   }
@@ -1456,7 +1506,8 @@ function mkSong(o){
   var order=o.order||["I","A","A","B","C","C"], lead=[], j, i, s, n, bp;
   var t={bpm:o.bpm, once:false, loop:0,
          bv:(o.bv===undefined?0.30:o.bv), g2v:(o.g2v===undefined?0.12:o.g2v),
-         chord:[], gtr:[], drum:[], gv:[], vv:[], sabi:[], inst:[],
+         key:(o.key===undefined?0:o.key),
+         chord:[], gtr:[], drum:[], gv:[], vv:[], sabi:[], inst:[], harm:[], scale:[],
          top:[], crash:[], fill:[], bass:[], lead2:[],
          prevSem:0, prevEnd:-9, fn:songStep};
   for(j=0;j<order.length;j++){
@@ -1472,6 +1523,8 @@ function mkSong(o){
       t.vv.push(s.vv||o.vv||0.26);
       t.sabi.push(!!s.sabi);
       t.inst.push(!!s.inst);
+      t.harm.push(!!(s.harm!==undefined?s.harm:s.sabi));    /* ハモリはサビに（指定があればそれ） */
+      t.scale.push(s.scale||o.scale||"minor");
       t.top.push(i===0);
       t.crash.push(s.crash!==false);
       t.fill.push((s.fill===false)?0:(i>=n-4?i-(n-4)+1:0));
@@ -1747,289 +1800,356 @@ function musicTick(){
 
 /* ===== 21_songs.js ===== */
 /* ============================ 曲の中身 ============================
-   ステージ9曲・ボス戦・大魔王戦・エンディング。
-   組み立て方（mkSong / セクションの書き方）は src/20_audio.js の方にある。
-
-   並び順は全曲おなじ：
-     I（イントロ2小節・歌なし）→ A（Aメロ4小節）→ A（もう1回）
-     → B（Bメロ4小節）→ C（サビ4小節）→ C（サビもう1回）→ Aメロへ戻る
-   イントロは面の始めに1回だけ鳴る。くり返しはAメロの頭から。
-
-   数字は「ラ(A)＝0」からの半音。0=ラ 3=ド 5=レ 7=ミ 8=ファ 10=ソ 12=ラ(1つ上)。
-   lead の null は「前の音をのばす」。chord は1小節に1つ（和音の根音）。
+   ステージ9曲・ボス戦・大魔王戦・ボス選択・エンディング（13曲）。
+   組み立て方（mkSong / セクションの書き方）は src/20_audio.js、楽器の音は src/22_band.js。
 
    ------------------------------------------------------------------
-   2026-09-06（1回目）全曲を長調へ（院長指示「暗いので明るい疾走感に」）。
-   2026-09-06（2回目）ステージ曲・ボス戦・大魔王戦を作り直し
-   （院長指示「各ステージ音楽、まだ全然クールじゃない。
-     クールでかっこいい奴にして、FF5の戦闘曲みたいな」）。
+   2026-09-08 全曲を作り直し（院長指示）
+   「音楽ももっとクールでニヒルなものに。A・B・C・Dメロまでつくって、平和を守るため戦う
+     ヒーローを引き立てるようなものに。メロディックなもの、L'Arc〜en〜Cielみたいな。
+     時間をいくらかけてもいいので品質を優先」
 
-   1回目は明るくはなったが「音階をただ上り下りする」書き方だったので、
-   練習曲のように聞こえてクールさが出ていなかった。FF5の戦闘曲のように
-   聞かせるために、ステージ曲は次の5つの型で書き直してある。**新しい曲もこの型で書く。**
+   ▼ 曲の形（全曲共通）
+       I（イントロ2小節）→ A（Aメロ4小節）→ A2（Aメロ2回目・高く）→ B（Bメロ4小節）
+       → C（サビ前半4小節）→ C2（サビ後半4小節）→ D（Dメロ4小節・場面が変わる）
+       → C → C2 → ※Aメロへ戻る（イントロは1回だけ）
+     ＝ 34小節（テンポ170で約48秒）。
 
-     1. 動機（モチーフ）を作る … 1小節ぶんの短い型を決める。
-        例「ドッ…ドッ・ソ・ミ」。歌はこの型の**くり返し**で覚えられる
-     2. 次の小節は同じ型のまま高さだけ動かす（＝ゼクエンツ）。
-        1小節目 C・2小節目 B♭ のように、リズムを変えずに音だけ落とす
-     3. 音階を歩かない。**5度・オクターブで跳ぶ**。跳ぶとかっこよくなる
-     4. 表拍から食う（3歩目・7歩目など裏から入れる）。ずっと8分で埋めない
-     5. フレーズの終わりは音をのばして**空ける**。空いたところをギター（lead2）が答える
+   ▼ L'Arc〜en〜Ciel らしさとして入れたもの
+     ・**短調で、メロディが大きく動く**（ニヒルさ＝短調、ヒーロー感＝サビで高く長くのばす）
+     ・Aメロは **クリーンのアルペジオ**（gtr:"clean"）で静かに始め、Bメロで刻みが入り、
+       サビで **開放的なコード**（gtr:"ring"）と歪みが全部そろう＝盛り上がりの段差
+     ・ベースは **よく動く**（bass:"tetsu" / "walk4" / "drop"）。根音だけを踏まない
+     ・サビは **3度上のハモリ**（harm）を長い音にだけ重ねる
+     ・進行は ♭VI→♭VII→i（例 F→G→Am）と、相対長調の「王道」IV→V→iii→vi を使い分ける。
+       Dメロは iv や ♭III から始めて「場面が変わった」感を出し、V（長三和音）で サビへ戻す
+     ・音階を歩かない。4度・5度・オクターブで跳ぶ。フレーズの終わりはのばして空ける
 
-   和音は **ミクソリディア（♭7＝I→♭VII を行き来する）** を多めにした。
-   長調の明るさは保ったまま、FFの戦闘曲らしい硬さが出る（C→B♭、A→G、D→C など）。
-   低音も `BASSPAT` に riff / pump / sync を足して、ベース自体がリフを弾く。
+   ▼ 1曲ずつ「リズムの型」を変えてある（2回目の書き直し。1回目は全曲が同じ型の移調で、
+     並べると同じ曲に聞こえた）。各曲の頭のコメントにその曲の型を書いてある。
 
-   音域は ラ(0)〜ド(27) の中に収めてある。これ以上高くすると耳に刺さり、
-   音量の合計（peak）も上がって割れる。 */
+   ▼ 書き方
+     数字は「ラ(A)＝0」からの半音。0=ラ 3=ド 5=レ 7=ミ 8=ファ 10=ソ 12=ラ 15=ド 19=ミ 24=ラ 27=ド。
+     L(小節数, "…") … 1歩1つ。"." は前の音をのばす。"|" は小節の区切り（読みやすさのため。無視される）。
+     chord … 1小節に1つ（和音の根音）。key … 主音。scale … minor（自然短音階）。
+     音域は ラ(0)〜ド(27) に収める（これ以上高いと耳に刺さり、音量が上がって割れる）。
+
+   ▼ 機械で確かめる
+     node test/check_harmony.js … 濁る音程・調の外の音・音域・長さのズレ
+     python test/make_piano_roll.py … 旋律の形を絵にする（曲どうしが同じ形になっていないか）
+     bash test/run_music_check.sh … 音量（peak 1.0 で割れる）と無音。8分ほどかかる */
+
+function L(bars, s){
+  var out=[], t=s.split(/\s+/), i;
+  for(i=0;i<t.length;i++){
+    if(t[i]===""||t[i]==="|") continue;
+    out.push(t[i]==="."?null:parseInt(t[i],10));
+  }
+  if(out.length!==bars*8) throw new Error("旋律の歩数が合わない: "+out.length+"（"+bars+"小節なら"+(bars*8)+"）: "+s);
+  return out;
+}
+var ORDER=["I","A","A2","B","C","C2","D","C","C2"];
 
 var T_STAGE=[
 
-/* 1 プラーク洞窟：ハ・ミクソリディア C-B♭-F。「ドッ…ド・ソ・ミ」の動機を2小節続けて落とす */
-mkSong({bpm:168, gtr:"chug", drum:"rock", bass:"riff",
+/* 1 プラーク洞窟：イ短調 bpm168。型＝「3＋3＋2」の食い（ン・タ・ン・タ・タ）。
+   Aメロは低く不安げ、サビは高い所から4つ落ちてくる動機（27→24→22→19）が主役 */
+mkSong({bpm:168, key:0, order:ORDER, gtr:"chug", drum:"rock", bass:"tetsu", vv:0.27, gv:0.15,
   sec:{
-    I:{chord:[3,3], gtr:"power", drum:"lite", bass:"root8", inst:true, crash:false, fill:false,
-       lead:[15,null,null,15, 22,null,19,null, 13,null,null,13, 20,null,17,null]},
-    A:{chord:[3,1,-4,3],
-       lead:[15,null,null,15, 22,null,19,17, 13,null,null,13, 20,null,17,15,
-             12,null,12,null, 15,17,null,19, 22,null,null,19, 15,null,null,null]},
-    B:{chord:[-4,1,3,3], drum:"double", bass:"pump",
-       lead:[20,null,19,20, 24,null,null,null, 22,null,20,22, 25,null,null,null,
-             27,null,null,24, 22,null,19,null, 20,null,19,17, 15,null,null,null]},
-    C:{chord:[-4,3,1,3], sabi:true, vv:0.30, bass:"oct",
-       lead:[24,null,24,null, 22,24,null,27, 26,null,null,22, 19,null,22,null,
-             25,null,25,null, 22,20,null,22, 24,null,22,19, 15,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, 15,null,19,22,
-              null,null,null,null, null,null,null,null, null,null,null,null, 19,null,22,24]}
+    I:{chord:[0,0], gtr:"clean", drum:"lite", bass:"pedal", inst:true, crash:false, fill:false, gv:0.16,
+       lead:L(2,"12 . . 15 . . 19 . | 12 . . 15 . . 22 .")},
+    A:{chord:[0,-4,-2,0], gtr:"clean", drum:"drive8", bass:"pedal", gv:0.15,
+       lead:L(4,"12 . . 15 . . 12 . | 8 . . 12 . . 15 . | 10 . . 14 . . 17 . | 12 . . . . 10 12 .")},
+    A2:{chord:[0,-4,-2,-5], gtr:"chug", drum:"drive8", bass:"tetsu",
+       lead:L(4,"19 . . 22 . . 19 . | 20 . . 24 . . 20 . | 22 . . 26 . . 22 . | 19 . . . . 23 26 .")},
+    B:{chord:[-4,-2,-5,-5], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.28,
+       lead:L(4,"20 20 . 24 24 . 27 . | 22 22 . 26 26 . 24 . | 19 . 23 . 26 . 23 . | 26 . . . . 24 23 .")},
+    C:{chord:[-4,-2,0,0], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.17,
+       lead:L(4,"27 24 22 . 19 . . . | 26 22 19 . 17 . . . | 24 . . 27 . . 26 24 | 22 . . . 19 . . ."),
+       lead2:L(4,". . . . . 12 15 19 | . . . . . 10 14 17 | . . . . . . . . | . . . . 15 . 19 .")},
+    C2:{chord:[-4,-2,0,-2], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.17,
+       lead:L(4,"27 24 22 . 19 . . . | 26 22 19 . 17 . . . | 15 . 19 . 24 . . 22 | 22 . . . . 19 22 ."),
+       lead2:L(4,". . . . . 12 15 19 | . . . . . 10 14 17 | . . . . . . . . | . . . . 26 . 22 .")},
+    D:{chord:[3,-2,5,-5], gtr:"cleanlow", drum:"halfrock", bass:"drop", vv:0.29, harm:true, gv:0.16,
+       lead:L(4,"15 . . . 19 . . . | 14 . . . 17 . . . | 20 . . . 24 . 22 . | 23 . . . . . 26 ."),
+       lead2:L(4,". . 15 19 . . . . | . . 14 17 . . . . | . . . . . . . . | . . 19 23 . . . .")}
   }}),
 
-/* 2 歯石鉱山：ニ・ミクソリディア D-C-D-G。重い刻みの上でリフが跳ねる */
-mkSong({bpm:152, gtr:"power", drum:"rock", gv:0.17, bass:"riff",
+/* 2 歯石の岩山：ホ短調 bpm152。型＝「行進」（タ・タ・ン・タ）同じ音を2回叩いて重く登る。
+   サビは6度の跳び（19→27）で峰を見上げる */
+mkSong({bpm:152, key:7, order:ORDER, gtr:"power", drum:"rock", bass:"tetsu", vv:0.27, gv:0.17,
   sec:{
-    I:{chord:[5,5], gtr:"power", drum:"lite", bass:"root8", inst:true, crash:false, fill:false,
-       lead:[17,null,null,17, 24,null,21,null, 15,null,null,15, 22,null,19,null]},
-    A:{chord:[5,3,5,-2],
-       lead:[17,null,17,null, 21,null,24,21, 15,null,15,null, 19,null,22,19,
-             17,null,17,null, 24,null,26,24, 22,null,21,19, 17,null,null,null]},
-    B:{chord:[-2,3,5,5], drum:"double", bass:"pump",
-       lead:[26,null,null,24, 22,null,19,null, 24,null,null,22, 19,null,15,null,
-             21,null,24,null, 26,null,24,21, 17,null,19,21, 24,null,null,null]},
-    C:{chord:[3,-2,5,5], sabi:true, drum:"double", bass:"oct", vv:0.30, gv:0.18,
-       lead:[27,null,null,24, 22,null,24,null, 26,null,null,22, 19,null,22,null,
-             24,null,26,null, 24,null,21,null, 26,24,21,null, 17,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, 15,null,19,22,
-              null,null,null,null, null,null,null,null, null,null,null,null, 21,null,17,null]}
+    I:{chord:[7,7], gtr:"power", drum:"lite", bass:"root8", inst:true, crash:false, fill:false,
+       lead:L(2,"7 7 . 14 . . 12 . | 10 10 . 14 . . 19 .")},
+    A:{chord:[7,5,3,2], gtr:"chug", drum:"drive8", bass:"pedal", gv:0.15,
+       lead:L(4,"14 14 . 19 . 17 . . | 12 12 . 17 . 15 . . | 15 15 . 19 . 17 . . | 18 . . . 14 . . .")},
+    A2:{chord:[7,5,3,2], gtr:"chug", drum:"drive8", bass:"tetsu",
+       lead:L(4,"19 19 . 22 . 21 . . | 17 17 . 21 . 19 . . | 22 22 . 24 . 22 . . | 18 . . . 21 . 26 .")},
+    B:{chord:[0,7,3,2], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.28,
+       lead:L(4,"12 . 15 . 19 . 24 . | 14 . 19 . 22 . 26 . | 15 . 19 . 22 . 27 . | 26 . . . 21 . 18 .")},
+    C:{chord:[3,5,7,7], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.18,
+       lead:L(4,"19 . 27 . . . 26 24 | 21 . 26 . . . 24 22 | 19 . . 22 24 . 26 . | 26 . . . 24 . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . . 14 17 19")},
+    C2:{chord:[3,5,10,2], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.18,
+       lead:L(4,"19 . 27 . . . 26 24 | 21 . 26 . . . 24 22 | 22 . 26 . 27 . 26 . | 26 . . . 21 . 18 ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . . 18 21 26")},
+    D:{chord:[0,3,10,2], gtr:"cleanlow", drum:"halfrock", bass:"drop", vv:0.29, harm:true,
+       lead:L(4,"12 12 . 15 . . . . | 15 15 . 19 . . . . | 22 22 . 19 . 17 . . | 18 . . . 21 . 26 ."),
+       lead2:L(4,". . . . . 12 15 19 | . . . . . 15 19 22 | . . . . . . . . | . . . . . . . .")}
   }}),
 
-/* 3 酸の谷：イ・ミクソリディア A-G-D。動機をそのまま2度下げて置く */
-mkSong({bpm:176, gtr:"drive", drum:"double", gv:0.14, bass:"sync",
+/* 3 うがい水のプール：ロ短調 bpm164。型＝「流れる8分」（タタタタ・タ・ン・タ）。
+   水の中を漂う。サビは長い音がゆっくり下りてくる */
+mkSong({bpm:164, key:2, order:ORDER, gtr:"chug", drum:"rock", bass:"tetsu", vv:0.27, gv:0.15,
   sec:{
-    I:{chord:[0,0], gtr:"hush", drum:"lite", bass:"root8", inst:true, crash:false, fill:false,
-       lead:[12,null,null,12, 19,null,16,null, 10,null,null,10, 17,null,14,null]},
-    A:{chord:[0,-2,5,0],
-       lead:[12,null,12,null, 16,19,null,16, 10,null,10,null, 14,17,null,14,
-             17,null,17,null, 21,24,null,21, 19,null,16,12, 12,null,null,null]},
-    B:{chord:[5,-2,0,0], gtr:"chug", drum:"rock", bass:"riff",
-       lead:[24,null,null,21, 19,null,17,null, 22,null,null,19, 17,null,14,null,
-             16,null,19,null, 21,null,24,null, 24,null,21,19, 16,null,null,null]},
-    C:{chord:[-2,5,0,0], sabi:true, gtr:"drive", bass:"oct", vv:0.29,
-       lead:[22,null,22,null, 21,22,null,24, 21,null,21,null, 19,21,null,24,
-             26,null,null,24, 21,null,24,null, 21,19,16,null, 12,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, 12,null,16,19,
-              null,null,null,null, null,null,null,null, null,null,null,null, 19,null,16,12]}
+    I:{chord:[2,2], gtr:"clean", drum:"lite", bass:"pedal", inst:true, crash:false, fill:false, gv:0.16,
+       lead:L(2,"14 17 21 17 14 . 21 . | 14 17 21 17 26 . . .")},
+    A:{chord:[2,5,0,-2], gtr:"clean", drum:"drive8", bass:"pedal", gv:0.15,
+       lead:L(4,"14 16 17 19 21 . 19 . | 17 19 21 24 21 . 17 . | 12 14 16 19 16 . 12 . | 10 . 14 . . . 12 .")},
+    A2:{chord:[2,5,0,-2], gtr:"chug", drum:"drive8", bass:"tetsu",
+       lead:L(4,"21 22 24 26 24 . 21 . | 21 24 26 24 21 . 17 . | 19 21 24 21 19 . 16 . | 22 . 19 . . . 17 .")},
+    B:{chord:[7,-2,0,0], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.28,
+       lead:L(4,"19 . . 22 . . 19 . | 22 . . 26 . . 22 . | 24 . . 21 . . 24 . | 26 . . . . 24 21 .")},
+    C:{chord:[-2,0,2,2], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.17,
+       lead:L(4,"26 . . . . . 24 22 | 24 . . . . . 21 19 | 21 . . . 26 . 24 21 | 19 . . . . . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . 14 17 21 24 . 21 .")},
+    C2:{chord:[-2,0,5,9], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.17,
+       lead:L(4,"26 . . . . . 24 22 | 24 . . . . . 21 19 | 17 . 21 . 24 . 26 . | 25 . . . 21 . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . . 16 21 25")},
+    D:{chord:[7,2,-2,0], gtr:"cleanlow", drum:"halfrock", bass:"drop", vv:0.29, harm:true,
+       lead:L(4,"19 21 22 . 26 . . . | 21 19 17 . 14 . . . | 22 . 19 . 17 . 14 . | 16 . . . 19 . 21 ."),
+       lead2:L(4,". . . . . . 19 22 | . . . . . . 21 17 | . . . . . . . . | . . . . . . . .")}
   }}),
 
-/* 4 歯ぐきの沼：ト長調 G-C-G-D。ゆるい面だが動機は硬く跳ばせる */
-mkSong({bpm:156, gtr:"chug", drum:"rock", vv:0.30, gv:0.14, bass:"riff",
+/* 4 みがき残しの公園：ニ短調 bpm160。型＝「跳ねる裏拍」（ン・タ・タ・ン・タ）。
+   青空なのに短調。サビは同じ音を2つ叩くポップな動機（25 25・22）で王道 B♭→C→Am→Dm */
+mkSong({bpm:160, key:5, order:ORDER, gtr:"chug", drum:"rock", bass:"tetsu", vv:0.28, gv:0.15,
   sec:{
-    I:{chord:[-2,-2], gtr:"power", drum:"lite", bass:"root8", inst:true, crash:false, fill:false,
-       lead:[10,null,null,10, 17,null,14,null, 8,null,null,8, 15,null,12,null]},
-    A:{chord:[-2,3,-2,5],
-       lead:[22,null,22,null, 19,17,null,14, 15,null,15,null, 19,22,null,19,
-             22,null,22,null, 26,null,24,22, 21,null,19,17, 17,null,null,null]},
-    B:{chord:[3,5,-2,-2], drum:"double", bass:"pump",
-       lead:[24,null,null,22, 19,null,22,null, 26,null,null,24, 21,null,24,null,
-             22,null,24,26, 22,null,19,null, 17,null,19,21, 22,null,null,null]},
-    C:{chord:[7,3,5,-2], sabi:true, drum:"rock", bass:"oct", vv:0.31, gv:0.15,
-       lead:[26,null,26,null, 24,26,null,19, 27,null,27,null, 26,24,null,22,
-             24,null,null,21, 24,null,26,null, 27,26,24,null, 22,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, 15,null,19,22,
-              null,null,null,null, null,null,null,null, null,null,null,null, 19,null,15,null]}
+    I:{chord:[5,5], gtr:"clean", drum:"lite", bass:"pedal", inst:true, crash:false, fill:false, gv:0.16,
+       lead:L(2,". 17 20 . 24 . 20 . | . 17 20 . 24 . 27 .")},
+    A:{chord:[5,1,8,3], gtr:"clean", drum:"drive8", bass:"pedal", gv:0.15,
+       lead:L(4,". 17 20 . 17 . 20 . | . 13 17 . 13 . 20 . | . 20 24 . 20 . 22 . | 19 . . 15 . . 17 .")},
+    A2:{chord:[5,1,8,3], gtr:"chug", drum:"drive8", bass:"tetsu",
+       lead:L(4,". 24 27 . 24 . 25 . | . 25 22 . 20 . 17 . | . 20 24 . 27 . 24 . | 22 . . 19 . . 15 .")},
+    B:{chord:[10,0,5,5], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.29,
+       lead:L(4,"22 . 25 . 22 . 25 . | 24 . 24 . 19 . 16 . | 17 . 20 . 24 . 27 . | 25 . . . . 24 22 .")},
+    C:{chord:[1,3,0,5], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.31, gv:0.17,
+       lead:L(4,"25 25 . 22 . . 20 . | 27 27 . 24 . . 22 . | 24 24 . 27 . . 24 19 | 22 . 20 . 17 . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . 17 . 20 24")},
+    C2:{chord:[1,3,5,0], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.31, gv:0.17,
+       lead:L(4,"25 25 . 22 . . 20 . | 27 27 . 24 . . 22 . | 24 . 22 . 20 . 17 . | 16 . . . 19 . 24 ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . 24 . 19 .")},
+    D:{chord:[10,5,1,0], gtr:"cleanlow", drum:"halfrock", bass:"drop", vv:0.30, harm:true,
+       lead:L(4,". 22 25 . 22 . . . | . 20 17 . 12 . . . | . 13 17 . 20 . 25 . | 24 . . . 19 . 16 ."),
+       lead2:L(4,". . . . . . 22 25 | . . . . . . 20 17 | . . . . . . . . | . . . . . . . .")}
   }}),
 
-/* 5 砂糖の街：ヘ・ミクソリディア F-C-F-B♭。跳ねるいちばん明るい面 */
-mkSong({bpm:172, gtr:"chug", drum:"rock", bass:"riff",
+/* 5 砂糖の街：ト短調 bpm172。型＝「2つずつ」（タタ・ン・ン・タタ・ン・ン）都会のダークポップ。
+   サビは食って入る（タ・ン・タ・ン・ン・タ・ン・タ） */
+mkSong({bpm:172, key:10, order:ORDER, gtr:"chug", drum:"rock", bass:"tetsu", vv:0.28, gv:0.15,
   sec:{
-    I:{chord:[-4,-4], gtr:"power", drum:"lite", bass:"root8", inst:true, crash:false, fill:false,
-       lead:[8,null,null,8, 15,null,12,null, 13,null,null,13, 20,null,17,null]},
-    A:{chord:[-4,3,-4,1],
-       lead:[20,null,20,null, 17,15,null,12, 19,null,19,null, 15,13,null,10,
-             20,null,20,null, 24,null,22,20, 22,null,20,17, 13,null,null,null]},
-    B:{chord:[1,-4,3,3], drum:"double", bass:"pump",
-       lead:[25,null,null,22, 20,null,17,null, 24,null,null,20, 19,null,15,null,
-             22,null,24,null, 22,null,19,null, 20,null,19,17, 15,null,null,null]},
-    C:{chord:[1,3,-4,-4], sabi:true, vv:0.30, bass:"oct",
-       lead:[25,null,25,null, 24,25,null,27, 27,null,27,null, 26,27,null,22,
-             24,null,null,27, 24,null,22,null, 24,22,20,null, 20,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, 15,null,19,22,
-              null,null,null,null, null,null,null,null, null,null,null,null, 17,null,12,null]}
+    I:{chord:[10,10], gtr:"clean", drum:"lite", bass:"pedal", inst:true, crash:false, fill:false, gv:0.16,
+       lead:L(2,"10 13 . . 17 13 . . | 10 13 . . 17 22 . .")},
+    A:{chord:[10,6,8,10], gtr:"clean", drum:"drive8", bass:"pedal", gv:0.15,
+       lead:L(4,"17 22 . . 20 17 . . | 18 22 . . 25 22 . . | 20 24 . . 22 20 . . | 17 . . . 15 13 . .")},
+    A2:{chord:[10,6,8,5], gtr:"chug", drum:"drive8", bass:"tetsu",
+       lead:L(4,"22 25 . . 24 22 . . | 25 22 . . 18 15 . . | 20 24 . . 27 24 . . | 21 . . . 17 12 . .")},
+    B:{chord:[3,6,8,8], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.29,
+       lead:L(4,"15 . 18 . 22 . . 18 | 18 . 22 . 25 . . 22 | 20 . 24 . 27 . . 24 | 24 . . . . 22 20 .")},
+    C:{chord:[6,8,10,10], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.31, gv:0.17,
+       lead:L(4,"25 . 22 . . 18 . 25 | 27 . 24 . . 20 . 27 | 22 . 25 . . 22 . 20 | 22 . . . 17 . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . . 10 13 17")},
+    C2:{chord:[6,8,1,5], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.31, gv:0.17,
+       lead:L(4,"25 . 22 . . 18 . 25 | 27 . 24 . . 20 . 27 | 25 . 22 . . 20 . 17 | 21 . . . 17 . 24 ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . . 17 21 24")},
+    D:{chord:[3,10,6,5], gtr:"cleanlow", drum:"halfrock", bass:"drop", vv:0.30, harm:true,
+       lead:L(4,"15 18 . . 22 . . . | 17 22 . . 25 . . . | 22 18 . . 15 . 13 . | 17 . . . 21 . 24 ."),
+       lead2:L(4,". . . . . . 15 18 | . . . . . . 17 22 | . . . . . . . . | . . . . . . . .")}
   }}),
 
-/* 6 酸竜のねぐら：ホ・ミクソリディア E-D-E-A。ギャロップの上を跳ぶ */
-mkSong({bpm:160, gtr:"gallop", drum:"gallop", gv:0.17, bv:0.33, bass:"gallop",
+/* 6 酸の火山：嬰ヘ短調 bpm176。型＝「ギャロップ」（タ・ン・タタ・タ・ン・タタ）攻撃的。
+   サビは3連のように畳みかけて（タタタ・ン）から高い音をのばす */
+mkSong({bpm:176, key:9, order:ORDER, gtr:"gallop", drum:"gallop", bass:"gallop", vv:0.27, gv:0.17, bv:0.33,
   sec:{
-    I:{chord:[-5,-5], gtr:"power", drum:"lite", bass:"root8", inst:true, crash:false, fill:false,
-       lead:[7,null,null,7, 14,null,11,null, 5,null,null,5, 12,null,9,null]},
-    A:{chord:[-5,5,-5,0],
-       lead:[19,null,19,null, 16,14,null,11, 17,null,17,null, 14,12,null,9,
-             19,null,19,null, 23,null,21,19, 21,null,19,16, 12,null,null,null]},
-    B:{chord:[0,2,-5,-5], gtr:"chug", drum:"rock", bass:"riff",
-       lead:[24,null,null,21, 19,null,16,null, 26,null,null,23, 21,null,18,null,
-             19,null,23,null, 26,null,23,21, 23,null,21,19, 19,null,null,null]},
-    C:{chord:[5,0,2,-5], sabi:true, gtr:"chug", drum:"double", bass:"oct", vv:0.30,
-       lead:[24,null,24,null, 21,24,null,26, 26,null,26,null, 24,26,null,21,
-             23,null,null,26, 23,null,21,null, 26,23,21,null, 19,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, 12,null,16,19,
-              null,null,null,null, null,null,null,null, null,null,null,null, 19,null,14,null]}
+    I:{chord:[9,9], gtr:"trem", drum:"lite", bass:"root8", inst:true, crash:false, fill:false, gv:0.14,
+       lead:L(2,"9 . 9 9 16 . 14 14 | 12 . 12 12 16 . 21 21")},
+    A:{chord:[9,5,7,9], gtr:"gallop", drum:"gallop", bass:"gallop",
+       lead:L(4,"21 . 21 21 16 . 14 14 | 17 . 17 17 21 . 19 19 | 19 . 19 19 23 . 21 21 | 21 . . . 16 . 14 .")},
+    A2:{chord:[9,5,7,4], gtr:"gallop", drum:"gallop", bass:"gallop",
+       lead:L(4,"24 . 24 24 21 . 19 19 | 21 . 21 21 26 . 24 24 | 23 . 23 23 26 . 24 24 | 23 . . . 20 . 16 .")},
+    B:{chord:[2,5,7,4], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.28,
+       lead:L(4,"14 . . 17 . . 21 . | 17 . . 21 . . 26 . | 19 . . 23 . . 26 . | 23 . . . . 20 23 .")},
+    C:{chord:[5,7,9,9], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.18,
+       lead:L(4,"24 26 24 . 21 . . . | 23 26 23 . 19 . . . | 21 24 21 . 26 . . . | 24 . . . 21 . . ."),
+       lead2:L(4,". . . . . . 17 21 | . . . . . . 16 19 | . . . . . . . . | . . . . . 9 12 16")},
+    C2:{chord:[5,7,4,9], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.18,
+       lead:L(4,"24 26 24 . 21 . . . | 23 26 23 . 19 . . . | 23 20 16 . 23 . . . | 21 . . . 16 . 21 ."),
+       lead2:L(4,". . . . . . 17 21 | . . . . . . 16 19 | . . . . . . . . | . . . . . 21 . 16")},
+    D:{chord:[2,9,5,4], gtr:"trem", drum:"halfrock", bass:"drop", vv:0.29, harm:true, gv:0.14,
+       lead:L(4,"14 . 17 . 21 . . . | 16 . 21 . 24 . . . | 21 . 17 . 14 . 12 . | 16 . . . 20 . 23 ."),
+       lead2:L(4,". . . . . . 14 17 | . . . . . . 16 21 | . . . . . . . . | . . . . . . . .")}
   }}),
 
-/* 7 矯正ワイヤー工場：変ロ・ミクソリディア B♭-F-B♭-E♭。16分の機械リフ */
-mkSong({bpm:178, gtr:"drive", drum:"double", gv:0.15, bass:"root8",
+/* 7 ワイヤー発電所：ハ短調 bpm178。型＝「機械」（16分の同音刻みの上で、タタタタ・タ・ン・タ）。
+   サビはオクターブの跳び（15↔27）がスイッチのように入る */
+mkSong({bpm:178, key:3, order:ORDER, gtr:"drive", drum:"double", bass:"root8", vv:0.27, gv:0.15,
   sec:{
-    I:{chord:[1,1], gtr:"hush", drum:"lite", inst:true, crash:false, fill:false,
-       lead:[1,1,8,1, 13,1,8,1, 6,6,13,6, 18,6,13,6]},
-    A:{chord:[1,-4,1,6],
-       lead:[1,1,8,1, 13,null,11,8, 8,8,15,8, 20,null,18,15,
-             1,1,8,1, 13,null,17,13, 6,6,13,6, 18,17,15,13]},
-    B:{chord:[-2,-4,1,1], gtr:"chug", drum:"rock", bass:"riff",
-       lead:[22,null,null,20, 18,null,17,null, 20,null,null,18, 17,null,15,null,
-             20,null,17,13, 17,null,20,null, 22,20,18,17, 13,null,null,null]},
-    C:{chord:[6,-4,1,1], sabi:true, gtr:"drive", bass:"oct", vv:0.29,
-       lead:[25,null,25,null, 23,25,null,27, 27,null,27,null, 25,27,null,24,
-             25,null,null,22, 20,null,22,null, 24,22,20,null, 13,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, 13,null,17,20,
-              null,null,null,null, null,null,null,null, null,null,null,null, 20,null,17,null]}
+    I:{chord:[3,3], gtr:"trem", drum:"lite", bass:"root8", inst:true, crash:false, fill:false, gv:0.14,
+       lead:L(2,"3 3 10 3 15 3 10 3 | 6 6 13 6 18 6 13 6")},
+    A:{chord:[3,11,13,3], gtr:"trem", drum:"drive8", bass:"root8", gv:0.14,
+       lead:L(4,"15 15 15 15 18 . 15 . | 11 11 11 11 15 . 18 . | 13 13 13 13 17 . 20 . | 15 . . . 10 . 13 .")},
+    A2:{chord:[3,11,13,-2], gtr:"drive", drum:"drive8", bass:"tetsu",
+       lead:L(4,"22 22 22 22 25 . 22 . | 23 23 23 23 27 . 25 . | 25 25 25 25 22 . 20 . | 22 . . . 18 . 14 .")},
+    B:{chord:[8,11,13,-2], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.28,
+       lead:L(4,"20 . 20 . 23 . 27 . | 23 . 23 . 27 . 25 23 | 25 . . 22 25 . 27 . | 26 . . . . . 22 18")},
+    C:{chord:[11,13,3,3], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.17,
+       lead:L(4,"15 27 . . 15 27 . 23 | 13 25 . . 13 25 . 22 | 15 27 . . 25 . 22 . | 20 . 18 . 15 . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . 15 . 18 22")},
+    C2:{chord:[11,13,-2,3], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.17,
+       lead:L(4,"15 27 . . 15 27 . 23 | 13 25 . . 13 25 . 22 | 14 26 . . 22 . 17 . | 15 . . . 22 . 15 ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . 22 . 15 .")},
+    D:{chord:[6,13,8,-2], gtr:"cleanlow", drum:"halfrock", bass:"drop", vv:0.29, harm:true,
+       lead:L(4,"18 . 22 . 25 . . . | 17 . 22 . 25 . . . | 20 . 15 . 11 . 8 . | 14 . . . 17 . 22 ."),
+       lead2:L(4,". . . . . . 18 22 | . . . . . . 17 22 | . . . . . . . . | . . . . . . . .")}
   }}),
 
-/* 8 夜の顎：ニ長調 D-Bm-D-G。動機を短3度下げて置くと夜の色が出る */
-mkSong({bpm:170, gtr:"chug", drum:"rock", vv:0.29, bass:"riff",
+/* 8 夜の海辺：嬰ハ短調 bpm166。型＝「長い音」（タ・ン・ン・ン・タ・ン・ン・ン）切ないバラード寄り。
+   サビだけ8分で走って、最後に高い音を長くのばす */
+mkSong({bpm:166, key:4, order:ORDER, gtr:"chug", drum:"rock", bass:"tetsu", vv:0.28, gv:0.15,
   sec:{
-    I:{chord:[5,5], gtr:"power", drum:"lite", bass:"root8", inst:true, crash:false, fill:false,
-       lead:[17,null,null,17, 24,null,21,null, 14,null,null,14, 21,null,17,null]},
-    A:{chord:[5,2,5,-2],
-       lead:[17,null,17,null, 24,null,21,17, 14,null,14,null, 21,null,17,14,
-             17,null,17,null, 26,null,24,21, 22,null,21,19, 17,null,null,null]},
-    B:{chord:[-2,0,5,5], drum:"double", bass:"pump",
-       lead:[26,null,null,24, 22,null,19,null, 24,null,null,21, 19,null,16,null,
-             17,null,21,24, 26,null,24,21, 24,null,21,19, 17,null,null,null]},
-    C:{chord:[2,-2,0,5], sabi:true, drum:"double", bass:"oct", vv:0.31,
-       lead:[26,null,26,null, 24,26,null,21, 24,null,24,null, 22,24,null,26,
-             26,null,null,24, 21,null,24,null, 26,24,21,null, 17,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, 14,null,17,22,
-              null,null,null,null, null,null,null,null, null,null,null,null, 21,null,17,null]}
+    I:{chord:[4,4], gtr:"clean", drum:"lite", bass:"pedal", inst:true, crash:false, fill:false, gv:0.16,
+       lead:L(2,"16 . . . 19 . . . | 23 . . . 26 . . .")},
+    A:{chord:[4,0,2,4], gtr:"clean", drum:"drive8", bass:"pedal", gv:0.15,
+       lead:L(4,"16 . . . 19 . . 18 | 16 . . . 12 . . . | 14 . . . 18 . . 16 | 14 . . . 11 . 14 .")},
+    A2:{chord:[4,0,2,11], gtr:"chug", drum:"drive8", bass:"tetsu",
+       lead:L(4,"23 . . . 26 . . 24 | 23 . . . 19 . . . | 21 . . . 26 . . 23 | 23 . . . 27 . 18 .")},
+    B:{chord:[9,0,2,2], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.29,
+       lead:L(4,"21 . 24 . 21 . . . | 24 . 26 . 24 . . . | 26 . . 23 26 . 24 . | 26 . . . . 23 21 .")},
+    C:{chord:[0,2,4,4], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.31, gv:0.17,
+       lead:L(4,"24 26 24 21 24 . 26 . | 26 23 21 19 21 . 23 . | 23 26 23 21 16 . 19 . | 21 . . . . . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . 16 19 23 26 . . .")},
+    C2:{chord:[0,2,7,11], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.31, gv:0.17,
+       lead:L(4,"24 26 24 21 24 . 26 . | 26 23 21 19 21 . 23 . | 19 . 23 . 26 . . . | 27 . . . . . 23 ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . . 23 . 18")},
+    D:{chord:[9,4,0,11], gtr:"cleanlow", drum:"halfrock", bass:"drop", vv:0.30, harm:true,
+       lead:L(4,"21 . . . 24 . . . | 23 . . . 19 . . . | 24 . 21 . 19 . 16 . | 18 . . . 23 . 26 ."),
+       lead2:L(4,". . 21 24 . . . . | . . 23 19 . . . . | . . . . . . . . | . . . . . . . .")}
   }}),
 
-/* 9 魔王の口腔：ト・ミクソリディア G-F-G-C。最終面。動機がいちばん硬い */
-mkSong({bpm:186, gtr:"drive", drum:"double", gv:0.16, vv:0.27, bass:"sync",
+/* 9 魔王の口腔：イ短調（和声的短音階）bpm184。型＝「疾走」（タ・ン・タ・ン・タタ・ン・タ）。
+   最終面。サビは8分で駆け上がってから高い音を決める */
+mkSong({bpm:184, key:0, order:ORDER, gtr:"drive", drum:"double", bass:"sync", vv:0.27, gv:0.16,
   sec:{
-    I:{chord:[-2,-2], gtr:"hush", drum:"lite", bass:"root8", inst:true, crash:false, fill:false,
-       lead:[10,null,null,10, 17,null,14,null, 8,null,null,8, 15,null,12,null]},
-    A:{chord:[-2,-4,-2,3],
-       lead:[22,null,22,null, 20,null,17,14, 20,null,20,null, 19,null,15,12,
-             22,null,22,null, 26,null,24,22, 19,null,22,null, 27,null,null,null]},
-    B:{chord:[3,5,-2,-2], gtr:"chug", drum:"rock", bass:"riff",
-       lead:[27,null,null,24, 22,null,19,null, 26,null,null,24, 21,null,17,null,
-             22,null,24,26, 22,null,20,null, 17,null,19,20, 22,null,null,null]},
-    C:{chord:[-4,3,5,-2], sabi:true, gtr:"drive", bass:"oct", vv:0.29,
-       lead:[24,null,24,null, 22,24,null,27, 26,null,26,null, 24,26,null,22,
-             24,null,null,26, 24,null,21,null, 26,24,22,null, 22,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, 15,null,19,22,
-              null,null,null,null, null,null,null,null, null,null,null,null, 22,null,19,null]}
+    I:{chord:[0,0], gtr:"trem", drum:"lite", bass:"root8", inst:true, crash:false, fill:false, gv:0.14,
+       lead:L(2,"12 . 12 . 19 20 . 19 | 15 . 12 . 11 . . .")},
+    A:{chord:[0,-4,-5,0], gtr:"drive", drum:"drive8", bass:"tetsu",
+       lead:L(4,"24 . 24 . 27 24 . 22 | 20 . 20 . 24 20 . 17 | 19 . 19 . 23 19 . 14 | 12 . . . 11 12 . .")},
+    A2:{chord:[0,-2,-4,-5], gtr:"drive", drum:"drive8", bass:"tetsu",
+       lead:L(4,"24 . 24 . 27 24 . 22 | 22 . 22 . 26 22 . 19 | 20 . 20 . 24 20 . 27 | 23 . . . 26 23 . .")},
+    B:{chord:[5,-4,-5,-5], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.28,
+       lead:L(4,"17 . 20 . 24 . 20 . | 20 . 24 . 27 . 24 . | 23 . 19 . 23 . 26 . | 26 . . . 23 . 19 .")},
+    C:{chord:[-4,-5,0,0], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.18,
+       lead:L(4,"20 24 27 . . . 24 . | 19 23 26 . . . 23 . | 24 . 27 . 26 24 . 22 | 24 . . . . . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . 12 15 19 24 . 19 .")},
+    C2:{chord:[-4,-2,-5,0], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.18,
+       lead:L(4,"20 24 27 . . . 24 . | 22 26 27 . . . 26 . | 23 . 19 . 14 . 23 . | 24 . . . 19 . 24 ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . . 24 . 19")},
+    D:{chord:[5,0,-4,-5], gtr:"trem", drum:"halfrock", bass:"drop", vv:0.29, harm:true, gv:0.14,
+       lead:L(4,"17 . 20 . 24 . . . | 15 . 19 . 24 . . . | 20 . 17 . 15 . 12 . | 14 . . . 19 . 23 ."),
+       lead2:L(4,". . . . . . 17 20 | . . . . . . 15 19 | . . . . . . . . | . . . . . . . .")}
   }})
 ];
 
-/* --- ボス戦（1〜8共通）：イ・ミクソリディア A-G-A-D ----------------------
-   FF5の戦闘曲の作り。ギャロップの刻みの上で、根音を2回叩いてから
-   5度・オクターブへ跳ぶ動機を、次の小節で2度下げてそのまま置く。 */
-var T_BOSS=mkSong({bpm:182, gtr:"gallop", drum:"gallop", gv:0.17, vv:0.27, bass:"gallop",
+/* --- ボス戦（1〜8共通）：ニ短調 bpm182。型＝「刺す」（タタ・ン・タタ・ン・タ・ン）緊迫。
+   サビは跳びの大きい動機（17→25→22）を2度ずつ上げていく --- */
+var T_BOSS=mkSong({bpm:182, key:5, order:ORDER, gtr:"gallop", drum:"gallop", bass:"gallop", vv:0.27, gv:0.17,
   sec:{
-    I:{chord:[0,0], gtr:"power", drum:"lite", bass:"root8", inst:true, crash:false, fill:false,
-       lead:[12,null,null,12, 19,null,16,null, 10,null,null,10, 17,null,14,null]},
-    A:{chord:[0,-2,0,5],
-       lead:[12,null,12,null, 19,null,16,12, 10,null,10,null, 17,null,14,10,
-             12,null,12,null, 24,null,21,19, 17,null,19,21, 24,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,null,
-              null,null,null,null, null,null,null,null, null,null,null,null, 24,null,21,17]},
-    B:{chord:[5,-2,0,0], gtr:"chug", drum:"rock", bass:"riff",
-       lead:[24,null,null,21, 19,null,17,null, 22,null,null,19, 17,null,14,null,
-             16,19,null,21, 24,null,21,19, 21,null,19,16, 12,null,null,null]},
-    C:{chord:[-2,5,0,0], sabi:true, gtr:"drive", drum:"double", bass:"oct", vv:0.29,
-       lead:[26,null,26,null, 24,26,null,22, 24,null,24,null, 26,24,null,21,
-             28,null,null,26, 24,null,21,null, 24,null,21,19, 12,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, 12,null,16,19,
-              null,null,null,null, null,null,null,null, null,null,null,null, 19,null,16,12]}
+    I:{chord:[5,5], gtr:"trem", drum:"lite", bass:"root8", inst:true, crash:false, fill:false, gv:0.14,
+       lead:L(2,"17 17 . 24 24 . 20 . | 17 17 . 24 24 . 25 .")},
+    A:{chord:[5,1,3,0], gtr:"gallop", drum:"gallop", bass:"gallop",
+       lead:L(4,"17 17 . 24 24 . 20 . | 13 13 . 20 20 . 17 . | 15 15 . 22 22 . 19 . | 16 16 . 19 . . 16 .")},
+    A2:{chord:[5,1,3,0], gtr:"gallop", drum:"gallop", bass:"gallop",
+       lead:L(4,"24 24 . 27 27 . 24 . | 25 25 . 22 22 . 20 . | 22 22 . 27 27 . 24 . | 24 24 . 19 . . 16 .")},
+    B:{chord:[10,1,0,0], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.28,
+       lead:L(4,"22 . 25 . 22 . 25 . | 25 . 22 . 25 . 22 . | 24 . . 19 24 . 27 . | 27 . . . . . 24 19")},
+    C:{chord:[1,3,5,5], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.18,
+       lead:L(4,"17 . 25 . 22 . . . | 19 . 27 . 24 . . . | 24 . 27 . 25 24 . 22 | 22 . 20 . 17 . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . 17 . 20 24")},
+    C2:{chord:[1,3,0,5], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.18,
+       lead:L(4,"17 . 25 . 22 . . . | 19 . 27 . 24 . . . | 24 . 19 . 16 . 24 . | 24 . . . 20 . 17 ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . 24 . 17 .")},
+    D:{chord:[10,5,1,0], gtr:"trem", drum:"halfrock", bass:"drop", vv:0.29, harm:true, gv:0.14,
+       lead:L(4,"22 22 . 25 . . . . | 20 20 . 17 . . . . | 13 13 . 17 . 20 . 25 | 24 . . . 19 . 16 ."),
+       lead2:L(4,". . . . . 22 25 . | . . . . . 20 17 . | . . . . . . . . | . . . . . . . .")}
   }});
 
-/* --- 大魔王戦：ニ長調 D-G-A。いちばん速く、オクターブを跳び回る --- */
-var T_FINAL=mkSong({bpm:196, gtr:"drive", drum:"double", gv:0.17, vv:0.28, g2v:0.13, bass:"root8",
+/* --- 大魔王戦：嬰ト短調 bpm196。型＝「駆け上がり」（タタタタタタ・タ・ン）いちばん速く、狂気。
+   サビは高い音を長くのばして「決着」を歌う --- */
+var T_FINAL=mkSong({bpm:196, key:11, order:ORDER, gtr:"drive", drum:"double", bass:"root8", vv:0.28, gv:0.17, g2v:0.13,
   sec:{
-    I:{chord:[5,5], gtr:"hush", drum:"lite", inst:true, crash:false, fill:false,
-       lead:[24,22,21,19, 17,14,12,9, 5,9,12,17, 21,null,null,null]},
-    A:{chord:[5,5,-2,-2],
-       lead:[5,17,9,21, 12,24,9,21, 5,17,7,19, 9,21,12,null,
-             -2,10,2,14, -2,10,7,19, 5,17,2,14, 10,null,null,null]},
-    B:{chord:[-2,0,5,5], gtr:"chug", drum:"rock", bass:"riff",
-       lead:[26,null,null,24, 22,null,19,null, 24,null,null,21, 19,null,16,null,
-             17,null,21,24, 26,null,24,21, 24,null,21,19, 17,null,null,null]},
-    C:{chord:[2,-2,0,5], sabi:true, bass:"oct", vv:0.30,
-       lead:[26,null,24,26, 21,null,24,null, 24,null,22,24, 19,null,22,null,
-             26,null,24,21, 24,null,26,null, 26,null,24,21, 17,null,null,null],
-       lead2:[24,21,17,14, null,null,null,null, 22,19,14,10, null,null,null,null,
-              null,null,null,null, null,null,null,null, null,null,null,null, 21,null,17,null]}
+    I:{chord:[11,11], gtr:"trem", drum:"lite", inst:true, crash:false, fill:false, gv:0.14,
+       lead:L(2,"23 21 18 16 14 11 7 4 | 11 14 18 23 26 . . .")},
+    A:{chord:[11,7,9,11], gtr:"drive", drum:"double", bass:"tetsu",
+       lead:L(4,"11 14 16 18 23 . 21 . | 7 11 14 16 19 . 23 . | 9 13 16 18 21 . 25 . | 23 . . . 26 . 23 .")},
+    A2:{chord:[11,7,9,6], gtr:"drive", drum:"double", bass:"tetsu",
+       lead:L(4,"23 21 18 16 23 . 26 . | 19 16 14 11 19 . 23 . | 21 18 16 13 21 . 25 . | 22 . . . 25 . 22 .")},
+    B:{chord:[4,7,9,9], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.29,
+       lead:L(4,"16 . . 19 . . 23 . | 19 . . 23 . . 26 . | 21 . . 25 . . 21 . | 25 . . . . 23 21 .")},
+    C:{chord:[7,9,11,11], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.18,
+       lead:L(4,"26 . . . . . 23 19 | 25 . . . . . 21 18 | 23 . . . 26 . 25 23 | 21 . . . 18 . . ."),
+       lead2:L(4,". 19 23 26 . . . . | . 18 21 25 . . . . | . . . . . . . . | . . . . . 11 14 18")},
+    C2:{chord:[7,9,6,11], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.30, gv:0.18,
+       lead:L(4,"26 . . . . . 23 19 | 25 . . . . . 21 18 | 25 . 22 . 18 . 25 . | 23 . . . . . . ."),
+       lead2:L(4,". 19 23 26 . . . . | . 18 21 25 . . . . | . . . . . . . . | . 11 14 18 23 . 18 .")},
+    D:{chord:[4,11,7,6], gtr:"trem", drum:"halfrock", bass:"drop", vv:0.29, harm:true, gv:0.14,
+       lead:L(4,"16 . 19 . 23 . . . | 18 . 23 . 26 . . . | 23 . 19 . 16 . 14 . | 18 . . . 22 . 25 ."),
+       lead2:L(4,". . . . . . 16 19 | . . . . . . 18 23 | . . . . . . . . | . . . . . . . .")}
   }});
 
-/* --- エンディング：ハ長調。ゆっくりめでも走る大サビ --- */
-var T_END=mkSong({bpm:142, gtr:"chug", drum:"rock", vv:0.31, gv:0.14, bass:"run8",
+/* --- エンディング：イ短調 bpm142 → サビは相対長調 C の王道 F→G→C→Am。
+   型＝「ゆったり」（タ・ン・タ・ン・タ・ン・ン・ン）。平和を守ったヒーローの歌 --- */
+var T_END=mkSong({bpm:142, key:0, order:ORDER, gtr:"chug", drum:"rock", bass:"tetsu", vv:0.31, gv:0.14,
   sec:{
-    I:{chord:[3,3], gtr:"arp", drum:"lite", bass:"half", inst:true, crash:false, fill:false,
-       lead:[15,null,19,null, 22,null,19,null, 15,17,19,22, 24,null,null,null]},
-    A:{chord:[3,-2,0,-4],
-       lead:[15,19,22,19, 24,22,19,15, 14,17,22,17, 26,22,17,14,
-             12,15,19,15, 24,19,15,12, 8,12,15,17, 20,17,15,12]},
-    B:{chord:[-4,3,-2,0], drum:"rock", bass:"run8",
-       lead:[20,null,null,19, 17,null,19,null, 22,null,null,19, 15,null,19,null,
-             22,null,24,null, 22,null,19,null, 24,null,22,19, 17,null,null,null]},
-    C:{chord:[-4,-2,3,3], sabi:true, drum:"rock", bass:"oct", vv:0.32,
-       lead:[20,null,20,19, 20,null,24,null, 22,null,22,20, 19,null,22,null,
-             24,null,22,24, 27,null,26,null, 24,null,22,19, 15,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,null,
-              null,null,null,null, null,null,null,null, 22,null,19,null, 15,null,null,null]}
+    I:{chord:[0,0], gtr:"clean", drum:"lite", bass:"pedal", inst:true, crash:false, fill:false, gv:0.16,
+       lead:L(2,"12 . 15 . 19 . . . | 24 . 22 . 19 . . .")},
+    A:{chord:[0,-4,3,-2], gtr:"clean", drum:"drive8", bass:"pedal", gv:0.15,
+       lead:L(4,"12 . 15 . 19 . . . | 15 . 20 . 19 . . . | 15 . 19 . 22 . . . | 19 . 17 . 14 . . .")},
+    A2:{chord:[0,-4,3,-2], gtr:"chug", drum:"drive8", bass:"tetsu",
+       lead:L(4,"19 . 22 . 24 . . . | 20 . 24 . 27 . . . | 22 . 19 . 15 . . . | 22 . 19 . 17 . . .")},
+    B:{chord:[-4,-2,0,0], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.30,
+       lead:L(4,"20 . . 24 . . 22 . | 22 . . 26 . . 24 . | 24 . . 27 . . 24 . | 26 . . . . 24 22 .")},
+    C:{chord:[-4,-2,3,0], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.32, gv:0.16,
+       lead:L(4,"24 . . . 27 . 24 . | 26 . . . 22 . 19 . | 27 . . . 24 . 22 . | 24 . . . . . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . 12 15 19 22 . 19 .")},
+    C2:{chord:[-4,-2,0,-2], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.32, gv:0.16,
+       lead:L(4,"24 . . . 27 . 24 . | 26 . . . 22 . 19 . | 24 . 22 . 19 . 15 . | 17 . 19 . 22 . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . . 22 . 19")},
+    D:{chord:[5,7,-4,-2], gtr:"cleanlow", drum:"halfrock", bass:"drop", vv:0.31, harm:true,
+       lead:L(4,"17 . 20 . 24 . . . | 19 . 22 . 26 . . . | 20 . 24 . 27 . 24 . | 26 . . . 22 . 19 ."),
+       lead2:L(4,". . . . . . 17 20 | . . . . . . 19 22 | . . . . . . . . | . . . . . . . .")}
   }});
 
-/* --- ボス選択の画面 ------------------------------------------------------
-   2026-09-06に作り替え（院長指示「全部明るい疾走感に」）。
-   2026-09-03に Am→G→F→E の下降でつけた「手ごわいボスが出てくるぞ感」は、
-   進行ではなく テンポ（bpm176）とツーバス・行進のような同音連打 で出すことにした。
-   進行は C→G→Am→F の明るい型。サビだけ歌を戻して厚くする。 */
-var T_SELECT=mkSong({bpm:176, gtr:"chug", drum:"double", gv:0.17, vv:0.15, bass:"oct", g2v:0.13,
+/* --- ボス選択の画面：ヘ短調 bpm150。型＝「決意」（タ・ン・ン・タ・ン・ン・タ・ン）。
+   静かに歌い出して、サビで開く。歌は控えめ（画面の文字の邪魔をしない） --- */
+var T_SELECT=mkSong({bpm:150, key:8, order:ORDER, gtr:"chug", drum:"drive8", bass:"tetsu", vv:0.18, gv:0.15, g2v:0.12,
   sec:{
-    /* イントロ: 低いところから一気に駆け上がって身構えさせる */
-    I:{chord:[3,3], gtr:"arp", drum:"lite", bass:"run8", inst:true, crash:false, fill:false,
-       lead:[3,7,10,15, 19,15,10,7, 3,10,15,19, 22,19,15,10]},
-    /* Aメロ: 同じ音を2回叩く行進のリズム。C→G→Am→F */
-    A:{chord:[3,-2,0,-4],
-       lead:[15,null,15,14, 15,null,19,null, 14,null,14,12, 14,null,17,null,
-             12,null,12,15, 19,null,15,null, 17,null,15,null, 12,null,null,null]},
-    /* Bメロ: F→G で持ち上げて C に着地＝「行くぞ」の助走 */
-    B:{chord:[-4,-2,3,3], gtr:"drive", bass:"run8",
-       lead:[20,null,19,17, 15,null,17,null, 19,null,17,19, 22,null,null,null,
-             15,17,19,22, 19,null,15,null, 17,null,19,null, 22,null,null,null]},
-    /* サビ: 高いところで開ける。ここだけ歌を戻して厚くする */
-    C:{chord:[-4,-2,3,3], sabi:true, vv:0.24, drum:"double",
-       lead:[24,null,24,22, 24,null,27,null, 26,null,26,24, 22,null,null,null,
-             24,null,22,null, 24,null,27,null, 22,null,19,null, 15,null,null,null],
-       lead2:[null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,null,
-              null,null,null,null, null,null,null,null, 19,null,15,null, 12,null,null,null]}
+    I:{chord:[8,8], gtr:"clean", drum:"lite", bass:"pedal", inst:true, crash:false, fill:false, gv:0.16,
+       lead:L(2,"8 . . 11 . . 15 . | 8 . . 11 . . 20 .")},
+    A:{chord:[8,1,6,8], gtr:"clean", drum:"drive8", bass:"pedal", gv:0.15,
+       lead:L(4,"15 . . 20 . . 18 . | 13 . . 16 . . 20 . | 18 . . 22 . . 20 . | 15 . . . . 13 11 .")},
+    A2:{chord:[8,1,6,3], gtr:"chug", drum:"drive8", bass:"tetsu", vv:0.20,
+       lead:L(4,"20 . . 23 . . 22 . | 20 . . 16 . . 13 . | 18 . . 22 . . 25 . | 19 . . . . 15 11 .")},
+    B:{chord:[1,6,3,3], gtr:"stab", drum:"tight16", bass:"walk4", vv:0.21,
+       lead:L(4,"13 . 16 . 20 . . . | 18 . 22 . 25 . . . | 19 . 22 . 27 . 22 . | 23 . . . . 22 19 .")},
+    C:{chord:[1,6,8,8], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.25, gv:0.17,
+       lead:L(4,"25 . . 20 . . 25 . | 27 . . 22 . . 27 . | 20 . . 23 . 27 25 23 | 20 . . . 15 . . ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . . 8 11 15")},
+    C2:{chord:[1,6,3,8], sabi:true, gtr:"ring", drum:"double", bass:"eight", vv:0.25, gv:0.17,
+       lead:L(4,"25 . . 20 . . 25 . | 27 . . 22 . . 27 . | 22 . 19 . 15 . 22 . | 20 . . . 15 . 20 ."),
+       lead2:L(4,". . . . . . . . | . . . . . . . . | . . . . . . . . | . . . . 20 . 15 .")},
+    D:{chord:[1,8,6,3], gtr:"cleanlow", drum:"halfrock", bass:"drop", vv:0.24, harm:true,
+       lead:L(4,"13 . . 16 . . 20 . | 15 . . 20 . . 23 . | 22 . 18 . 15 . 13 . | 15 . . . 19 . 22 ."),
+       lead2:L(4,". . . . . . 13 16 | . . . . . . 15 20 | . . . . . . . . | . . . . . . . .")}
   }});
 
 /* ===== 22_band.js ===== */
@@ -2042,6 +2162,7 @@ var T_SELECT=mkSong({bpm:176, gtr:"chug", drum:"double", gv:0.17, vv:0.15, bass:
    歪ませる装置を作り直さなくてよい（軽い・実機のアンプに近い鳴り方）。 */
 
 var gtrIn=null, gtrLead=null, bassIn=null, voxIn=null, drumIn=null;
+var gtrClean=null;      /* 歪ませないアルペジオ用（2026-09-08 L'Arc風のAメロ・Dメロに使う） */
 
 function distCurve(k){
   var n=1024, c=new Float32Array(n);
@@ -2073,6 +2194,20 @@ function buildBand(){
   }
   gtrIn  = ampLine(26, 120, 2900, 0.25, -0.28);   /* 刻みのギター（左） */
   gtrLead= ampLine(34, 200, 4200, 0.26,  0.30);   /* 弾きまくる方（右） */
+  /* --- クリーンギター：歪ませず、コーラス（少しずらした遅れ）で広げる --- */
+  var ci=AC.createGain(); ci.gain.value=1;
+  var chp=AC.createBiquadFilter(); chp.type="highpass"; chp.frequency.value=160;
+  var clp=AC.createBiquadFilter(); clp.type="lowpass"; clp.frequency.value=5200;
+  var cg=AC.createGain(); cg.gain.value=0.30;
+  ci.connect(chp); chp.connect(clp); clp.connect(cg); cg.connect(musicGain);
+  var cd=AC.createDelay(0.05); cd.delayTime.value=0.018;
+  var cdg=AC.createGain(); cdg.gain.value=0.5;
+  var cd2=AC.createDelay(0.5); cd2.delayTime.value=0.31;
+  var cd2g=AC.createGain(); cd2g.gain.value=0.22;
+  clp.connect(cd); cd.connect(cdg); cdg.connect(musicGain);
+  clp.connect(cd2); cd2.connect(cd2g); cd2g.connect(musicGain);
+  if(AC.createStereoPanner){ var cp=AC.createStereoPanner(); cp.pan.value=0.12; cg.disconnect(); cg.connect(cp); cp.connect(musicGain); }
+  gtrClean=ci;
 
   /* --- ベース：歪ませすぎず、芯だけ通す --- */
   var bi=AC.createGain(); bi.gain.value=1;
@@ -2140,6 +2275,20 @@ function chord5(root,t,dur,vol,palm){
 }
 /* ギターのオブリガート（右で弾く単音） */
 function gLead(sem,t,dur,vol){ gNote(sem,t,dur,vol,false,gtrLead); }
+/* クリーンのアルペジオ1音（三角波＋少しの矩形波。減衰は弦らしく長め） */
+function cNote(sem,t,dur,vol){
+  if(!AC||muted) return;
+  var f=ntof(sem);
+  var o=AC.createOscillator(); o.type="triangle"; o.frequency.value=f;
+  var o2=AC.createOscillator(); o2.type="square"; o2.frequency.value=f*2.003;
+  var g=AC.createGain(), g2=AC.createGain(); g2.gain.value=0.10;
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+0.006);
+  g.gain.exponentialRampToValueAtTime(vol*0.35,t+dur*0.6);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur*1.3);
+  o.connect(g); o2.connect(g2); g2.connect(g); g.connect(gtrClean||gtrIn);
+  o.start(t); o.stop(t+dur*1.4); o2.start(t); o2.stop(t+dur*1.4);
+}
 
 /* --- ベース --- */
 function bNote(sem,t,dur,vol){

@@ -2875,6 +2875,10 @@ function climbStep(p,jumpEdge){
         p.climb=false; p.x+=side*4; p.y=ny2; p.face=side; p.grounded=true; return;
       }
     }
+    /* 降りられないときは向きだけ変える。これで、はしごにつかまったまま
+       右にも左にもフッ素バスター（特殊武器も）を撃てる（院長指示 2026-09-07）。
+       横には動かないので、はしごから落ちたり壁に食い込んだりはしない。 */
+    p.face=side;
   }
   var dir=(keys.up?-1:0)+(keys.down?1:0);
   if(dir===0) return;                             /* 押していない間は止まったまま */

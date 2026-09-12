@@ -195,7 +195,7 @@
   button.go:focus-visible{outline:3px solid var(--gold);outline-offset:3px;}
 
   /* ---- ボス選択 ---- */
-  #s-select{justify-content:flex-start;padding:2.5% 3%;gap:6px;overflow:auto;}
+  #s-select{justify-content:flex-start;padding:1.6% 3% 2.4%;gap:3px;overflow:auto;}
   #grid{
     display:grid;
     grid-template-columns:repeat(3,1fr);
@@ -204,17 +204,17 @@
   }
   .cell{
     position:relative;
-    display:flex;flex-direction:column;align-items:center;gap:2px;
-    padding:4px 2px 5px;
+    display:flex;flex-direction:column;align-items:center;gap:1px;
+    padding:2px 2px 3px;
     background:linear-gradient(180deg,var(--panel-2),var(--panel));
     border:1px solid #24597a;border-bottom:3px solid #071c2c;border-radius:8px;
     color:var(--enamel);cursor:pointer;
     touch-action:manipulation;-webkit-tap-highlight-color:transparent;
     font-family:var(--font-ui);
   }
-  .cell canvas{width:clamp(34px,7.4vw,52px);height:clamp(34px,7.4vw,52px);image-rendering:pixelated;}
-  .cell .nm{font-size:clamp(8px,1.55vw,11px);line-height:1.15;font-weight:700;letter-spacing:0;}
-  .cell .ti{font-size:clamp(7px,1.3vw,9px);color:var(--steel);line-height:1.1;}
+  .cell canvas{width:clamp(24px,5.2vw,38px);height:clamp(24px,5.2vw,38px);image-rendering:pixelated;}
+  .cell .nm{font-size:clamp(7px,1.35vw,10px);line-height:1.1;font-weight:700;letter-spacing:0;}
+  .cell .ti{font-size:clamp(6px,1.15vw,8px);color:var(--steel);line-height:1.05;}
   .cell:active{transform:translateY(2px);border-bottom-width:1px;}
   .cell.done{border-color:var(--mint);}
   .cell.done::after{
@@ -224,8 +224,29 @@
   }
   .cell.lock{opacity:.45;filter:grayscale(.7);cursor:not-allowed;}
   .cell.lock::after{content:"\1F512";position:absolute;top:3px;right:4px;font-size:11px;}
+  .codebox{
+    width:min(100%,430px);margin:5px 0 1px;
+    border-top:1px solid #2b4a5e;padding-top:5px;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .codeline{
+    margin:0;font-family:var(--font-disp);font-size:clamp(10px,1.8vw,13px);
+    color:var(--enamel);letter-spacing:.06em;
+  }
+  .codeline b{
+    font-size:clamp(14px,2.6vw,20px);color:var(--gold);letter-spacing:.22em;margin-left:6px;
+  }
+    .coderow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .codenote{font-family:var(--font-ui);font-size:clamp(7px,1.2vw,9px);color:var(--steel);margin-left:8px;}
+  #code-in{
+    width:5.4em;padding:5px 7px;border-radius:6px;
+    border:1px solid #24597a;background:var(--panel);color:var(--enamel);
+    font-family:var(--font-disp);font-size:clamp(12px,2.2vw,16px);
+    letter-spacing:.2em;text-align:center;text-transform:uppercase;
+  }
+  .coderow .go{margin:0;padding:5px 10px;font-size:clamp(9px,1.6vw,12px);}
   .ch2{
-    margin:8px 0 2px;width:min(100%,430px);
+    margin:5px 0 1px;width:min(100%,430px);
     font-family:var(--font-disp);font-size:clamp(9px,1.7vw,12px);letter-spacing:.12em;
     color:#ffb066;text-align:left;
     border-top:1px solid #2b4a5e;padding-top:6px;
@@ -544,6 +565,14 @@
       <p class="ch2">第2章　おくちクエスト編</p>
       <div id="grid2"></div>
       <p class="sub" id="sel-msg">好きなボスから挑戦できます。8体たおすと、まん中の扉がひらく。</p>
+      <div class="codebox">
+        <p class="codeline">つづきの あいことば <b id="code-now">----</b><span class="codenote">（記録が消えたときは、ここに入れ直す）</span></p>
+        <div class="coderow">
+          <input id="code-in" type="text" inputmode="latin" autocomplete="off"
+                 spellcheck="false" maxlength="4" placeholder="ABCD">
+          <button class="go ghost" id="btn-code">あいことばを入れる</button>
+        </div>
+      </div>
       <button class="go ghost" id="btn-title">タイトルへ</button>
     </div>
 
@@ -567,6 +596,7 @@
       <p class="kicker">Stage Clear</p>
       <p class="big win">CAVITY FREE!</p>
       <p class="sub" id="clear-msg">キング・カリエス撃破。口腔内に平和が戻った。</p>
+      <p class="codeline">あいことば <b id="code-clear">----</b></p>
       <button class="go" id="btn-next">ボス選択へ</button>
       <button class="go ghost" id="btn-again">もう一度このステージ</button>
     </div>
@@ -3812,6 +3842,11 @@ var WSTAGE=[-1, 0,1,2,3,4,5,6,7, 9,10,11,12];
 function weaponOwned(i){
   if(i===0) return true;
   return !!cleared[WSTAGE[i]];
+}
+/* ステージ st をクリアすると手に入る武器の番号（無ければ0＝大魔王） */
+function weaponOfStage(st){
+  for(var i=1;i<WSTAGE.length;i++) if(WSTAGE[i]===st) return i;
+  return 0;
 }
 function refillWeapons(){
   for(var i=0;i<WEAPONS.length;i++) wEnergy[i]=28;
@@ -7774,7 +7809,7 @@ function drawWin(){
 
 function endVictory(){
   winConf=[];
-  startWeaponDemo(stageIdx+1);
+  startWeaponDemo(weaponOfStage(stageIdx));   /* 第2章は添字がずれるので対応表から引く */
 }
 
 /* ===== 47_intro.js ===== */
@@ -7948,7 +7983,7 @@ function drawIntro(){
     ctx.translate(ox2,0);
     px(0,26,214,38,"rgba(4,18,30,.78)");
     px(0,26,3,38,PAL.accent);
-    etext("STAGE "+(stageIdx===8?"FINAL":("0"+(stageIdx+1))), 12, 42, 10, PAL.accent, 1, "left");
+    etext("STAGE "+(stageIdx===8?"FINAL":(stageIdx<8?("0"+(stageIdx+1)):String(stageIdx+1))), 12, 42, 10, PAL.accent, 1, "left");
     etext(LV.name, 12, 58, 15, "#ffffff", 1, "left");
     ctx.restore();
   }
@@ -8021,7 +8056,7 @@ function drawDemo(){
 function endWeaponDemo(){
   state="clear";
   showScreen("s-clear");
-  var S=BOSSES[LEVELS[stageIdx].boss], got=WEAPONS[stageIdx+1];
+  var S=BOSSES[LEVELS[stageIdx].boss], got=WEAPONS[weaponOfStage(stageIdx)];
   document.getElementById("clear-msg").textContent=
     S.name+"撃破。残りHP "+player.hp+" ／ SCORE "+score+"。\n"+
     "★ 特殊武器「"+got.name+"」を手に入れた！ "+got.hint+"。"+
@@ -8727,6 +8762,56 @@ function loadProgress(){
 }
 function saveProgress(){
   try{ localStorage.setItem("dentalman_clear",JSON.stringify(cleared)); }catch(e){}
+  /* 端末が保存を消してしまうことがあるので、合言葉も作り直して画面に出す */
+  showCode();
+}
+
+/* ============================ あいことば（ロックマン方式） ============================
+   iPhone・iPadのSafariは「しばらく使わないサイトの保存データを消す」決まりがあり、
+   端末まかせにすると倒したボスの記録が消える（院長報告 2026-09-12）。
+   そこで、倒したボスを4文字の合言葉にして出す。次に開いたときに入れれば元に戻る。
+   別の端末（iPadで遊んで、次はパソコン）でも続きから遊べる。 */
+var CODE_A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   /* まぎらわしい I O 0 1 は使わない */
+function progCode(){
+  var v=0, i;
+  for(i=0;i<LEVELS.length && i<13;i++) if(cleared[i]) v|=(1<<i);
+  var chk=(v ^ (v>>5) ^ (v>>10)) & 7;            /* 打ちまちがいよけ */
+  var n=v | (chk<<13);
+  var s="";
+  for(i=3;i>=0;i--) s+=CODE_A.charAt((n>>(i*5))&31);
+  return s;
+}
+/* 合言葉を読む。正しければ true。 */
+function applyCode(txt){
+  if(!txt) return false;
+  var t=String(txt).toUpperCase().replace(/[^A-Z2-9]/g,"");
+  if(t.length!==4) return false;
+  var n=0, i;
+  for(i=0;i<4;i++){
+    var k=CODE_A.indexOf(t.charAt(i));
+    if(k<0) return false;
+    n|=k<<((3-i)*5);
+  }
+  var v=n & 0x1FFF, chk=(n>>13)&7;
+  if(((v ^ (v>>5) ^ (v>>10)) & 7)!==chk) return false;
+  for(i=0;i<LEVELS.length;i++) cleared[i]=((v>>i)&1)===1;
+  try{ localStorage.setItem("dentalman_clear",JSON.stringify(cleared)); }catch(e){}
+  return true;
+}
+function showCode(){
+  var c=progCode();
+  var e=document.getElementById("code-now");
+  if(e) e.textContent=c;
+  var e2=document.getElementById("code-clear");
+  if(e2) e2.textContent=c;
+  /* URLの後ろにも合言葉を付けておく。
+     iPadで「ホーム画面に追加」やブックマークをすると、そのリンクから続きが戻る。
+     ⚠️ #opening などの入口を書きかえないよう、空か #p= のときだけ触る */
+  try{
+    var h=location.hash;
+    if((h===""||h==="#"||h.indexOf("#p=")===0) && history && history.replaceState)
+      history.replaceState(null,"","#p="+c);
+  }catch(e3){}
 }
 function finalOpen(){
   for(var i=0;i<8;i++) if(!cleared[i]) return false;
@@ -8819,6 +8904,7 @@ function buildGrid(){
     g2.innerHTML="";
     CELL_ORDER2.forEach(function(i){ g2.appendChild(makeCell(i,false)); });
   }
+  showCode();
   var done=0;
   for(var k=0;k<8;k++) if(cleared[k]) done++;
   document.getElementById("sel-msg").textContent=
@@ -8891,6 +8977,22 @@ function onBossDown(){
 }
 
 /* ============================ ボタン ============================ */
+/* あいことばを入れて続きから */
+(function(){
+  var b=document.getElementById("btn-code");
+  if(!b) return;
+  b.addEventListener("click",function(){
+    var inp=document.getElementById("code-in");
+    var msg=document.getElementById("sel-msg");
+    if(applyCode(inp.value)){
+      inp.value="";
+      buildGrid(); updateWeaponBar();
+      msg.textContent="あいことばで、つづきから遊べるようになりました。";
+    } else {
+      msg.textContent="あいことばが ちがうみたいです（4文字）。";
+    }
+  });
+})();
 document.getElementById("btn-start").addEventListener("click",gotoSelect);
 document.getElementById("btn-op").addEventListener("click",startOpening);
 document.getElementById("btn-title").addEventListener("click",gotoTitle);
@@ -8911,6 +9013,11 @@ document.addEventListener("visibilitychange",function(){
 try{ muted=(localStorage.getItem("dentalman_mute")==="1"); }catch(e){}
 setMuted(muted);
 loadProgress();
+/* URLに合言葉が付いていれば、それを先に読む（端末の保存が消えていても戻る） */
+(function(){
+  var m=(location.hash||"").match(/^#p=([A-Za-z2-9]{4})$/);
+  if(m) applyCode(m[1]);
+})();
 refillWeapons();
 loadStage(0);
 reset();

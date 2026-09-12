@@ -366,6 +366,26 @@
   .btn.bb small{color:rgba(0,0,0,.55);}
   .btn.pressed{transform:translateY(3px);border-bottom-width:1px;filter:brightness(1.35);}
 
+  /* リセット（十字キーとABXYの中間・画面の下）。押しまちがい防止に2回押し */
+  .rst{
+    flex:0 0 auto;align-self:flex-end;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+    min-width:clamp(54px,11vw,84px);padding:6px 8px 7px;
+    border-radius:10px;cursor:pointer;
+    font-family:var(--font-disp);font-size:clamp(9px,1.7vw,13px);letter-spacing:.06em;
+    background:linear-gradient(180deg,#54687a,#2e3d4c);
+    border:1px solid #7e94a6;border-bottom:3px solid #16202a;
+    color:#eaf7f6;
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  }
+  .rst small{display:block;font-family:var(--font-ui);font-size:clamp(6px,1.15vw,9px);color:#c3d6de;margin-top:1px;}
+  .rst:active{transform:translateY(2px);border-bottom-width:1px;}
+  .rst.arm{
+    background:linear-gradient(180deg,#e05a6a,#8c1f2f);
+    border-color:#ff9aa6;border-bottom-color:#5a0d16;color:#fff;
+  }
+  .rst.arm small{color:#ffd9de;}
+
   #tip{
     max-width:760px;width:100%;
     font-size:11px;color:#5f7d92;line-height:1.6;
@@ -373,7 +393,8 @@
   }
 
   @media (pointer:fine){
-    #pad{display:none;}
+    #pad>.cluster{display:none;}     /* マウスはキーボード操作。リセットだけ残す */
+    #pad{justify-content:center;}
   }
   @media (min-width:700px){
     .btn{font-size:18px;}
@@ -424,6 +445,7 @@
     #wbar .wchip .we{width:24px;height:3px;}
     #pad{display:contents;}
     #pad>.cluster{grid-row:2;align-self:center;}
+    #pad>.rst{grid-column:2;grid-row:3;justify-self:center;align-self:start;margin-top:2px;}
     #app{column-gap:8px;}
     #pad>.dpad{grid-column:1;}
     #pad>.abxy{grid-column:3;}
@@ -450,6 +472,7 @@
     #pad{display:contents;}
     #pad>.dpad{grid-column:1;grid-row:3;justify-self:start;align-self:end;}
     #pad>.abxy{grid-column:3;grid-row:3;justify-self:end;align-self:end;}
+    #pad>.rst{grid-column:2;grid-row:3;justify-self:center;align-self:end;}
     .btn{font-size:clamp(12px, 2vh, 20px);}
     .btn small{font-size:clamp(8px, 1.2vh, 12px);}
     .btn.arrow{font-size:clamp(20px, 3.6vh, 36px);}
@@ -566,7 +589,7 @@
       <div id="grid2"></div>
       <p class="sub" id="sel-msg">好きなボスから挑戦できます。8体たおすと、まん中の扉がひらく。</p>
       <div class="codebox">
-        <p class="codeline">つづきの あいことば <b id="code-now">----</b><span class="codenote">（記録が消えたときは、ここに入れ直す）</span></p>
+        <p class="codeline">つづきの あいことば <b id="code-now">----</b><span class="codenote">（ひかえておくと、次に続きから遊べる）</span></p>
         <div class="coderow">
           <input id="code-in" type="text" inputmode="latin" autocomplete="off"
                  spellcheck="false" maxlength="4" placeholder="ABCD">
@@ -616,6 +639,7 @@
       <div class="btn arrow right" data-k="right" aria-label="右">▶</div>
       <div class="btn arrow down"  data-k="down"  aria-label="下・しゃがむ">▼</div>
     </div>
+    <button type="button" id="btn-reset" class="rst" aria-label="リセット・このステージをやり直す">RESET<small>やり直し</small></button>
     <div class="cluster abxy">
       <div class="btn bx" data-k="wnext" aria-label="X 武器チェンジ">X<small>武器</small></div>
       <div class="btn by" data-k="fire"  aria-label="Y ショット">Y<small>ショット</small></div>
@@ -626,7 +650,7 @@
 
   <p id="tip">ボタンはスーパーファミコンと同じ並びです。Y＝ショット（長押しで溜め。離しても溜まったままで、次に押したときに発射。特殊武器も溜められる）／B＝ジャンプ／A＝スライディング（<b>▲を押しながらAで上空ダッシュ</b>＝まっすぐ上へ。空中でも1回）／X＝武器チェンジ。特殊武器は<b>▲を押しながらYで真上、▲＋←→で斜め上</b>に撃てる。十字の▲▼で<b>はしご</b>を上り下り。<br>
   スマホは横向きにすると画面が大きくなります。音が出るので外では音量にご注意ください。<br>
-  進み具合はこの端末に保存されます（次に開いたときは倒したボスがCLEARのまま）。</p>
+  <b>開くたびに最初から</b>始まります（医院のiPadをみんなで使うため）。続きから遊びたいときは、ボス選択画面の<b>あいことば</b>4文字をひかえておいて、入れ直してください。</p>
 </div>
 
 <script>
@@ -6375,6 +6399,41 @@ function withOutline(left,top,w,h,col,draw){
   ctx.drawImage(OL.buf,left-pad,top-pad);
 }
 
+/* 中身を見せずに、形だけ濃い色で塗る（タイトルの「まだ倒していないボス」用）。
+   院長指示 2026-09-13「ラスボスを最初から見せると萎える。シャドーにして」 */
+function asShadow(left,top,w,h,col,edge,draw){
+  var pad=2, W2=(w+pad*2)|0, H2=(h+pad*2)|0;
+  if(W2<=0||H2<=0||W2>320||H2>320){ draw(); return; }
+  outlineReady(W2,H2);
+  if(!OL.c||!OL.c2){ draw(); return; }
+  var save=ctx;
+  OL.c.setTransform(1,0,0,1,0,0);
+  OL.c.clearRect(0,0,OL.buf.width,OL.buf.height);
+  OL.c.save(); OL.c.translate(pad-left,pad-top);
+  ctx=OL.c; draw(); ctx=save;
+  OL.c.restore();
+  OL.c2.setTransform(1,0,0,1,0,0);
+  OL.c2.clearRect(0,0,OL.buf2.width,OL.buf2.height);
+  OL.c2.drawImage(OL.buf,0,0);
+  OL.c2.globalCompositeOperation="source-in";
+  OL.c2.fillStyle=col; OL.c2.fillRect(0,0,OL.buf2.width,OL.buf2.height);
+  OL.c2.globalCompositeOperation="source-over";
+  if(edge){
+    /* 夜空に沈まないよう、ふちだけ少し明るく */
+    OL.c.setTransform(1,0,0,1,0,0);
+    OL.c.clearRect(0,0,OL.buf.width,OL.buf.height);
+    OL.c.drawImage(OL.buf2,0,0);
+    OL.c.globalCompositeOperation="source-in";
+    OL.c.fillStyle=edge; OL.c.fillRect(0,0,OL.buf.width,OL.buf.height);
+    OL.c.globalCompositeOperation="source-over";
+    for(var dx=-1;dx<=1;dx++) for(var dy=-1;dy<=1;dy++){
+      if(dx===0&&dy===0) continue;
+      ctx.drawImage(OL.buf,left-pad+dx,top-pad+dy);
+    }
+  }
+  ctx.drawImage(OL.buf2,left-pad,top-pad);
+}
+
 /* ボス共通の「生きている感じ」（2026-09-12 院長指示「ボスもこれくらい動かして」）。
    ボスごとの絵はそのままに、足もとを軸にした変形だけを外から足す。
      ・息づかい（ゆっくり ふくらむ／へこむ）
@@ -8129,14 +8188,32 @@ function gotoTitle(){
 
 /* ボス1体を「足元の位置」で置く。縮尺と上下のゆれを指定できる。
    dim は奥行き＝薄く描くほど夜に沈んで見える（四角い影で塗らないこと） */
+/* 一枚絵で「まだ倒していないと 中身を見せない」ボス。
+   大魔王と第2章の4体（院長指示 2026-09-13「最初から見せると萎える」）。
+   値＝そのボスのステージ番号。倒すと本来の絵に変わる。 */
+var TITLE_SECRET={mushiburn:8, akeeru:9, shitaochi:10, marunomin:11, magarin:12};
+function titleHidden(kind){
+  var i=TITLE_SECRET[kind];
+  return i!==undefined && !cleared[i];
+}
 function titleBoss(kind,cx,by,sc,dim,bob){
-  var S=BOSSES[kind];
+  var S=BOSSES[kind], top=S.top||0;
   ctx.save();
   ctx.globalAlpha=1-(dim||0);
   ctx.translate(cx-S.w*sc/2, by-S.h*sc+bob);
   ctx.scale(sc,sc);
-  S.draw({x:0,y:0,w:S.w,h:S.h,face:(cx<240?1:-1),mouth:0,hurt:0,t:titleT,phase:1,
-          hp:S.hp,maxhp:S.hp,state:"ceil",wing:0,aura:0,squash:0,step:0,wheel:0},0,0,false);
+  var bb={x:0,y:0,w:S.w,h:S.h,face:(cx<240?1:-1),kind:kind,mouth:0,hurt:0,t:titleT,phase:1,
+          hp:S.hp,maxhp:S.hp,state:"ceil",wing:0,aura:0,squash:0,step:0,wheel:0};
+  var mg=26;
+  if(titleHidden(kind)){
+    asShadow(-mg,-top-mg,S.w+mg*2,S.h+top+mg*2,"#0b1a2b","#22405c",function(){
+      S.draw(bb,0,0,false); bossLimbs(bb,0,0,false);
+    });
+  } else {
+    withOutline(-mg,-top-mg,S.w+mg*2,S.h+top+mg*2,"#0b1118",function(){
+      S.draw(bb,0,0,false); bossLimbs(bb,0,0,false);
+    });
+  }
   ctx.restore();
   ctx.globalAlpha=1;
 }
@@ -8769,18 +8846,19 @@ window.addEventListener("orientationchange",scheduleFit);
 });
 
 /* ============================ 進み具合の保存 ============================ */
+/* ============================================================================
+   進み具合は「端末に残さない」（院長指示 2026-09-13）。
+   医院のiPadを子どもが順番に使うので、**開くたびに必ず最初から**にする。
+   同じブラウザで開き直しても、別の端末でも同じ。自動で戻す道は残さない。
+   続きから遊びたいときだけ、あいことば（4文字）を手で入れる。
+   ============================================================================ */
 var cleared=[];
 function loadProgress(){
   cleared=[];
-  try{
-    var v=JSON.parse(localStorage.getItem("dentalman_clear")||"[]");
-    if(v instanceof Array) cleared=v;
-  }catch(e){}
-  for(var i=0;i<LEVELS.length;i++) if(cleared[i]!==true) cleared[i]=false;
+  for(var i=0;i<LEVELS.length;i++) cleared[i]=false;
 }
 function saveProgress(){
-  try{ localStorage.setItem("dentalman_clear",JSON.stringify(cleared)); }catch(e){}
-  /* 端末が保存を消してしまうことがあるので、合言葉も作り直して画面に出す */
+  /* 端末には書かない。合言葉だけ作り直して画面に出す */
   showCode();
 }
 
@@ -8813,7 +8891,6 @@ function applyCode(txt){
   var v=n & 0x1FFF, chk=(n>>13)&7;
   if(((v ^ (v>>5) ^ (v>>10)) & 7)!==chk) return false;
   for(i=0;i<LEVELS.length;i++) cleared[i]=((v>>i)&1)===1;
-  try{ localStorage.setItem("dentalman_clear",JSON.stringify(cleared)); }catch(e){}
   return true;
 }
 function showCode(){
@@ -8822,19 +8899,14 @@ function showCode(){
   if(e) e.textContent=c;
   var e2=document.getElementById("code-clear");
   if(e2) e2.textContent=c;
-  /* URLの後ろにも合言葉を付けておく。
-     iPadで「ホーム画面に追加」やブックマークをすると、そのリンクから続きが戻る。
-     ⚠️ #opening などの入口を書きかえないよう、空か #p= のときだけ触る */
-  try{
-    var h=location.hash;
-    if((h===""||h==="#"||h.indexOf("#p=")===0) && history && history.replaceState)
-      history.replaceState(null,"","#p="+c);
-  }catch(e3){}
 }
 function finalOpen(){
   for(var i=0;i<8;i++) if(!cleared[i]) return false;
   return true;
 }
+/* 第2章「おくちクエスト編」が開く条件＝最初の8体＋大魔王をたおしたこと
+   （院長指示 2026-09-13。それまでは選択画面で選べない） */
+function ch2Open(){ return finalOpen() && !!cleared[8]; }
 
 /* ============================ 画面 ============================ */
 var SCREENS=["s-title","s-select","s-over","s-clear","s-pause","s-end"];
@@ -8887,7 +8959,9 @@ var CELL_ORDER=[0,1,2, 3,8,4, 5,6,7];   /* まん中がラスボス */
 var CELL_ORDER2=[9,10,11,12];           /* 第2章「おくちクエスト編」。いつでも選べる */
 
 /* 1マス分のボタンを作る。lock を付けるとふせ字になる。 */
-function makeCell(i,lock){
+/* lock を付けるとふせ字になる。note＝ふせ字のときに出す小さな字、
+   msg＝押したときに下に出す説明 */
+function makeCell(i,lock,note,msg){
   var lv=LEVELS[i], S=BOSSES[lv.boss];
   var cell=document.createElement("button");
   cell.type="button";
@@ -8898,14 +8972,14 @@ function makeCell(i,lock){
   cvp.width=64; cvp.height=64;
   cell.appendChild(cvp);
   var nm=document.createElement("div"); nm.className="nm"; nm.textContent=lock?"？？？":S.name;
-  var ti=document.createElement("div"); ti.className="ti"; ti.textContent=lock?"8体たおすと開く":lv.name;
+  var ti=document.createElement("div"); ti.className="ti"; ti.textContent=lock?(note||"8体たおすと開く"):lv.name;
   cell.appendChild(nm); cell.appendChild(ti);
   if(!lock) drawPortrait(lv.boss,cvp.getContext("2d"),64);
   else { var c2=cvp.getContext("2d"); c2.fillStyle="#0b2136"; c2.fillRect(0,0,64,64);
          c2.fillStyle="#3d5a6e"; c2.font="bold 34px system-ui"; c2.textAlign="center"; c2.fillText("?",32,44); }
   cell.addEventListener("click",function(){
     audioInit();
-    if(lock){ document.getElementById("sel-msg").textContent="まだ開かない。ほかの8体を先にたおす。"; return; }
+    if(lock){ document.getElementById("sel-msg").textContent=msg||"まだ開かない。ほかの8体を先にたおす。"; return; }
     openStage(i,cell);
   });
   return cell;
@@ -8916,18 +8990,26 @@ function buildGrid(){
   CELL_ORDER.forEach(function(i){
     g.appendChild(makeCell(i, i===8 && !finalOpen()));
   });
-  /* 第2章（おくちクエスト編）。第1章と関係なく、最初から4体とも選べる */
-  var g2=document.getElementById("grid2");
+  /* 第2章（おくちクエスト編）。大魔王をたおすまでは選べない。
+     ただし、すでにたおしてある面は取り上げない */
+  var g2=document.getElementById("grid2"), open2=ch2Open();
   if(g2){
     g2.innerHTML="";
-    CELL_ORDER2.forEach(function(i){ g2.appendChild(makeCell(i,false)); });
+    CELL_ORDER2.forEach(function(i){
+      g2.appendChild(makeCell(i, !open2 && !cleared[i],
+        "大魔王をたおすと開く",
+        "第2章は、まだ開かない。8体と大魔王を先にたおす。"));
+    });
   }
+  var ch=document.querySelector(".ch2");
+  if(ch) ch.textContent=open2?"第2章　おくちクエスト編":"第2章　おくちクエスト編（大魔王をたおすと開く）";
   showCode();
   var done=0;
   for(var k=0;k<8;k++) if(cleared[k]) done++;
   document.getElementById("sel-msg").textContent=
     finalOpen()
-      ? (cleared[8] ? "全部たおした。好きなボスと何度でも戦える。" : "8体たおした。まん中の扉が開いている。")
+      ? (cleared[8] ? "大魔王をたおした。第2章「おくちクエスト編」が開いている。"
+                    : "8体たおした。まん中の扉が開いている。")
       : "好きなボスから挑戦できます（"+done+"／8たおした）。8体たおすと、まん中の扉がひらく。";
 }
 function gotoSelect(){
@@ -9011,6 +9093,30 @@ function onBossDown(){
     }
   });
 })();
+/* リセット（画面の下のまん中）。いまのステージを最初からやり直す。
+   子どもが遊ぶので、押しまちがい防止に「2回押し」にしてある（院長指示 2026-09-13）。 */
+(function(){
+  var b=document.getElementById("btn-reset");
+  if(!b) return;
+  var armed=0;
+  function calm(){ armed=0; b.classList.remove("arm"); b.innerHTML='RESET<small>やり直し</small>'; }
+  b.addEventListener("click",function(){
+    audioInit();
+    /* ステージを読み込んでいないとき（タイトル・ボス選択・オープニング・エンディング）は何もしない */
+    if(state==="title"||state==="select"||state==="opening"||state==="ending"){ calm(); return; }
+    var now=Date.now();
+    if(armed && now-armed<2600){
+      calm();
+      if(state==="pause") togglePause();
+      startGame(false);
+    } else {
+      armed=now;
+      b.classList.add("arm");
+      b.innerHTML='もう一度<small>おすと やり直し</small>';
+      setTimeout(function(){ if(armed && Date.now()-armed>=2500) calm(); },2600);
+    }
+  });
+})();
 document.getElementById("btn-start").addEventListener("click",gotoSelect);
 document.getElementById("btn-op").addEventListener("click",startOpening);
 document.getElementById("btn-title").addEventListener("click",gotoTitle);
@@ -9031,11 +9137,6 @@ document.addEventListener("visibilitychange",function(){
 try{ muted=(localStorage.getItem("dentalman_mute")==="1"); }catch(e){}
 setMuted(muted);
 loadProgress();
-/* URLに合言葉が付いていれば、それを先に読む（端末の保存が消えていても戻る） */
-(function(){
-  var m=(location.hash||"").match(/^#p=([A-Za-z2-9]{4})$/);
-  if(m) applyCode(m[1]);
-})();
 refillWeapons();
 loadStage(0);
 reset();

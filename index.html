@@ -871,6 +871,10 @@ var LEVELS=[
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
 var W=480, H=272, TS=16;
+/* ゲーム中だけ世界を拡大して描く（院長指示 2026-09-13「キャラをもっと大きく。目が悪くなる」）。
+   キャンバスの大きさ（W×H）は変えない。変えるとタイトル・オープニング・エンディングの
+   絵の座標が全部ずれるため。代わりに「映す世界の広さ」を VW×VH に狭めて拡大率をかける。 */
+var ZOOM=1.40, VW=Math.round(W/ZOOM), VH=Math.round(H/ZOOM);
 /* ROWS（縦のマス数）と LVH（ステージの高さpx）はステージごとに変わる。
    17行＝画面ちょうど1枚ぶん＝上下スクロールなし。34行なら2枚ぶん。
    loadStage がマップの行数を見て決める（2026-09-03 上下スクロール対応）。 */
@@ -2772,8 +2776,8 @@ function reset(){
   player={x:sx0,y:sy,w:12,h:PH_STAND,vx:0,vy:0,face:1,grounded:false,udash:0,udashUsed:false,udashN:0,
     hp:28,maxhp:28,inv:0,charge:0,shootAnim:0,coyote:0,buf:0,anim:0,jumpCut:0,
     slide:0,crawl:false,slideCool:0,wcd:0,climb:false,cpx:sx0,cpy:sy,dead:0};
-  cam.x=Math.max(0,Math.min(LVW-W,sx0-W/2));
-  cam.y=Math.max(0,Math.min(LVH-H, sy-H*0.58));   /* 主人公が見える高さから始める */
+  cam.x=Math.max(0,Math.min(LVW-VW,sx0-VW/2));
+  cam.y=Math.max(0,Math.min(LVH-VH, sy-VH*0.58));   /* 主人公が見える高さから始める */
   ready=110;
   /* ボタンを押しっぱなしのままステージが変わっても、押し直しを要らなくする */
   lastJump=false; lastSlide=false; lastFire=false;
@@ -3115,20 +3119,20 @@ function update(){
   }
 
   /* --- カメラ --- */
-  var tx=p.x+p.w/2-W/2;
-  if(gateOn) tx=Math.max(BOSS_TRIGGER,Math.min(LVW-W,tx));
-  cam.x += (Math.max(0,Math.min(LVW-W,tx))-cam.x)*0.16;
+  var tx=p.x+p.w/2-VW/2;
+  if(gateOn) tx=Math.max(BOSS_TRIGGER,Math.min(LVW-VW,tx));
+  cam.x += (Math.max(0,Math.min(LVW-VW,tx))-cam.x)*0.16;
   if(cam.x<0) cam.x=0;
   /* 横も安全網。ボス戦中はカメラを BOSS_TRIGGER より左へ動かさない作りなので、
      ボス部屋の上の通路を左へ進むと主人公が画面の左端から消えていた
      （2026-09-06 院長報告：プールのボス戦「上の通路をずっと進むとそうなる」）。 */
   var scrX=p.x-cam.x;
-  if(scrX<12) cam.x=Math.max(0,Math.min(LVW-W,p.x-12));
-  else if(scrX+p.w>W-12) cam.x=Math.max(0,Math.min(LVW-W,p.x+p.w-(W-12)));
+  if(scrX<12) cam.x=Math.max(0,Math.min(LVW-VW,p.x-12));
+  else if(scrX+p.w>VW-12) cam.x=Math.max(0,Math.min(LVW-VW,p.x+p.w-(VW-12)));
   /* 縦のカメラ。17行のステージ（LVH===H）では maxY が0になり、今までどおり動かない。
      主人公を画面の少し下寄り（0.58）に置くと、上を見上げる余裕ができる。
      ボス部屋では一番下に固定して、戦いの見え方を毎回そろえる。 */
-  var maxY=Math.max(0,LVH-H);
+  var maxY=Math.max(0,LVH-VH);
   if(maxY===0){ cam.y=0; }
   else {
     /* ボス部屋では床が画面の下に来るように止める。
@@ -3136,7 +3140,7 @@ function update(){
        あったころの名残り。迷路になってからは部屋の高さが面ごとに違う（2026-09-04） */
     var ty;
     if(gateOn){
-      ty=bossFloorY()+TS-H;
+      ty=bossFloorY()+TS-VH;
       /* ボス部屋は24行（384px）あるが画面は272px。床を下に固定したままだと
          上の112pxは映らない。水中の面（プール）は自由に浮き上がれるので、
          そこまで上がると主人公が画面から消えていた（2026-09-06 院長報告）。
@@ -3144,7 +3148,7 @@ function update(){
          カメラも一緒に上げる（下がるときは元の固定位置まで戻る）。 */
       var head=p.y-36;
       if(head<ty) ty=head;
-    } else ty=p.y+p.h/2-H*0.58;
+    } else ty=p.y+p.h/2-VH*0.58;
     ty=Math.max(0,Math.min(maxY,ty));
     cam.y += (ty-cam.y)*0.16;
     if(cam.y<0) cam.y=0; else if(cam.y>maxY) cam.y=maxY;
@@ -3153,7 +3157,7 @@ function update(){
        トランポリン）でも、ここで必ず画面の中に入れる（2026-09-06）。 */
     var scr=p.y-cam.y;
     if(scr<8) cam.y=Math.max(0,Math.min(maxY,p.y-8));
-    else if(scr+p.h>H-8) cam.y=Math.max(0,Math.min(maxY,p.y+p.h-(H-8)));
+    else if(scr+p.h>VH-8) cam.y=Math.max(0,Math.min(maxY,p.y+p.h-(VH-8)));
   }
 
   /* --- ボス開始 --- */
@@ -3183,11 +3187,11 @@ function shoot(level){
 }
 
 function updateSpawns(){
-  var pcx=cam.x+W/2;
+  var pcx=cam.x+VW/2;
   for(var i=0;i<spawns.length;i++){
     var sp=spawns[i];
     if(Math.abs(sp.x-pcx)>620){ sp.dead=false; sp.inst=null; }
-    else if(!sp.dead && !sp.inst && sp.x>cam.x-30 && sp.x<cam.x+W+30){
+    else if(!sp.dead && !sp.inst && sp.x>cam.x-30 && sp.x<cam.x+VW+30){
       sp.inst=makeEnemy(sp); enemies.push(sp.inst);
     }
   }
@@ -3314,7 +3318,7 @@ function updateEnemies(){
     if(enemies[i]!==e) continue;
 
     if(overlap(p,e)) hurtPlayer(3,false,e.x+7);
-    if(e.x<cam.x-120 || e.x>cam.x+W+120 || e.y>LVH+40){
+    if(e.x<cam.x-120 || e.x>cam.x+VW+120 || e.y>LVH+40){
       if(e.sp) e.sp.inst=null;
       enemies.splice(i,1);
     }
@@ -3348,7 +3352,7 @@ function updateBullets(){
       part(b.x,b.y,WEAPONS[b.wid||0].col,4,1.4);
       pbullets.splice(i,1); continue;
     }
-    if(b.x<cam.x-60||b.x>cam.x+W+60||b.y>LVH+40||b.y<-60) pbullets.splice(i,1);
+    if(b.x<cam.x-60||b.x>cam.x+VW+60||b.y>LVH+40||b.y<-60) pbullets.splice(i,1);
   }
   for(i=ebullets.length-1;i>=0;i--){
     b=ebullets[i];
@@ -3366,7 +3370,7 @@ function updateBullets(){
       if(b.bomb) burst(b.x+b.w/2,b.y+b.h/2);
       ebullets.splice(i,1); continue;
     }
-    if(b.x<cam.x-60||b.x>cam.x+W+60||b.y>LVH+30||b.y<-60) ebullets.splice(i,1);
+    if(b.x<cam.x-60||b.x>cam.x+VW+60||b.y>LVH+30||b.y<-60) ebullets.splice(i,1);
   }
 }
 /* 爆弾の破裂：4方向に破片 */
@@ -3518,7 +3522,7 @@ function killPlayer(){
   var p=player;
   if(p.dead>0) return;
   p.hp=0; p.dead=86; p.vx=0; p.vy=0; p.climb=false;
-  burstDeath(p.x+p.w/2, Math.min(p.y+p.h/2, H-24));   /* 画面の中で爆発させる */
+  burstDeath(p.x+p.w/2, Math.min(p.y+p.h/2, VH-24));   /* 画面の中で爆発させる */
   flash=6; shake=12;
   SFX.playerDie();                                   /* 曲を止めて「バンバンバンバン」 */
 }
@@ -3590,7 +3594,7 @@ function updateLava(p){
       if(p.inv===0){ hurtPlayer(4,true); z.y=z.start; z.active=false; }
     }
     /* 主人公が遠くへ行ったら底へ戻す（戻ってきたときにもう一度） */
-    if(Math.abs((p.x+p.w/2)-((z.c0+z.c1+1)*TS/2))>W*1.5){ z.y=z.start; z.active=false; }
+    if(Math.abs((p.x+p.w/2)-((z.c0+z.c1+1)*TS/2))>VW*1.5){ z.y=z.start; z.active=false; }
   }
 }
 /* 発生源：天井の酸のしずく／転がり落ちる岩 */
@@ -3598,7 +3602,7 @@ function updateEmitters(){
   var p=player;
   for(var i=0;i<emitters.length;i++){
     var m=emitters[i];
-    if(Math.abs(m.x-(cam.x+W/2))>W*0.8) continue;      /* 画面の近くだけ */
+    if(Math.abs(m.x-(cam.x+VW/2))>VW*0.8) continue;      /* 画面の近くだけ */
     m.t++;
     if(m.kind==="drip"){
       if(m.t%110===0){
@@ -5328,32 +5332,41 @@ function draw(){
 
   ctx.save();
   ctx.translate(sx,sy);
-  drawBg();
-  /* 主の床より下は地の底。空と山を塗りつぶして地下らしくする */
-  if(UNDER_Y<LVH){
-    var uy=UNDER_Y-Math.round(cam.y);
-    if(uy<H){
-      var top=Math.max(0,uy);
-      var gd=ctx.createLinearGradient(0,top,0,Math.min(H,top+90));
-      gd.addColorStop(0,"rgba(6,14,20,.72)"); gd.addColorStop(1,"rgba(4,9,13,1)");
-      ctx.fillStyle=gd; ctx.fillRect(0,top,W,H-top);
+  /* ここから世界を ZOOM 倍で描く（キャラを大きく見せる。2026-09-13）。
+     背景の絵も「映す広さ」に合わせたいので、描いている間だけ W/H を VW/VH に入れ替える。
+     ⚠️ HUD・READY・フラッシュはこの外（画面そのままの大きさ）で描くこと。 */
+  ctx.scale(ZOOM,ZOOM);
+  var SW=W, SH=H;
+  W=VW; H=VH;
+  try{
+    drawBg();
+    /* 主の床より下は地の底。空と山を塗りつぶして地下らしくする */
+    if(UNDER_Y<LVH){
+      var uy=UNDER_Y-Math.round(cam.y);
+      if(uy<H){
+        var top=Math.max(0,uy);
+        var gd=ctx.createLinearGradient(0,top,0,Math.min(H,top+90));
+        gd.addColorStop(0,"rgba(6,14,20,.72)"); gd.addColorStop(1,"rgba(4,9,13,1)");
+        ctx.fillStyle=gd; ctx.fillRect(0,top,W,H-top);
+      }
     }
+    ctx.save();
+    ctx.translate(-Math.round(cam.x),-Math.round(cam.y));
+    drawTiles();
+    drawPlatforms();
+    drawPickups();
+    drawEnemies();
+    drawBoss();
+    drawBullets();
+    drawPlayerSprite();
+    drawLava();
+    drawParts();
+    ctx.restore();
+    drawWaterOverlay();      /* 水面の高さはカメラ基準なので、拡大の中で描く */
+  } finally {
+    W=SW; H=SH;
   }
-  ctx.save();
-  ctx.translate(-Math.round(cam.x),-Math.round(cam.y));
-  drawTiles();
-  drawPlatforms();
-  drawPickups();
-  drawEnemies();
-  drawBoss();
-  drawBullets();
-  drawPlayerSprite();
-  drawLava();
-  drawParts();
   ctx.restore();
-  ctx.restore();
-
-  drawWaterOverlay();
 
   drawHud();
 
@@ -7921,10 +7934,15 @@ function drawIntro(){
   ctx.translate(W/2, FLOOR+drop);
   ctx.scale(sc*(1+squash), sc*(1-squash));
   ctx.translate(-S2.w/2, -S2.h);
-  S2.draw({x:0,y:0,w:S2.w,h:S2.h,face:-1,
+  var ib={x:0,y:0,w:S2.w,h:S2.h,face:-1,kind:LV.boss,
           mouth:(introT>=INTRO_ROAR&&introT<INTRO_ROAR+90)?9:(introT>110?4:0),hurt:0,
           t:introT*2,phase:1,hp:S2.hp,maxhp:S2.hp,state:"ceil",
-          wing:1,aura:1,squash:0,step:2,wheel:introT*0.1},0,0,false);
+          wing:1,aura:1,squash:0,step:2,wheel:introT*0.1};
+  /* 本編と同じく、縁取りと手足を付ける（2026-09-13） */
+  var img=26;
+  withOutline(-img,-(S2.top||0)-img,S2.w+img*2,S2.h+(S2.top||0)+img*2,"#0b1118",function(){
+    S2.draw(ib,0,0,false); bossLimbs(ib,0,0,false);
+  });
   ctx.restore();
 
   /* 着地の土けむり */

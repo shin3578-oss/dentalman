@@ -778,9 +778,14 @@ var C={
   mint:"#2fd6c2", mintLo:"#12796f",
   caries:"#ff4d80", cariesLo:"#8c1f42", cariesHi:"#ff9ab8",
   gold:"#ffd447", steel:"#7d9bb0", ink:"#04121e",
-  coat:"#f3fbfa", coatSh:"#c4dcdd", skin:"#f2c39a", skinSh:"#cf9d75",
-  hair:"#22303c", pants:"#1d5f86", pantsSh:"#123f5c",
-  glove:"#2fd6c2", visor:"#8fe9ff",
+  /* --- 主人公「しんちゃまくん」の色（2026-09-12 デンタルマンから差し替え） --- */
+  coat:"#fbfdfc", coatSh:"#d2e2e4",        /* 白衣 */
+  skin:"#fbe0da", skinSh:"#e6bdb6",        /* 顔（うすいピンク） */
+  hair:"#8a5230", hairHi:"#ab6e45",        /* 茶色のとんがり毛 */
+  cheek:"#f59aa6", rim:"#1b242c",          /* ほっぺ／丸めがねのふち */
+  pants:"#2b3640", pantsSh:"#1c242c",      /* 細い手足 */
+  shoe:"#141c24",                          /* くつ */
+  glove:"#f6ded7", visor:"#8fe9ff",        /* 手（はだ色） */
   tartar:"#d8c07a", tartarLo:"#8d7736",
   acid:"#b6ff4d", boss:"#ff6f9c", bossLo:"#a02a55", bossDark:"#5d1730"
 };
@@ -3408,7 +3413,7 @@ function updateEmitters(){
 
 /* ===== 28_weapons.js ===== */
 /* ============================ 特殊武器 ============================
-   ボスを倒すと、そのボスの技をデンタルマンが使えるようになる。
+   ボスを倒すと、そのボスの技をしんちゃまくんが使えるようになる。
    武器1〜8はステージ1〜8のボスに対応（stage i を倒す → 武器 i+1）。
    弾数（エネルギー）はステージを始めるたびに満タンに戻る。
    それぞれ「効く相手」が1体いて、そこへ当てると3倍。輪になるように組んである。 */
@@ -5347,6 +5352,10 @@ function drawPickups(){
   }
 }
 
+/* ============================ 主人公「しんちゃまくん」 ============================
+   丸めがね・茶色のとんがり毛・白衣・細い手足。前に出した手には歯ブラシ。
+   当たり判定は 12×21。絵はその中に収める（毛と歯ブラシだけ外へ少しはみ出す）。
+   弾は p.y+9 から出るので、歯ブラシの高さ（y=10〜13）をそこに合わせてある。 */
 function drawPlayerSprite(){
   var p=player;
   if(p.dead>0) return;
@@ -5361,75 +5370,99 @@ function drawPlayerSprite(){
   if(p.climb || p.udash>0){
     /* はしご。後ろ姿で、手と足を左右交互に動かす。
        止まっている間は動かさない（つかまったまま）。
-       上空ダッシュ中も同じ「よじ登る」姿にする（院長指示 2026-09-05）。
-       こちらは空を掻いて上がるので、手足はフレームで速く動かす。 */
+       上空ダッシュ中も同じ「よじ登る」姿にする（院長指示 2026-09-05）。 */
     var ck=(p.udash>0)?Math.floor(frame/3)%2:Math.floor(p.anim*1.1)%2;
     var hL=ck?0:3, hR=ck?3:0;          /* 手の高さ */
     var lL=ck?1:0, lR=ck?0:1;          /* 足の高さ */
-    px(2,16+lL,4,5,C.pants); px(7,16+lR,4,5,C.pantsSh);
-    px(1,20+lL,5,2,"#0f2c40"); px(7,20+lR,5,2,"#0f2c40");
-    px(1,7,11,10,C.coat);              /* 背中 */
-    px(1,7,11,1,"#ffffff");
-    px(1,15,11,2,C.coatSh);
-    px(5,8,3,7,C.coatSh);              /* 背中の中心線 */
-    px(-2,5+hL,4,8,C.coat);            /* 上に伸ばした両腕 */
-    px(11,5+hR,4,8,C.coat);
-    px(-2,3+hL,4,3,C.glove);
-    px(11,3+hR,4,3,C.glove);
-    px(2,0,10,7,C.hair);               /* 後頭部 */
-    px(3,5,8,2,C.skinSh);              /* 首すじ */
+    px(3,18+lL,2,2,C.pants); px(7,18+lR,2,2,C.pants);
+    px(2,20+lL,4,2,C.shoe);  px(6,20+lR,4,2,C.shoe);
+    px(2,11,8,7,C.coat);               /* 白衣の背中 */
+    px(2,11,8,1,"#ffffff");
+    px(2,17,8,1,C.coatSh);
+    px(5,12,2,5,C.coatSh);             /* 背中の中心線 */
+    px(0,7+hL,2,6,C.coat);             /* 上に伸ばした両腕 */
+    px(10,7+hR,2,6,C.coat);
+    px(0,5+hL,2,2,C.glove);
+    px(10,5+hR,2,2,C.glove);
+    px(1,1,10,9,C.skin);               /* 後頭部 */
+    px(3,0,6,1,C.skin);
+    px(4,10,4,1,C.skinSh);             /* 首すじ */
+    drawShinHair();
     ctx.restore();
     return;
   }
 
   if(p.slide>0){
-    /* スライディング（横に伸びた姿勢） */
-    px(0,5,6,7,C.pants); px(-2,9,4,3,"#0f2c40");
-    px(3,2,11,9,C.coat);
-    px(3,2,11,1,"#ffffff");
-    px(3,10,11,2,C.coatSh);
-    px(9,0,7,7,C.skin);
-    px(9,0,8,3,C.hair);
-    px(9,3,6,3,"#f7fdfd");
-    px(12,2,2,1,C.ink);
-    px(15,4,4,4,C.glove);
-    ctx.globalAlpha=0.5;
+    /* スライディング（頭から前に伸びた姿勢） */
+    px(-2,9,4,3,C.pantsSh);            /* けり足 */
+    px(1,8,5,3,C.pants);
+    px(3,5,8,7,C.coat);                /* 白衣 */
+    px(3,5,8,1,"#ffffff");
+    px(3,11,8,1,C.coatSh);
+    px(11,9,4,2,C.coat);               /* 前に出した腕 */
+    px(15,9,3,2,C.glove);
+    px(9,1,9,8,C.skin);                /* 頭 */
+    px(9,0,9,2,C.hair);                /* 毛 */
+    px(10,-2,2,2,C.hair); px(13,-2,2,2,C.hairHi); px(16,-1,2,1,C.hair);
+    px(11,3,3,3,C.rim);  px(12,4,1,1,"#ffffff");   /* 丸めがね */
+    px(15,3,3,3,C.rim);  px(16,4,1,1,"#ffffff");
+    px(11,7,2,1,C.cheek); px(15,7,2,1,C.cheek);
+    ctx.globalAlpha=0.5;               /* 砂ぼこり */
     px(-6,8,7,3,"#9fe8ff"); px(-11,9,5,2,"#9fe8ff");
     ctx.globalAlpha=1;
     ctx.restore();
     return;
   }
 
+  /* --- 走り（4コマ）。細い足を前後に開く --- */
   var run=(p.vx!==0&&p.grounded)?Math.floor(p.anim)%4:0;
-  var legA=(run===1)?2:(run===3?-2:0);
+  var dL=0, dR=0, upL=0, upR=0;
+  if(!p.grounded){ dL=-1; dR=1; upL=0; upR=1; }
+  else if(run===1){ dL=-1; dR=1; upR=1; }
+  else if(run===3){ dL=1; dR=-1; upL=1; }
 
-  px(2,16,4,5,C.pants); px(7,16,4,5,C.pants);
-  if(p.grounded){ px(2,16,4,5,C.pants); px(7+legA*0,16,4,5,C.pantsSh); }
-  else { px(1,15,4,5,C.pants); px(8,17,4,4,C.pantsSh); }
-  px(1,20,5,2,"#0f2c40"); px(7,20,5,2,"#0f2c40");
+  px(3+dL,18-upL,2,2+upL,C.pants);  px(7+dR,18-upR,2,2+upR,C.pants);
+  px(2+dL,20,4,2,C.shoe);           px(6+dR,20,4,2,C.shoe);
 
-  px(1,7,11,10,C.coat);
-  px(1,7,11,1,"#ffffff");
-  px(1,15,11,2,C.coatSh);
-  px(5,7,3,6,C.mint);
-  px(6,8,1,5,C.mintLo);
+  px(0,12,2,3,C.coatSh);             /* 後ろの腕 */
+  px(0,15,2,2,C.glove);
 
-  px(3,0,8,7,C.skin);
-  px(3,5,8,2,C.skinSh);
-  px(2,0,10,3,C.hair);
-  px(2,2,1,2,C.hair);
-  px(3,3,7,3,"#f7fdfd");
-  px(3,3,7,1,"#d3ecec");
-  px(4,2,2,1,C.ink);
-  px(8,2,2,1,C.ink);
-  px(2,-1,9,2,"#173446");
-  px(8,-1,3,2,C.visor);
+  px(2,11,8,7,C.coat);               /* 白衣 */
+  px(2,11,8,1,"#ffffff");
+  px(2,17,8,1,C.coatSh);
+  px(4,11,1,3,C.coatSh);             /* えり */
+  px(7,11,1,3,C.coatSh);
+  px(3,14,3,2,"#e6f1f2");            /* むねポケット */
+  px(4,14,1,1,C.mint);
 
+  px(1,1,10,9,C.skin);               /* 顔 */
+  px(3,0,6,1,C.skin);
+  px(10,2,1,7,C.skinSh);
+  px(2,9,8,1,C.skinSh);
+  px(4,10,4,1,C.skinSh);             /* 首 */
+
+  px(1,3,4,4,C.rim);                 /* 丸めがね（左） */
+  px(2,4,2,2,"#ffffff");
+  px(3,5,1,1,C.rim);
+  px(6,3,4,4,C.rim);                 /* 丸めがね（右） */
+  px(7,4,2,2,"#ffffff");
+  px(8,5,1,1,C.rim);
+  px(5,4,1,1,C.rim);                 /* ブリッジ */
+
+  px(1,7,2,1,C.cheek); px(9,7,2,1,C.cheek);   /* ほっぺ */
+  px(5,8,3,1,"#a85b60");                      /* 笑った口 */
+  px(4,7,1,1,"#a85b60"); px(8,7,1,1,"#a85b60");
+
+  drawShinHair();
+
+  /* --- 前に出した腕と歯ブラシ（弾はこの高さから出る） --- */
   var ext=p.shootAnim>0?3:0;
-  px(9,9,4,4,C.coat);
-  px(11+ext,9,5,4,"#cfe7e6");
-  px(15+ext,9,3,4,C.glove);
-  px(16+ext,10,2,2,"#bffff4");
+  px(9,11,3,3,C.coat);
+  px(11+ext,11,3,2,C.glove);
+  px(13+ext,11,4,2,"#eff7f8");       /* 柄 */
+  px(14+ext,10,1,1,"#cfe0e2");
+  px(17+ext,10,2,3,C.mint);          /* 毛先 */
+  px(17+ext,10,2,1,"#bffff4");
 
   /* 溜めの光（4段階） */
   var lvl=chargeLv(p.charge);
@@ -5439,16 +5472,25 @@ function drawPlayerSprite(){
     var rr=[0,4,6.5,9][lvl]+Math.sin(frame*0.5)*1.2;
     ctx.globalAlpha=0.85;
     ctx.fillStyle=cols[lvl];
-    ctx.beginPath(); ctx.arc(18+ext,11,rr,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(19+ext,11.5,rr,0,Math.PI*2); ctx.fill();
     if(lvl===3){
       ctx.globalAlpha=0.5; ctx.fillStyle=C.caries;
-      ctx.beginPath(); ctx.arc(18+ext,11,rr+3+Math.sin(frame*0.9)*1.5,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(19+ext,11.5,rr+3+Math.sin(frame*0.9)*1.5,0,Math.PI*2); ctx.fill();
     }
     ctx.globalAlpha=1;
     ctx.fillStyle="#ffffff";
-    ctx.beginPath(); ctx.arc(18+ext,11,rr*0.45,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(19+ext,11.5,rr*0.45,0,Math.PI*2); ctx.fill();
   }
   ctx.restore();
+}
+
+/* 頭の上の茶色いとんがり毛。前からも後ろからも同じ形で載せる。 */
+function drawShinHair(){
+  px(1,0,10,2,C.hair);       /* てっぺんをすっぽり覆う */
+  px(2,-2,8,2,C.hair);       /* もり上がり */
+  px(3,-3,6,1,C.hair);       /* 上は平らに近く */
+  px(4,-4,2,1,C.hairHi);     /* ひとふさだけ跳ねる */
+  px(3,-2,3,1,C.hairHi);     /* 光の当たる面 */
 }
 
 function drawEnemies(){
@@ -6596,7 +6638,7 @@ function bg2Maw(p) {
 var endT=0, endDone=false;
 
 var END_CREDITS=[
-  "", "DENTALMAN", "デンタルマン", "",
+  "", "SHINCHAMA-KUN", "しんちゃまくん", "",
   "― 倒した者たち ―",
   "キング・カリエス",
   "タルタル・タンク",
@@ -6766,7 +6808,7 @@ function drawEnding(){
       var y=top+c*22;
       if(y<-10||y>H+20) continue;
       var line=END_CREDITS[c];
-      var big=(line==="DENTALMAN");
+      var big=(line==="SHINCHAMA-KUN");
       var head=(line.charAt(0)==="―");
       etext(line,W/2,y, big?22:(head?12:14),
             big?"#2fd6c2":(head?"#7d9bb0":"#eaf7f6"), 1);
@@ -7359,7 +7401,7 @@ function drawLogo(cx,cy,sc,a){
    ロックマン2のタイトルOPと同じ運び。
      1 あらすじの文章がゆっくり流れる（星空）
      2 夜の街のビルを下から上へなめる
-     3 屋上に立つデンタルマン。風が吹き、題字が飛び込んでくる
+     3 屋上に立つしんちゃまくん。風が吹き、題字が飛び込んでくる
    曲は 1〜2 が T_OP（ハイテンポの主題）、題字の瞬間に T_TITLE へ切り替わる。
    どのボタンでも飛ばせる。飛ばすとタイトル画面へ。 */
 
@@ -7376,7 +7418,7 @@ var OP_LINES=[
   "白衣をまとい、たったひとりで立ち上がった",
   "ヒーローがいる。",
   "",
-  "その名は ―― デンタルマン。",
+  "その名は ―― しんちゃまくん。",
   "",
   "フッ素ブラスターを片手に、",
   "8体の魔物が待つ街へ 走り出す。"

@@ -939,7 +939,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-13 09:33";
+var BUILD_AT="2026-09-13 09:35";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -4058,15 +4058,17 @@ function bossBody(b,x,y,P,hl,o){
   var e  = hl?"#ffffff":BOSS_EDGE;
   var w=b.w, h=b.h, cx=x+((w/2)|0);
   var step=(b.step!==undefined)?b.step:(b.t||0);
-  var walk=(o.walk===false)?0:Math.round(Math.sin(step*0.16)*2);
+  var posing=!!b.pose;                                   /* 登場シーンの決めポーズ */
+  var walk=(posing||o.walk===false)?0:Math.round(Math.sin(step*0.16)*2);
+  var sp=posing?2:0;                                     /* 決めポーズは足を広げる */
 
   /* --- もも と ブーツ（ロックマン準拠の太さ） --- */
   var ty=y+h-11;
-  px(cx-8,ty+walk,5,8-walk,c);   px(cx-4,ty+walk,1,8-walk,e);
-  px(cx+3,ty-walk,5,8+walk,c);   px(cx+3,ty-walk,1,8+walk,e);
-  px(cx-10,y+h-5,8,5,lo);        px(cx+2,y+h-5,8,5,lo);
-  px(cx-10,y+h-1,8,1,e);         px(cx+2,y+h-1,8,1,e);
-  px(cx-10,y+h-5,8,1,e);         px(cx+2,y+h-5,8,1,e);
+  px(cx-8-sp,ty+walk,5,8-walk,c);   px(cx-4-sp,ty+walk,1,8-walk,e);
+  px(cx+3+sp,ty-walk,5,8+walk,c);   px(cx+3+sp,ty-walk,1,8+walk,e);
+  px(cx-10-sp,y+h-5,8,5,lo);        px(cx+2+sp,y+h-5,8,5,lo);
+  px(cx-10-sp,y+h-1,8,1,e);         px(cx+2+sp,y+h-1,8,1,e);
+  px(cx-10-sp,y+h-5,8,1,e);         px(cx+2+sp,y+h-5,8,1,e);
 
   /* --- 胴 --- */
   var by=y+5, bh=h-16;
@@ -4083,9 +4085,20 @@ function bossBody(b,x,y,P,hl,o){
   px(cx-10,by-1,20,1,e);
 
   /* --- 腕 --- */
-  var am=o.arm||"down";
+  var am=posing?"pose":(o.arm||"down");
   var ay=by+3;
-  if(am==="up"){
+  if(am==="pose"){
+    /* 決めポーズ（院長指示 2026-09-13）。前の腕を斜め上へ突き上げる */
+    var f=(b.face<0)?-1:1;
+    px(cx-10,ay+1,4,9,c);  px(cx-11,ay+1,1,9,e); px(cx-7,ay+1,1,9,e);
+    px(cx-10,ay+10,4,3,lo); px(cx-10,ay+13,4,1,e);
+    var x1=(f>0)?(cx+6):(cx-10);
+    px(x1,ay-1,4,7,c);  px(x1-1,ay-1,1,7,e);  px(x1+4,ay-1,1,7,e);
+    var x2=(f>0)?(cx+9):(cx-13);
+    px(x2,ay-8,4,8,c);  px(x2-1,ay-8,1,8,e);  px(x2+4,ay-8,1,8,e);
+    var x3=(f>0)?(cx+8):(cx-14);
+    px(x3,ay-14,6,6,lo); px(x3,ay-15,6,1,e);
+  } else if(am==="up"){
     px(cx-10,ay-8,4,10,c); px(cx-11,ay-8,1,10,e); px(cx-7,ay-8,1,10,e);
     px(cx+6,ay-8,4,10,c);  px(cx+5,ay-8,1,10,e);  px(cx+10,ay-8,1,10,e);
     px(cx-10,ay-11,4,3,lo); px(cx+6,ay-11,4,3,lo);
@@ -7889,13 +7902,14 @@ function drawIntro(){
     var floorY=by+bandH-34;
     var drop=introDropY(t);
     var squash=(t>=54&&t<66)?(1-(t-54)/12)*0.22:0;
-    var pose=(t>=INTRO_ROAR&&t<INTRO_ROAR+80);
+    var pose=(t>=INTRO_ROAR);
     var sc=2.2;
     ctx.save();
     ctx.translate(W/2, floorY+drop);
     ctx.scale(sc*(1+squash), sc*(1-squash));
     ctx.translate(-S.w/2, -S.h);
     var ib={x:0,y:0,w:S.w,h:S.h,face:-1,kind:LV.boss,
+            pose:pose,               /* 決めポーズ（院長指示 2026-09-13） */
             mouth:pose?9:0,hurt:0,   /* ふだんは腕を下ろした「立ち」 */
             t:t*2,phase:1,hp:S.hp,maxhp:S.hp,state:pose?"intro2":"ceil",
             wing:1,aura:1,squash:0,step:(t>66)?t:0,wheel:t*0.1};

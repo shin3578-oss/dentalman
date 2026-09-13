@@ -739,7 +739,7 @@
       <div class="btn arrow down"  data-k="down"  aria-label="下・しゃがむ">▼</div>
     </div>
     <div class="cluster rside">
-      <button type="button" id="btn-reset" class="rst" aria-label="リセット・このステージをやり直す">RESET<small>やり直し</small></button>
+      <button type="button" id="btn-reset" class="rst" aria-label="リセット・ボス選択へ戻る">RESET<small>セレクトへ</small></button>
       <div class="abxy">
         <div class="btn bx" data-k="wnext" aria-label="X 武器チェンジ">X<small>武器</small></div>
         <div class="btn by" data-k="fire"  aria-label="Y ショット">Y<small>ショット</small></div>
@@ -1016,7 +1016,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-13 21:17";
+var BUILD_AT="2026-09-13 21:37";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -9225,7 +9225,7 @@ function onBossDown(){
   var b=document.getElementById("btn-reset");
   if(!b) return;
   var armed=0;
-  function calm(){ armed=0; b.classList.remove("arm"); b.innerHTML='RESET<small>やり直し</small>'; }
+  function calm(){ armed=0; b.classList.remove("arm"); b.innerHTML='RESET<small>セレクトへ</small>'; }
   b.addEventListener("click",function(){
     audioInit();
     /* ステージを読み込んでいないとき（タイトル・ボス選択・オープニング・エンディング）は何もしない */
@@ -9233,12 +9233,14 @@ function onBossDown(){
     var now=Date.now();
     if(armed && now-armed<2600){
       calm();
+      /* 押したらボス選択へ戻る（院長指示 2026-09-13。以前は同じステージの頭からやり直し） */
       if(state==="pause") togglePause();
-      startGame(false);
+      rushMode=false; picking=false; boss=null; gateOn=false;
+      gotoSelect();
     } else {
       armed=now;
       b.classList.add("arm");
-      b.innerHTML='もう一度<small>おすと やり直し</small>';
+      b.innerHTML='もう一度<small>おすと セレクトへ</small>';
       setTimeout(function(){ if(armed && Date.now()-armed>=2500) calm(); },2600);
     }
   });

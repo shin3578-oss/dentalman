@@ -939,7 +939,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-13 10:14";
+var BUILD_AT="2026-09-13 10:29";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -4032,307 +4032,61 @@ function boomCube(b){
   }
 }
 
+/* ===== 29_boss_data.js ===== */
+/* このファイルは src/gen_boss.py が書き出す。手で直さないこと。 */
+/* ボス13体の手描きドット絵（1コマ 26x32、右向き）。 */
+var BOSS_ART={
+  caries:{pal:{"c":"#e83a72","d":"#8c1f42","l":"#ff9ab8","s":"#ffd447","t":"#a8741a","f":"#ffd9c4","a":"#ffd447","y":"#ffd447","g":"#c8cdd8"},rows:[".........s.s.s............","........ossosso...........","........osssssso..........","........ottttttto.........",".......occcccccco.........","......occcllcccccco.......","......occlfffffcccco......","......ocfffffffffcco......","......ocfeefffeeffco......","......ocfffffffffco.......",".......ofwfwfwfwfo........",".......offeeeeeffo........","........offfffffo.........","....oooooocccooooooo......","..oocccccccccccccccdoo....",".occcccccdcccccccccccdo...",".occcooccdaaccccccooccdo..",".occoccccdaaccccccccoccdo.",".ocdocccccddcccccccccdodo.",".oddoccccdddccccccccddodo.","..oodccccdddccccccccddoo..","...odddoddddddddddoddo....","....oo.oddddoddddo.oo.....",".......oddddoddddo........",".......ocdddocdddo........",".......ocdddocdddo........","......oyyyyoyyyyyo........",".....oyyyyyoyyyyyyo.......",".....oyylyyoyyylyyo.......","....oyyyyyyoyyyyyyyo......","....otttttttottttttto.....",".....ooooooooooooooo......"]},
+  tank:{pal:{"c":"#c9b26a","d":"#7a6528","l":"#efe0a8","s":"#8d7736","t":"#4a3c14","f":"#3a2f14","a":"#ff9a3c","y":"#c9b26a","g":"#5a5a5a"},rows:["..........................","......ooooooooooooo.......",".....occccccccccccco......",".....ocllllllllllcco......",".....occccccccccccco......",".....occooooooooocco......",".....ocoffffffffocco......",".....ocofaaaaaafocco......",".....ocoffffffffocco......",".....occooooooooocco......",".....occcccddcccccco......","......occdddddddcco.......","..oooooddcccccccddoooooo..",".ocdcccccccccccccccccccdo.",".occcccccccccccccccccccco.","ocdccccoocccaacccooccccdco","ocdcccoccocaaaacoccocccdco","ocdcccocccoaaaaoccocccddco","ocddccocccccaacccccoccddco","ocddccoccccddddccccocdddco",".oddocccccdddddddccccoddo.",".oddo.oddddddddddddo.oddo.","..oo..odddddddddddo..oo...","......oddddddddddo........","....ooggggggggggggggoo....","...ogggogogogogogogggo....","...oggoooooooooooooggo....","...ogo.ttttttttttt.ogo....","...ogo.ttttttttttt.ogo....","...oggoooooooooooooggo....","...ogggogogogogogogggo....","....ooooooooooooooooo....."]},
+  slime:{pal:{"c":"#7cc44e","d":"#3f7a2a","l":"#c4f19a","s":"#2e5c20","t":"#1d3a14","f":"#1e3a14","a":"#b6ff4d","y":"#c4f19a","g":"#c8cdd8"},rows:["..........................","..........oooooo..........","........oocccccco.........",".......occllllccco........","......occlccccclcco.......","......occccccccccco.......",".....occcooooooocccco.....",".....occowwwowwwocsco.....",".....occowaewaewocsco.....",".....occowwwowwwocsso.....",".....occcooooooocc.o......","......occffffffcco........","......occfeeeeffco........",".......ocffffffco.........","....ooooocccccooooo.......","...occcccccccccccccco.....","..occccccccdccccccccco....","..oclccccccdaacccccclco...","..occccccccdaacccccccco...","..occccccccdddcccccccco...",".oddoccccccdddccccccoddo..",".oddoccccccdddccccccoddo..","..oo.oddddddddddddd.oo....",".....odddddoodddddo.......",".....ocdddoooodddco.......",".....ocdddo..odddco.......","....oyyyyyo..oyyyyyo......","...oyyyyyyo..oyyyyyyo.....","...oyylyyyo..oyyylyyo.....","..oyyyyyyyo..oyyyyyyyo....","..otttttttto.ottttttto....","...oooooooo...oooooooo...."]},
+  queen:{pal:{"c":"#ff8ec4","d":"#a8386e","l":"#ffd3e8","s":"#fff0f5","t":"#c9a0b8","f":"#fff0f5","a":"#ffd447","y":"#ffd447","g":"#c8cdd8"},rows:["oo.........ooo.........oo.","oaoo......oaaao......ooao.",".oaaoo....oaaao....ooaao..","..oaaaooooccccccoooaaao...","...oaaaccccllccccccaao....","....oaccccccccccccccao....",".....occcffffffffcco......",".....occfffffffffcco......",".....ocffeefffeefco.......",".....ocfffffffffffo.......","......offffeefffo.........",".......offffffffo.........","........oosssoo...........","......oocsssssscoo........",".....ocsssssssssssco......","....ocssssssaassssssco....","....ocsssssaaaasssssco....","....ocsscssaaaasscssco....","....otsscsssaassssctso....","....otsscssssssssscstso...",".....otoctttttttcotso.....","......oo.otttttto.oo......",".........oscccsco.........",".........osccosco.........",".........osccosco.........",".........occoocco.........","........oyyyooyyyo........","........oyyyooyyyo........","........oylyooylyo........",".......oyyyyooyyyyo.......",".......otttto.otttto......","........oooo...oooo......."]},
+  bomber:{pal:{"c":"#eef6f6","d":"#8fb2bd","l":"#ffffff","s":"#ff6f9c","t":"#b83e63","f":"#2c3e4a","a":"#ffd447","y":"#ff6f9c","g":"#c8cdd8"},rows:["............oa............","............aa............","...........oddo...........","..........occcco..........",".........occllcco.........",".........occcccco.........","........occoooooco........","........ocoffffoco........","........ocofeefoco........","........ocoffffoco........","........occoooocco........",".........ocddddco.........","..........oooooo..........",".......oooccccccooo.......",".....ooccccccccccccoo.....","....occclcccccccccccco....","...occccccccsssscccccco...","..occccccccsssssscccccco..","..occoocccssssssssccooco..",".occoccocccssssssccocooco.",".occoccoccccssssccccocooco",".ocdoccoccccccccccccococdo",".oddoccccdddddddddcccoddo.","..oo.ocdddddddddddddco.oo.",".....oddddddddddddddo.....","......odddddoodddddo......",".......odddo..odddo.......","......oyyyyo..oyyyyo......",".....oyyyyyo..oyyyyyo.....",".....oylyyyo..oyyylyo.....","....oyyyyyyo..oyyyyyyo....","....oooooooo..oooooooo...."]},
+  dragon:{pal:{"c":"#5fbf5a","d":"#2c6b2a","l":"#b6ff4d","s":"#e6ff6a","t":"#8fa020","f":"#1a3a1a","a":"#e6ff6a","y":"#5fbf5a","g":"#c8cdd8"},rows:[".........oo...............","........oclo..............","........occlo.....oo......",".......occcclo...ollo.....",".......occcccloooclllo....","......occcccccccccccclo...","......occwwoccccccccccclo.","......ocweaocccccccccccco.","......occwwocccccccdddddo.","......occcccccccccdaaaaao.",".......occccccddddwewewwo.","........oddddddddoooooooo.",".........ooooooooo........","......ooooocccccoooooo....","....oocccccccccccccccccoo.","...ocssccccccccdccccccccco","...ocsssccccccdaacccccccco","..ocsssccccccccaaccccoocco","..ocssccccccccddddcccoccco","..ocsccccccccdddddccccccco","..ocoocccccccdddddccccocco","...oo.odddddddddddddooddo.","......oddddddddddddo..oo..",".....oddddddoooddddo......","....oddddddo...odddddo....","...oddddddo.....oddddddo..","..occcccco.......occcccco.",".occccccco.......occccccco",".occcccco.........occcccco",".ottttto...........ottttto","oo.oo.oo...........oo.oo.o","o..o..o.............o..o.o"]},
+  wire:{pal:{"c":"#c8cdd8","d":"#5a606c","l":"#f0f3f8","s":"#8fd7ff","t":"#2b6284","f":"#1d2530","a":"#8fd7ff","y":"#8fd7ff","g":"#8a90a0"},rows:["...........oaao...........","..........oaaaao..........",".........oaaaaaao.........","..........oaaaao..........","...........oaao...........","..........occcco..........",".........occllcco.........",".........occccccco........","........occooooooco.......","........ocoaaaaaaoco......","........ocoffffffoco......","........occoooooocco......",".........ocddddddco.......","..........oooooooo........","......oosoocccccooosoo....",".....ocssoccccccccossco...","....ocsssoccdccaacosssco..","....ocsscocccdcaacoccssco.","....ocsscoccccddccocoscco.",".....otsoccccdddccocotso..","......oo.occccddccc.oo....",".........otddddddto.......",".........otddddddto.......","..........otddotddo.......","..........occdocddo.......","..........occdocddo.......","..........occdocddo.......",".........oyyyyoyyyyo......",".........oyylyoylyyo......","........oyyyyyoyyyyyo.....","........ottttttttttto.....",".........ooooooooooo......"]},
+  knight:{pal:{"c":"#cfc6e6","d":"#6f6394","l":"#f4efff","s":"#ff6f9c","t":"#a8386e","f":"#2a2440","a":"#ff6f9c","y":"#6f6394","g":"#c8cdd8"},rows:["........ogogogogo.........",".......ogggggggggo........","........ogogogogo.........","........occccccco.........",".......occllllccco........","......occccccccccco.......","......ocsoooooooosco......","......ocsoaaaaaaosco......","......ocsoooooooosco......","......occcffffffccco......",".......ocffwwwwffco.......",".......ocfffffffco........","........ooddddddo.........","...ooooooccccccooooooo....","..occcccccccccccccccccco..",".ocllcccccccdcccccccccllco",".occccccccccdaacccccccccco",".ocddccooccccaaccccooccddo",".ocddccocccccddcccccoccddo","..oddccoccccdddccccocddo..","..oddocccccdddddccccoddo..","...oo.oddddddddddddo.oo...","......odddddoodddddo......","......ocdddo..odddco......","......ocdddo..odddco......","......ocdddo..odddco......",".....ossssso..ossssso.....","....osssssso..osssssso....","....osslssso..ossslsso....","...ossssssso..ossssssso...","...ottttttto..ottttttto...","....oooooooo..oooooooo...."]},
+  mushiburn:{pal:{"c":"#7a1430","d":"#3a0a18","l":"#c43a66","s":"#ffd447","t":"#a8741a","f":"#1a0508","a":"#ff6f9c","y":"#3a0a18","g":"#c8cdd8"},rows:["oo....................oo..","oso..................oso..",".oso................oso...",".osso..............osso...","..osso....oooooo..osso....","..osssooocccccccoosso.....","...ossoccccllccccosso.....","....ooccccccccccccoo......","....occcooooooooccco......","....occoaaoffoaaoccco.....","....occoaaoffoaaoccco.....","....occoooooooooocco......",".....occfwwwwwwfcco.......",".....occeeeeeeeecco.......","......ocdddddddddco.......",".osoooooodddddddoooooooso.",".ossoccccccccccccccccosso.","ossocccccccccccccccccossso","oso.occccccdaacccccco.osso","oo.ocdcccccdaaccccccdo..oo","...ocdcoocccccccoocccdo...","...ocdocccddddddccocddo...","...oddoccdddddddddcoddo...","...oddoccdddddddddcoddo...","....oo.odddddoddddd.oo....",".......oddddoodddddo......",".......ocdddo.odddco......",".......ocdddo.odddco......","......oyyyyyo.oyyyyyo.....",".....oyyyyyyo.oyyyyyyo....",".....oyyyyyyo.oyyyyyyo....",".....oooooooo.oooooooo...."]},
+  akeeru:{pal:{"c":"#8e5fd6","d":"#5a3690","l":"#c9a8f0","s":"#e8d7ff","t":"#5a3690","f":"#2a1a44","a":"#e8d7ff","y":"#5a3690","g":"#3a2a55"},rows:["..........................","..........oooooo..........",".........occcccco.........","........occllllcco........","........occcccccco........","........occeeeecco........","........ocweewweco........","........ocweeeweco........",".........occcccco.........","......ooooccccccoooo......","....oocccccccccccccccoo...","...occccccccccccccccccco..","..occccooooooooooooccccco.","..occcoggggggggggggocccco.",".occccogogogogogogogccccco",".occccogggggggggggggocccco",".occccogogogogogogogocccco",".ocdccogggggggggggggoccdco",".ocdccogogogogogogogoccdco",".ocddccooooooooooooocccddo","..oddccccccccccccccccdddo.","..odd.ooccccddddccccoo.ddo","...oo..oddddddddddddo..oo.",".......oddddddoddddo......",".......ocdddddoddddo......",".......ocdddddoddddo......","......oyyyyyyoyyyyyyo.....",".....oyyyyyyyoyyyyyyyo....",".....oyylyyyyoyyyylyyo....","....oyyyyyyyyoyyyyyyyyo...","....ottttttttttttttttto...",".....ooooooooooooooooo...."]},
+  shitaochi:{pal:{"c":"#3fc8e8","d":"#1a6f96","l":"#a8ecf7","s":"#3a3f47","t":"#1c2026","f":"#0e2a3a","a":"#ffffff","y":"#1a6f96","g":"#5a5f68"},rows:["..........................",".......oooooooooooo.......","......occcccccccccco......","......ocllllllllllco......","......occcccccccccco......","......occoooooooocco......","......ocoaaaaaaaaoco......","......ocoffffffffoco......","......occoooooooocco......","......occcccccccccco......",".......occffeefcco........",".......ocffffffcco........","........ooooooooo.........","..ooooooocccccccooooooo...",".occcccccccccccccccccccco.",".occlccccccccccccccccclcco",".occcccccccdaaccccccccccco",".occoocccccdaacccccccoocco",".occoccccccdddccccccccocco",".ocdoccccccdddcccccccodco.",".ocdocccccddddddcccccodco.","ossso.oddddddddddddo.ossso","osssso.oddddddddddo.osssso","osssso..ocdddddddo..osssso","osssso...ocddoddco..osssso",".osso....ocddoddco...osso.","..oo....oyyyyoyyyyo...oo..","........oyyyyoyyyyo.......",".......oyylyyoyylyyo......","......oyyyyyyoyyyyyyo.....","......ottttttttttttto.....",".......ooooooooooooo......"]},
+  marunomin:{pal:{"c":"#b8d420","d":"#6f8a10","l":"#e8f07a","s":"#ffd447","t":"#a8741a","f":"#2a3308","a":"#ffd447","y":"#6f8a10","g":"#c8cdd8"},rows:["........o.....o.....o.....","........so....so....so....","........sso...sso...sso...","........osoooosooooso.....","........occccccccccco.....",".......occllllllccccco....",".......occccccccccccco....",".......occooooooooocco....",".......ocoffffffffocco....",".......ocofeefffeefocco...",".......ocoffffffffocco....",".......occooooooooocco....",".......occfwwwwwwwfco.....",".......ocfeeeeeeeefco.....","........ofwwwwwwwwfo......","........ooooooooooo.......","....ooooocccccccoooooo....","..oocccccccccccccccccccoo.",".occcccccccccdccccccccccco",".occoocccccccdaacccccoocco",".occocccccccccaaccccccocco",".ocdoccccccccddddccccccdco",".ocdocccccccddddddcccccdco","..oo.odddddddddddddddo.oo.",".....oddddddddddddddo.....","......odddddooddddddo.....","......ocdddo..oddddco.....",".....oyyyyyo..oyyyyyo.....","....oyyyyyyo..oyyyyyyo....","....oyyylyyo..oyylyyyo....","...oyyyyyyyo..oyyyyyyyo...","...oooooooo...ooooooooo..."]},
+  magarin:{pal:{"c":"#ff8a2b","d":"#a8500e","l":"#ffc47a","s":"#ffffff","t":"#c8cdd8","f":"#3a1a04","a":"#ffffff","y":"#a8500e","g":"#c8cdd8"},rows:["..........................","..........................","........oooooooooo........",".......occcccccccco.......","......occllllllllcco......","......occcccccccccco......",".....occoooooooooocco.....",".....ocoaaaaaaaaaaoco.....",".....occoooooooooocco.....",".....occcffffffffccco.....","......ocffeeffeeffco......","......ocfffffffffco.......",".......ooooffffooo........","..oooo.ooocccccooo.oooo...",".odddo.occcccccccco.odddo.",".odddoocccccdccccccoodddo.",".oddddoccccdaaccccccodddo.",".oddddocccccaaccccccodddo.",".oddddocccccddccccccodddo.",".odddooccccddddccccooddddo",".oddoccccdddddddddccccoddo","..oo.ocdddddddddddddco.oo.",".....odddddddddddddo......","......oddddddodddddo......","......ocddddo.odddco......","......ocddddo.odddco......",".....oyyyyyyo.oyyyyyo.....",".....oyyyyyyo.oyyyyyo.....","....oyyylyyyo.oyylyyyo....","....oyyyyyyyo.oyyyyyyyo...","....ottttttto.ottttttto...",".....ooooooo...ooooooo...."]},
+};
+
 /* ===== 29_bossbody.js ===== */
-/* ============================ ボスの体の部品（ロボット） ============================
-   院長指示 2026-09-13
-     「ロックマンと同じフォルムにして、全員ロボット。なんとかマンってことはヒーローなんだから、
-      もっとクールにして」
-   → 全員 **ロックマンと同じ作りのロボット**にする。
-      ヘルメット（額のクレストで個性）／顔の板（目とマスク）／胸のアーマーとコア／
-      肩の球／ガントレット（前腕が太い）／ひざ当てつきの大きなブーツ。
-      かわいい記号（ほっぺ・舌・ねむい目）は使わない。
+/* ============================ ボスの絵（手描きドット絵） ============================
+   院長指示 2026-09-13「ロックマン2のロボットマスターと同じに」。
+   数式で四角を並べる描き方（前の版）は不格好だったので、主人公と同じく
+   **1体ずつ手描きのドット絵**にした。絵そのものは gen_boss.py が書き出す 29_boss_data.js。
 
-   大きさは全員 22×30（当たり判定）。頭のクレストだけ top ぶん上へ。
+   1コマ 26×32、右向きで描いてある。当たり判定 22×30 に対して 左へ2・上へ2ずらして描く。
+   左向き（face<0）は反転。被弾の白点滅（hl）は全部白で塗る。
+   動き（息づかい・着地・前かがみ・のけぞり・決めポーズ）は 40_draw.js の bossMotion が
+   足もとを軸にした変形でつける。 */
 
-   使い方
-     var g=bossBody(b,x,y,PAL,hl,{crest:"fin",arm:"fore",boot:"wide",back:"jet"});
-     PAL={c:装甲, lo:影, hi:光, f:顔の板, a:差し色}
-   crest … ヘルメットの飾り
-     "fin"（背びれ状の刃）/"horns"（2本の角）/"crown"（王冠）/"dome"（丸い）/"antenna"
-     /"visor"（バイザー一体）/"box"（角ばる）/"spikes"（とげ3本）/"wings"（左右の翼）
-     /"crest"（前へ突き出た刃）/"drill"（ドリル）/"none"
-   arm   … "down"/"fore"（バスターを構える）/"up"/"pose"（決めポーズ）
-   boot  … "wide"（ロックマン型）/"tall"（すね長）/"tread"（キャタピラ）/"claw"
-   back  … "cape"/"jet"（ジェットパック）/"wing"/"fin"/null
-   eyes  … "sharp"（既定）/"visor"（一本の光）/"glow"（光る2つ）/"angry"  */
+var BOSS_W = 22, BOSS_H = 30, BOSS_EDGE = "#0b1118";
 
-var BOSS_W = 22, BOSS_H = 30;
-var BOSS_EDGE = "#0b1118";
-
-function bossBody(b,x,y,P,hl,o){
-  o=o||{};
-  var c  = hl?"#ffffff":P.c;
-  var lo = hl?"#ffffff":P.lo;
-  var hi = hl?"#ffffff":(P.hi||P.c);
-  var fc = hl?"#ffffff":(P.f||"#f6dfc8");
-  var ac = hl?"#ffffff":(P.a||"#8fe9ff");
-  var e  = hl?"#ffffff":BOSS_EDGE;
-  var w=b.w, h=b.h, cx=x+((w/2)|0);
-  var step=(b.step!==undefined)?b.step:(b.t||0);
-  var posing=!!b.pose;
-  var walk=(posing||o.walk===false)?0:Math.round(Math.sin(step*0.16)*2);
-  var f=(b.face<0)?-1:1;
-  var sp=posing?2:0;
-
-  /* ---------------- 背中（先に描く） ---------------- */
-  var back=o.back;
-  if(back==="cape"){
-    ctx.fillStyle=lo;
-    ctx.beginPath();
-    ctx.moveTo(cx-8,y+7); ctx.lineTo(cx+8,y+7);
-    ctx.lineTo(cx+11,y+h-3); ctx.lineTo(cx-11,y+h-3);
-    ctx.closePath(); ctx.fill();
-    px(cx-11,y+h-4,22,2,e);
-  } else if(back==="jet"){
-    px(cx-10,y+8,20,12,lo);
-    px(cx-11,y+8,1,12,e); px(cx+10,y+8,1,12,e); px(cx-10,y+7,20,1,e);
-    px(cx-8,y+20,5,4,e); px(cx+3,y+20,5,4,e);
-    ctx.globalAlpha=0.7; px(cx-7,y+24,3,3+(step%3),"#ffb04a"); px(cx+4,y+24,3,3+((step+1)%3),"#ffb04a"); ctx.globalAlpha=1;
-  } else if(back==="wing"){
-    ctx.fillStyle=hi;
-    for(var wg=0;wg<2;wg++){
-      var d=wg?1:-1, fl=Math.sin(step*0.2)*2;
-      ctx.beginPath();
-      ctx.moveTo(cx+d*7,y+9); ctx.lineTo(cx+d*21,y+2+fl); ctx.lineTo(cx+d*19,y+17+fl);
-      ctx.closePath(); ctx.fill();
-    }
-  } else if(back==="fin"){
-    ctx.fillStyle=hi;
-    for(var fn=0;fn<3;fn++){
-      ctx.beginPath();
-      ctx.moveTo(cx-6,y+8+fn*5); ctx.lineTo(cx-14,y+5+fn*5); ctx.lineTo(cx-6,y+13+fn*5);
-      ctx.closePath(); ctx.fill();
+/* 同じ色が続くところをまとめて塗る（1マスずつだと数が多い） */
+function bossSprite(kind,b,x,y,hl,tint){
+  var A=BOSS_ART[kind];
+  if(!A) return;
+  var rows=A.rows, pal=A.pal;
+  var flip=(b.face<0);
+  ctx.save();
+  ctx.translate(x+b.w/2, y);
+  ctx.scale(flip?-1:1, 1);
+  ctx.translate(-b.w/2-2, -2);
+  for(var r=0;r<rows.length;r++){
+    var s=rows[r], c=0, n=s.length;
+    while(c<n){
+      var ch=s.charAt(c), c2=c+1;
+      while(c2<n && s.charAt(c2)===ch) c2++;
+      if(ch!=="."){
+        var col=hl?"#ffffff":(ch==="o"?BOSS_EDGE:(tint&&tint[ch])||pal[ch]);
+        if(col) px(c,r,c2-c,1,col);
+      }
+      c=c2;
     }
   }
-
-  /* ---------------- 脚（もも→ひざ当て→ブーツ） ---------------- */
-  var boot=o.boot||"wide";
-  if(boot==="tread"){
-    px(cx-12,y+h-11,24,11,lo);
-    px(cx-13,y+h-11,1,11,e); px(cx+12,y+h-11,1,11,e);
-    px(cx-12,y+h-12,24,1,e); px(cx-12,y+h-1,24,1,e);
-    for(var tr=0;tr<5;tr++){ var tx=cx-11+((tr*5+Math.floor(step*0.4))%23); px(tx,y+h-10,2,9,c); }
-    px(cx-8,y+h-8,5,5,hi); px(cx+3,y+h-8,5,5,hi);
-  } else if(boot==="claw"){
-    px(cx-8-sp,y+h-13+walk,5,6-walk,c); px(cx+3+sp,y+h-13-walk,5,6+walk,c);
-    px(cx-11-sp,y+h-7,9,5,lo);  px(cx+2+sp,y+h-7,9,5,lo);
-    for(var cw=0;cw<3;cw++){ px(cx-12-sp+cw*3,y+h-3,2,3,c); px(cx+2+sp+cw*3,y+h-3,2,3,c); }
-    px(cx-12-sp,y+h-8,1,7,e); px(cx+10+sp,y+h-8,1,7,e);
-    px(cx-13-sp,y+h-1,11,1,e); px(cx+2+sp,y+h-1,11,1,e);
-  } else {
-    var tall=(boot==="tall");
-    /* もも */
-    px(cx-7-sp,y+h-13+walk,5,5-walk,c);  px(cx-8-sp,y+h-13+walk,1,5-walk,e);
-    px(cx+2+sp,y+h-13-walk,5,5+walk,c);  px(cx+7+sp,y+h-13-walk,1,5+walk,e);
-    /* ひざ当て */
-    px(cx-8-sp,y+h-9,7,2,hi); px(cx+1+sp,y+h-9,7,2,hi);
-    /* ブーツ（ロックマン型：前が少し出る） */
-    var bt=y+h-(tall?9:7);
-    px(cx-9-sp,bt,8,y+h-bt,lo);        px(cx+1+sp,bt,8,y+h-bt,lo);
-    px(cx-10-sp,bt,1,y+h-bt,e);        px(cx+9+sp,bt,1,y+h-bt,e);
-    px(cx-9-sp,bt-1,8,1,e);            px(cx+1+sp,bt-1,8,1,e);
-    px(cx-11-sp,y+h-3,10,3,lo);        px(cx+1+sp,y+h-3,10,3,lo);
-    px(cx-11-sp,y+h-1,10,1,e);         px(cx+1+sp,y+h-1,10,1,e);
-    px(cx-12-sp,y+h-3,1,3,e);          px(cx+11+sp,y+h-3,1,3,e);
-    px(cx-8-sp,bt+1,3,1,hi);           px(cx+2+sp,bt+1,3,1,hi);
-  }
-
-  /* ---------------- 胴（胸のアーマー） ---------------- */
-  var by=y+7, bh=10, bw=7+(o.bulk||0);
-  px(cx-bw,by,bw*2,bh,c);
-  px(cx-bw,by,bw*2,2,hi);
-  px(cx-bw,by+bh-3,bw*2,3,lo);
-  px(cx-bw-1,by,1,bh,e); px(cx+bw,by,1,bh,e);
-  px(cx-bw,by+bh,bw*2,1,e);
-  /* 胸のライン と コア */
-  px(cx-bw+1,by+3,bw*2-2,1,lo);
-  if(o.core!==false){
-    px(cx-2,by+4,4,4,e);
-    px(cx-1,by+5,2,2,ac);
-  }
-  /* ベルト */
-  px(cx-bw,by+bh+1,bw*2,2,e);
-  px(cx-1,by+bh+1,2,2,ac);
-
-  /* ---------------- 肩の球 ---------------- */
-  var sh=o.sh||"ball";
-  if(sh==="spike"){
-    ctx.fillStyle=hi;
-    ctx.beginPath(); ctx.moveTo(cx-bw,by+4); ctx.lineTo(cx-bw-9,by-4); ctx.lineTo(cx-bw+1,by-1); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(cx+bw,by+4); ctx.lineTo(cx+bw+9,by-4); ctx.lineTo(cx+bw-1,by-1); ctx.closePath(); ctx.fill();
-    px(cx-bw-4,by-1,5,5,c); px(cx+bw-1,by-1,5,5,c);
-    px(cx-bw-5,by-1,1,5,e); px(cx+bw+4,by-1,1,5,e);
-  } else if(sh==="pad"){
-    px(cx-bw-6,by-2,7,7,c);  px(cx+bw-1,by-2,7,7,c);
-    px(cx-bw-7,by-2,1,7,e);  px(cx+bw+6,by-2,1,7,e);
-    px(cx-bw-6,by-3,7,1,e);  px(cx+bw-1,by-3,7,1,e);
-    px(cx-bw-6,by-2,7,2,hi); px(cx+bw-1,by-2,7,2,hi);
-    px(cx-bw-6,by+4,7,1,lo); px(cx+bw-1,by+4,7,1,lo);
-  } else {
-    ctx.fillStyle=c;
-    ctx.beginPath(); ctx.arc(cx-bw-1,by+2,4,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx+bw+1,by+2,4,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle=e; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.arc(cx-bw-1,by+2,4.5,0,Math.PI*2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx+bw+1,by+2,4.5,0,Math.PI*2); ctx.stroke();
-    ctx.fillStyle=hi;
-    ctx.beginPath(); ctx.arc(cx-bw-2,by+1,1.5,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx+bw,by+1,1.5,0,Math.PI*2); ctx.fill();
-  }
-
-  /* ---------------- 腕（上腕→ガントレット→こぶし） ---------------- */
-  var am=posing?"pose":(o.arm||"down");
-  var ay=by+5, ox=bw+2;
-  function armDown(side){            /* side: -1 左（奥）, +1 右（手前） */
-    var ax=(side<0)?(cx-ox-3):(cx+ox);
-    px(ax,ay,3,5,c);                                    /* 上腕 */
-    px(ax-1,ay,1,5,e); px(ax+3,ay,1,5,e);
-    var gx=(side<0)?(cx-ox-5):(cx+ox-1);
-    px(gx,ay+5,6,6,lo);                                 /* ガントレット（太い） */
-    px(gx,ay+5,6,1,hi);
-    px(gx-1,ay+5,1,6,e); px(gx+6,ay+5,1,6,e);
-    px(gx,ay+11,6,3,c);                                 /* こぶし */
-    px(gx,ay+14,6,1,e); px(gx-1,ay+11,1,3,e); px(gx+6,ay+11,1,3,e);
-  }
-  function armFore(side){
-    var dir=side, ax=(dir>0)?(cx+ox):(cx-ox-3);
-    px(ax,ay,3,3,c); px(ax-1,ay,1,3,e); px(ax+3,ay,1,3,e);
-    var gx=(dir>0)?(cx+ox+2):(cx-ox-14);
-    px(gx,ay+1,12,6,lo); px(gx,ay+1,12,2,hi);            /* バスター */
-    px(gx,ay,12,1,e); px(gx,ay+7,12,1,e);
-    var mx=(dir>0)?(gx+12):(gx-3);
-    px(mx,ay,3,8,c); px((dir>0)?mx+3:mx-1,ay,1,8,e);
-    px((dir>0)?mx:mx+1,ay+2,2,4,ac);                      /* 銃口の光 */
-  }
-  function armUp(side){
-    var ax=(side<0)?(cx-ox-3):(cx+ox);
-    px(ax,ay-6,3,6,c); px(ax-1,ay-6,1,6,e); px(ax+3,ay-6,1,6,e);
-    var gx=(side<0)?(cx-ox-5):(cx+ox-1);
-    px(gx,ay-13,6,7,lo); px(gx,ay-8,6,1,hi);
-    px(gx-1,ay-13,1,7,e); px(gx+6,ay-13,1,7,e);
-    px(gx,ay-16,6,3,c); px(gx,ay-17,6,1,e); px(gx-1,ay-16,1,3,e); px(gx+6,ay-16,1,3,e);
-  }
-  if(am==="pose"){
-    armDown(-f);
-    /* 手前の腕を斜め上へ突き上げる */
-    var ax=(f>0)?(cx+ox):(cx-ox-3);
-    px(ax,ay-1,3,5,c); px(ax-1,ay-1,1,5,e); px(ax+3,ay-1,1,5,e);
-    var gx=(f>0)?(cx+ox+3):(cx-ox-9);
-    px(gx,ay-9,6,8,lo); px(gx,ay-9,6,1,hi);
-    px(gx-1,ay-9,1,8,e); px(gx+6,ay-9,1,8,e);
-    px(gx+(f>0?1:-1),ay-13,6,4,c); px(gx+(f>0?1:-1),ay-14,6,1,e);
-  } else if(am==="up"){
-    armUp(-1); armUp(1);
-  } else if(am==="fore"){
-    armDown(-f); armFore(f);
-  } else {
-    armDown(-1); armDown(1);
-  }
-
-  /* しっぽ */
-  if(o.tail){
-    ctx.fillStyle=lo;
-    ctx.beginPath();
-    ctx.moveTo(cx-bw,by+bh-2);
-    ctx.quadraticCurveTo(cx-bw-14,by+bh+3,cx-bw-18,by+bh-8+Math.sin(step*0.12)*3);
-    ctx.lineTo(cx-bw-15,by+bh-1);
-    ctx.quadraticCurveTo(cx-bw-9,by+bh+4,cx-bw,by+bh+1);
-    ctx.closePath(); ctx.fill();
-  }
-
-  /* ---------------- 首 ---------------- */
-  px(cx-2,y+5,4,2,e);
-
-  /* ---------------- ヘルメットと顔 ---------------- */
-  bossHelmet(cx,y,b,{c:c,lo:lo,hi:hi,f:fc,a:ac,e:e},hl,o);
-
-  return {cx:cx, by:by, bh:bh, bw:bw, e:e, c:c, lo:lo, hi:hi, a:ac};
-}
-
-/* ヘルメット（額のクレストで個性）と、その中の顔 */
-function bossHelmet(cx,y,b,K,hl,o){
-  var hy=y-7;                    /* ヘルメットの上端（全員同じ。クレストだけ上へ出る） */
-  var hb=y+6;                    /* あごの下 */
-  var f=(b.face<0)?-1:1;
-  var c=K.c, lo=K.lo, hi=K.hi, e=K.e, fc=K.f, ac=K.a;
-
-  /* かぶと本体 */
-  px(cx-7,hy+2,14,hb-hy-2,c);
-  px(cx-6,hy,12,2,c);
-  px(cx-7,hy+2,14,2,hi);
-  px(cx-8,hy+2,1,hb-hy-2,e); px(cx+7,hy+2,1,hb-hy-2,e);
-  px(cx-6,hy-1,12,1,e); px(cx-7,hy+1,1,1,e); px(cx+6,hy+1,1,1,e);
-  /* 耳当て */
-  px(cx-9,hb-6,2,5,lo); px(cx+7,hb-6,2,5,lo);
-  px(cx-10,hb-6,1,5,e); px(cx+9,hb-6,1,5,e);
-  /* 顔の板（下半分） */
-  var fy=hb-7;
-  px(cx-6,fy,12,7,fc);
-  px(cx-6,hb-1,12,1,lo);
-  px(cx-6,hb,12,1,e);
-  /* 目 */
-  var ey=fy+1, eyes=o.eyes||"sharp";
-  if(eyes==="visor"){
-    px(cx-6,ey,12,3,e); px(cx-5+f,ey+1,10,1,ac);
-  } else if(eyes==="glow"){
-    px(cx-5,ey,4,3,ac); px(cx+1,ey,4,3,ac);
-    px(cx-4+f,ey+1,2,1,"#ffffff"); px(cx+2+f,ey+1,2,1,"#ffffff");
-  } else {
-    /* 鋭い目：白目を細く、まゆを斜めに */
-    px(cx-6,ey-1,5,1,e); px(cx+1,ey-1,5,1,e);
-    px(cx-5,ey,4,3,"#ffffff"); px(cx+1,ey,4,3,"#ffffff");
-    px(cx-4+f,ey+1,2,2,e); px(cx+2+f,ey+1,2,2,e);
-    if(eyes==="angry"){ px(cx-6,ey-2,3,1,e); px(cx+3,ey-2,3,1,e); }
-  }
-  /* 口（マスクの線。弱点で開く） */
-  if(b.mouth>0){ px(cx-3,fy+5,6,2,e); px(cx-2,fy+5,4,1,"#ffffff"); }
-  else px(cx-2,fy+5,4,1,e);
-
-  /* クレスト */
-  var cr=o.crest||"none";
-  if(cr==="fin"){
-    ctx.fillStyle=hi;
-    ctx.beginPath(); ctx.moveTo(cx-2,hy); ctx.lineTo(cx+f*3,hy-9); ctx.lineTo(cx+f*7,hy+1); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle=e; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(cx-2,hy); ctx.lineTo(cx+f*3,hy-9); ctx.lineTo(cx+f*7,hy+1); ctx.stroke();
-  } else if(cr==="horns"){
-    ctx.fillStyle=hi;
-    ctx.beginPath(); ctx.moveTo(cx-7,hy+3); ctx.lineTo(cx-13,hy-8); ctx.lineTo(cx-2,hy-1); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(cx+7,hy+3); ctx.lineTo(cx+13,hy-8); ctx.lineTo(cx+2,hy-1); ctx.closePath(); ctx.fill();
-  } else if(cr==="crown"){
-    px(cx-7,hy-4,14,4,ac); px(cx-7,hy-5,14,1,e);
-    px(cx-6,hy-8,3,4,ac); px(cx-1,hy-10,3,6,ac); px(cx+4,hy-8,3,4,ac);
-    px(cx-8,hy-4,1,4,e); px(cx+7,hy-4,1,4,e);
-  } else if(cr==="dome"){
-    ctx.fillStyle=c;
-    ctx.beginPath(); ctx.ellipse(cx,hy+1,8,5,0,Math.PI,0); ctx.fill();
-    ctx.strokeStyle=e; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.ellipse(cx,hy+1,8.5,5.5,0,Math.PI,0); ctx.stroke();
-    px(cx-1,hy-6,2,3,hi);
-  } else if(cr==="antenna"){
-    px(cx-1,hy-8,2,8,lo); px(cx-3,hy-10,6,2,ac); px(cx-3,hy-11,6,1,e);
-  } else if(cr==="visor"){
-    px(cx-8,hy-2,16,3,lo); px(cx-8,hy-3,16,1,e); px(cx-7,hy-2,14,1,ac);
-  } else if(cr==="box"){
-    px(cx-8,hy-4,16,5,c); px(cx-8,hy-5,16,1,e); px(cx-9,hy-4,1,5,e); px(cx+8,hy-4,1,5,e);
-    px(cx-8,hy-4,16,1,hi);
-  } else if(cr==="spikes"){
-    ctx.fillStyle=hi;
-    for(var k=-1;k<=1;k++){
-      ctx.beginPath(); ctx.moveTo(cx+k*5-2,hy+1); ctx.lineTo(cx+k*5,hy-8); ctx.lineTo(cx+k*5+2,hy+1); ctx.closePath(); ctx.fill();
-    }
-  } else if(cr==="wings"){
-    ctx.fillStyle=hi;
-    ctx.beginPath(); ctx.moveTo(cx-6,hy+2); ctx.lineTo(cx-15,hy-4); ctx.lineTo(cx-7,hy+5); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(cx+6,hy+2); ctx.lineTo(cx+15,hy-4); ctx.lineTo(cx+7,hy+5); ctx.closePath(); ctx.fill();
-  } else if(cr==="crest"){
-    ctx.fillStyle=ac;
-    ctx.beginPath(); ctx.moveTo(cx-f*6,hy); ctx.lineTo(cx+f*12,hy-6); ctx.lineTo(cx+f*6,hy+2); ctx.closePath(); ctx.fill();
-  } else if(cr==="drill"){
-    ctx.fillStyle=lo;
-    ctx.beginPath(); ctx.moveTo(cx-5,hy+1); ctx.lineTo(cx,hy-10); ctx.lineTo(cx+5,hy+1); ctx.closePath(); ctx.fill();
-    px(cx-3,hy-3,6,1,hi); px(cx-2,hy-6,4,1,hi);
-  }
+  ctx.restore();
 }
 
 /* ===== 30_bosses.js ===== */
@@ -4369,7 +4123,7 @@ var BOSSES={
 /* ---------------------------------------------------------------- 1 */
 caries:{
   name:"キング・カリエス", title:"虫歯の王",
-  hp:30, w:22, h:30, top:17,
+  hp:30, w:22, h:30, top:2,
   ai:function(b,p){
     if(b.state==="wait"){
       b.vx=0; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
@@ -4421,18 +4175,13 @@ caries:{
       if(b.t>72){ b.state="wait"; b.t=0; b.cycle++; }
     }
   },
-  draw:function(b,x,y,hl){
-    /* 虫歯の王。深紅の装甲に金の王冠、マント。 */
-    bossBody(b,x,y,{c:"#e83a72",lo:"#8c1f42",hi:"#ff9ab8",f:"#ffd9c4",a:"#ffd447"},hl,
-      {crest:"crown",sh:"pad",boot:"wide",back:"cape",eyes:"angry",
-       arm:(b.state==="shoot"||b.mouth>0)?"fore":"down"});
-  }
+  draw:function(b,x,y,hl){ bossSprite("caries",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
 /* ---------------------------------------------------------------- 2 */
 tank:{
   name:"タルタル・タンク", title:"歯石戦車",
-  hp:34, w:22, h:30, top:12,
+  hp:34, w:22, h:30, top:2,
   init:function(b){ b.rolls=0; b.wheel=0; },
   ai:function(b,p){
     b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
@@ -4461,18 +4210,13 @@ tank:{
       if(b.t>84){ b.state="wait"; b.t=0; b.cycle++; }
     }
   },
-  draw:function(b,x,y,hl){
-    /* 歯石戦車。カーキの重装甲、キャタピラ、バイザー。 */
-    bossBody(b,x,y,{c:"#c9b26a",lo:"#7a6528",hi:"#efe0a8",f:"#3a2f14",a:"#ff9a3c"},hl,
-      {crest:"box",sh:"pad",boot:"tread",eyes:"visor",bulk:2,
-       arm:(b.state==="fire"||b.state==="lob")?"fore":"down"});
-  }
+  draw:function(b,x,y,hl){ bossSprite("tank",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
 /* ---------------------------------------------------------------- 3 */
 slime:{
   name:"プラーク・スライム", title:"歯垢のぬし",
-  hp:30, w:22, h:30, top:13,
+  hp:30, w:22, h:30, top:2,
   init:function(b){ b.lands=0; b.squash=0; },
   ai:function(b,p){
     if(b.squash>0) b.squash--;
@@ -4506,21 +4250,13 @@ slime:{
       }
     }
   },
-  draw:function(b,x,y,hl){
-    /* 歯垢のぬし。緑の装甲に丸いドーム、光る目。ぬめりがしたたる。 */
-    var g=bossBody(b,x,y,{c:"#7cc44e",lo:"#3f7a2a",hi:"#c4f19a",f:"#1e3a14",a:"#b6ff4d"},hl,
-      {crest:"dome",sh:"ball",boot:"wide",eyes:"glow",
-       arm:(b.mouth>0)?"up":"down"});
-    ctx.globalAlpha=0.6; ctx.fillStyle=hl?"#ffffff":"#c4f19a";
-    for(var d=0;d<3;d++){ var dy=((b.t||0)*1.2+d*17)%18; px(g.cx-7+d*6,y+b.h-5+dy*0.2,2,3); }
-    ctx.globalAlpha=1;
-  }
+  draw:function(b,x,y,hl){ bossSprite("slime",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
 /* ---------------------------------------------------------------- 4 */
 queen:{
   name:"ジンジバ・クイーン", title:"歯周病の女王",
-  hp:26, w:22, h:30, top:11,
+  hp:26, w:22, h:30, top:2,
   fly:true, y0:-70,
   init:function(b){ b.hy=188; b.wing=0; },
   intro:function(b,p){
@@ -4561,18 +4297,13 @@ queen:{
       if(b.t>40){ b.state="float"; b.t=0; b.cycle++; }
     }
   },
-  draw:function(b,x,y,hl){
-    /* 歯周病の女王。桃と白の装甲、翼、額の翼飾り。すらりとした脚。 */
-    bossBody(b,x,y,{c:"#ff8ec4",lo:"#a8386e",hi:"#ffd3e8",f:"#fff0f5",a:"#ffd447"},hl,
-      {crest:"wings",sh:"ball",boot:"tall",back:"wing",eyes:"sharp",bulk:-1,
-       arm:(b.state==="spore"||b.state==="dive")?"up":"down"});
-  }
+  draw:function(b,x,y,hl){ bossSprite("queen",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
 /* ---------------------------------------------------------------- 5 */
 bomber:{
   name:"シュガー・ボマー", title:"砂糖の爆弾魔",
-  hp:32, w:22, h:30, top:18, start:"bounce",
+  hp:32, w:22, h:30, top:2, start:"bounce",
   init:function(b){ b.lands=0; b.dropped=false; },
   ai:function(b,p){
     b.vy=Math.min(MAXFALL,b.vy+GRAV);
@@ -4601,20 +4332,13 @@ bomber:{
       else { b.vy=-10.6; b.vx=bounceDir(b,p)*2.4; b.dropped=false; }
     }
   },
-  draw:function(b,x,y,hl){
-    /* 砂糖の爆弾魔。白い丸い装甲にピンクの差し色。頭のアンテナに火花。 */
-    var g=bossBody(b,x,y,{c:"#eef6f6",lo:"#8fb2bd",hi:"#ffffff",f:"#2c3e4a",a:"#ff6f9c"},hl,
-      {crest:"antenna",sh:"ball",boot:"wide",eyes:"sharp",bulk:2,
-       arm:(b.state==="throw"||b.state==="drop")?"fore":"down"});
-    ctx.fillStyle=hl?"#ffffff":((Math.floor(frame/6)%2)?"#ffd447":"#ff6f9c");
-    ctx.beginPath(); ctx.arc(g.cx+0.5,y-18,2.4,0,Math.PI*2); ctx.fill();
-  }
+  draw:function(b,x,y,hl){ bossSprite("bomber",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
 /* ---------------------------------------------------------------- 6 */
 dragon:{
   name:"アシッド・ドラゴン", title:"酸の竜",
-  hp:32, w:22, h:30, top:16,
+  hp:32, w:22, h:30, top:2,
   fly:true, y0:-60,
   init:function(b){ b.hy=150; b.swoops=0; },
   intro:function(b,p){
@@ -4657,18 +4381,13 @@ dragon:{
       if(b.t>34){ b.state="ceil"; b.t=0; }
     }
   },
-  draw:function(b,x,y,hl){
-    /* 酸の竜。緑の装甲、頭の刃、背びれ、しっぽ、かぎ爪の脚。 */
-    bossBody(b,x,y,{c:"#5fbf5a",lo:"#2c6b2a",hi:"#b6ff4d",f:"#1a3a1a",a:"#e6ff6a"},hl,
-      {crest:"fin",sh:"spike",boot:"claw",back:"fin",tail:true,eyes:"angry",
-       arm:(b.state==="breath")?"fore":"down"});
-  }
+  draw:function(b,x,y,hl){ bossSprite("dragon",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
 /* ---------------------------------------------------------------- 7 */
 wire:{
   name:"ブレース・ワイヤーマン", title:"矯正ワイヤーの怪人",
-  hp:40, w:22, h:30, top:18, start:"walk",
+  hp:40, w:22, h:30, top:2, start:"walk",
   init:function(b){ b.step=0; },
   ai:function(b,p){
     b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
@@ -4700,19 +4419,13 @@ wire:{
       if(b.t>70){ b.state="walk"; b.t=0; b.vx=0; }
     }
   },
-  draw:function(b,x,y,hl){
-    /* 矯正ワイヤーの怪人。銀の細身、とげ肩、長いアンテナ、青いバイザー。 */
-    var g=bossBody(b,x,y,{c:"#c8cdd8",lo:"#5a606c",hi:"#f0f3f8",f:"#1d2530",a:"#8fd7ff"},hl,
-      {crest:"antenna",sh:"spike",boot:"tall",eyes:"visor",bulk:-1,
-       arm:(b.state==="shoot"||b.state==="wall")?"fore":"down"});
-    px(g.cx-g.bw,g.by+6,g.bw*2,1,hl?"#ffffff":"#8fd7ff");   /* 胸のワイヤー */
-  }
+  draw:function(b,x,y,hl){ bossSprite("wire",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
 /* ---------------------------------------------------------------- 8 */
 knight:{
   name:"ナイト・グラインダー", title:"歯ぎしりの騎士",
-  hp:44, w:22, h:30, top:13, start:"walk",
+  hp:44, w:22, h:30, top:2, start:"walk",
   init:function(b){ b.step=0; },
   ai:function(b,p){
     b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
@@ -4750,18 +4463,13 @@ knight:{
       }
     }
   },
-  draw:function(b,x,y,hl){
-    /* 歯ぎしりの騎士。銀紫の重装甲、前へ伸びる刃の飾り、マント。 */
-    bossBody(b,x,y,{c:"#cfc6e6",lo:"#6f6394",hi:"#f4efff",f:"#2a2440",a:"#ff6f9c"},hl,
-      {crest:"crest",sh:"pad",boot:"wide",back:"cape",eyes:"visor",bulk:1,
-       arm:(b.state==="charge"||b.state==="stomp")?"fore":"down"});
-  }
+  draw:function(b,x,y,hl){ bossSprite("knight",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
 /* ---------------------------------------------------------------- 9 */
 mushiburn:{
   name:"大魔王ムシバーン", title:"口腔の闇",
-  hp:46, w:22, h:30, top:15,
+  hp:46, w:22, h:30, top:2,
   fly:true, y0:-90,
   /* 体が小さくなったので、弾の高さに入るまで低く浮かせる（2026-09-13） */
   init:function(b){ b.hy=196; b.phase=1; b.aura=0; },
@@ -4831,12 +4539,10 @@ mushiburn:{
     }
   },
   draw:function(b,x,y,hl){
-    /* 大魔王。黒赤の装甲に大きな角、とげ肩、マント。半分から赤く燃える。 */
-    var p2=(b.phase>=2);
-    bossBody(b,x,y,{c:p2?"#ff2a5f":"#7a1430",lo:p2?"#8c1f42":"#3a0a18",hi:p2?"#ff9ab8":"#c43a66",
-                    f:"#1a0508",a:p2?"#ffd447":"#ff6f9c"},hl,
-      {crest:"horns",sh:"spike",boot:"wide",back:"cape",eyes:"glow",bulk:2,
-       arm:(b.mouth>0||b.state==="dark")?"up":"down"});
+    /* 大魔王。半分から装甲が赤く燃える（色だけ差し替え） */
+    var t=(b.phase>=2)?{c:"#ff2a5f",d:"#8c1f42",l:"#ff9ab8",a:"#ffd447"}:null;
+    if(b.mouth>0){ t=t||{}; t.a="#ffffff"; }
+    bossSprite("mushiburn",b,x,y,hl,t);
   }
 }
 
@@ -4920,7 +4626,7 @@ function updateBoss(){
    カピカピの風を吐く。吸い込んでいるあいだが弱点。 */
 BOSSES.akeeru={
   name:"アケール", title:"お口ポカンの主",
-  hp:68, w:22, h:30, top:13,
+  hp:68, w:22, h:30, top:2,
   init:function(b){ b.step=0; b.blows=0; },
   ai:function(b,p){
     b.step++;
@@ -4981,20 +4687,7 @@ BOSSES.akeeru={
       if(b.wallHit) b.vx=-b.vx;
     }
   },
-  draw:function(b,x,y,hl){
-    /* アケール。紫の装甲、丸いドーム。口の吸気口がいつも開いている。 */
-    var g=bossBody(b,x,y,{c:"#8e5fd6",lo:"#5a3690",hi:"#c9a8f0",f:"#2a1a44",a:"#e8d7ff"},hl,
-      {crest:"dome",sh:"ball",boot:"wide",eyes:"sharp",
-       arm:(b.state==="blow")?"fore":"down"});
-    var op=(b.mouth>0)?4:2;
-    px(g.cx-4,y+1,8,op,hl?"#ffffff":"#e8d7ff");               /* 吸気口 */
-    px(g.cx-3,y+1,1,op,hl?"#ffffff":"#5a3690"); px(g.cx+2,y+1,1,op,hl?"#ffffff":"#5a3690");
-    if(b.mouth>0){
-      ctx.globalAlpha=0.4; ctx.fillStyle="#e8d7ff";
-      for(var i=0;i<3;i++){ var r=10+(((b.t||0)*1.6+i*7)%14); ctx.beginPath(); ctx.arc(g.cx+b.face*r,y+2,1.8,0,Math.PI*2); ctx.fill(); }
-      ctx.globalAlpha=1;
-    }
-  }
+  draw:function(b,x,y,hl){ bossSprite("akeeru",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 };
 
 /* ---------------------------------------------------------------- 11 シタオチー
@@ -5002,7 +4695,7 @@ BOSSES.akeeru={
    投げたおもりは山なりに飛ぶ。 */
 BOSSES.shitaochi={
   name:"シタオチー", title:"おもり使い",
-  hp:60, w:22, h:30, top:12,
+  hp:60, w:22, h:30, top:2,
   init:function(b){ b.step=0; b.arm=0; },
   ai:function(b,p){
     b.step++;
@@ -5042,19 +4735,7 @@ BOSSES.shitaochi={
       if(b.t>52){ b.t=0; b.arm=0; b.state="wait"; }
     }
   },
-  draw:function(b,x,y,hl){
-    /* シタオチー。水色の装甲、角ばったヘルメット。両のこぶしに鉄のおもり。 */
-    var g=bossBody(b,x,y,{c:"#3fc8e8",lo:"#1a6f96",hi:"#a8ecf7",f:"#0e2a3a",a:"#ffffff"},hl,
-      {crest:"box",sh:"pad",boot:"wide",eyes:"visor",bulk:1,
-       arm:(b.state==="throw")?"fore":"down"});
-    var am=Math.round(b.arm||0);
-    ctx.fillStyle=hl?"#ffffff":"#3a3f47";
-    ctx.beginPath(); ctx.arc(g.cx-g.bw-4,y+b.h-7+am,5,0,Math.PI*2); ctx.fill();
-    if(b.state!=="throw"){ ctx.beginPath(); ctx.arc(g.cx+g.bw+4,y+b.h-7+am,5,0,Math.PI*2); ctx.fill(); }
-    ctx.strokeStyle=hl?"#ffffff":BOSS_EDGE; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.arc(g.cx-g.bw-4,y+b.h-7+am,5.5,0,Math.PI*2); ctx.stroke();
-    if(b.state!=="throw"){ ctx.beginPath(); ctx.arc(g.cx+g.bw+4,y+b.h-7+am,5.5,0,Math.PI*2); ctx.stroke(); }
-  }
+  draw:function(b,x,y,hl){ bossSprite("shitaochi",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 };
 
 /* ---------------------------------------------------------------- 12 マルノミン
@@ -5062,7 +4743,7 @@ BOSSES.shitaochi={
    立ち止まって カミカミ してから 食べものを吐き出す。突進中は口＝弱点。 */
 BOSSES.marunomin={
   name:"マルノミン", title:"まるのみ大王",
-  hp:70, w:22, h:30, top:15,
+  hp:70, w:22, h:30, top:2,
   init:function(b){ b.step=0; b.chew=0; },
   ai:function(b,p){
     b.step++;
@@ -5112,16 +4793,7 @@ BOSSES.marunomin={
       }
     }
   },
-  draw:function(b,x,y,hl){
-    /* マルノミン。黄緑の装甲、頭に3本のとげ。あごが大きく開く。 */
-    var g=bossBody(b,x,y,{c:"#b8d420",lo:"#6f8a10",hi:"#e8f07a",f:"#2a3308",a:"#ffd447"},hl,
-      {crest:"spikes",sh:"ball",boot:"wide",eyes:"angry",bulk:1,
-       arm:(b.state==="rush")?"fore":"down"});
-    var op=(b.mouth>0)?5:((b.state==="chewing")?(1+2*(Math.floor((b.t||0)/4)%2)):1);
-    px(g.cx-6,y+2,12,op+1,hl?"#ffffff":"#2a3308");                 /* 大きなあご */
-    for(var t=0;t<4;t++) px(g.cx-5+t*3,y+2,2,1,"#ffffff");
-    if(op>2) for(var t2=0;t2<4;t2++) px(g.cx-5+t2*3,y+2+op-1,2,1,"#ffffff");
-  }
+  draw:function(b,x,y,hl){ bossSprite("marunomin",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 };
 
 /* ---------------------------------------------------------------- 13 マガリン
@@ -5129,7 +4801,7 @@ BOSSES.marunomin={
    リュックのひもを むちのように振る。 */
 BOSSES.magarin={
   name:"マガリン", title:"かくれボス",
-  hp:76, w:22, h:30, top:10,
+  hp:76, w:22, h:30, top:2,
   init:function(b){ b.step=0; b.fade=1; b.whip=0; },
   ai:function(b,p){
     b.step++;
@@ -5185,13 +4857,11 @@ BOSSES.magarin={
     }
   },
   draw:function(b,x,y,hl){
-    /* マガリン。オレンジの装甲、ジェットパック、光る目。消えたり現れたり。 */
+    /* かくれボス。消えたり現れたり */
     var a=(b.fade===undefined)?1:b.fade;
     if(a<=0.02) return;
     ctx.globalAlpha=a;
-    bossBody(b,x,y,{c:"#ff8a2b",lo:"#a8500e",hi:"#ffc47a",f:"#3a1a04",a:"#ffffff"},hl,
-      {crest:"visor",sh:"ball",boot:"tall",back:"jet",eyes:"glow",
-       arm:(b.state==="whipup")?"fore":"down"});
+    bossSprite("magarin",b,x,y,hl,(b.mouth>0)?{a:"#ffd447"}:null);
     ctx.globalAlpha=1;
   }
 };
@@ -6470,10 +6140,10 @@ function drawPortrait(kind,g,size){
   ctx=g;
   g.clearRect(0,0,size,size);
   /* 角・王冠・アンテナは頭の上へさらに出るので、その分も入る四角にする */
-  /* ロボットの頭：ヘルメットは y-7〜y+6、クレストは y-top まで（29_bossbody.js） */
-  var hw=24, hh=top+12;
+  /* 手描きの絵（26×32、当たり判定の左上が絵の(2,2)）。頭は絵の 0〜14行め */
+  var hw=26, hh=15;
   var sc=Math.min(size/hw,size/hh)*0.98;
-  var hcx=S.w/2, hcy=(6-top)/2+1;             /* 頭のまん中（体の座標） */
+  var hcx=S.w/2, hcy=5;                       /* 頭のまん中（体の座標） */
   g.save();
   g.translate(size/2-hcx*sc, size*0.52-hcy*sc);
   g.scale(sc,sc);

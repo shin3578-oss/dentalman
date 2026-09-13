@@ -289,6 +289,55 @@
   .cell.final{border-color:var(--gold);}
   .cell.final.open{box-shadow:0 0 0 2px var(--gold),0 0 18px rgba(255,212,71,.5);}
 
+  /* ---- ボスラッシュ（ワイリーのテレポート部屋） ---- */
+  #s-rush{
+    justify-content:flex-start;padding:1.6% 3% 2.4%;gap:4px;overflow:auto;
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 2px, transparent 2px 24px),
+      repeating-linear-gradient(180deg, rgba(255,255,255,.04) 0 2px, transparent 2px 24px),
+      linear-gradient(180deg,#0e1f5c,#122a7a 55%,#0a1846);
+  }
+  #s-rush .kicker{color:#9fe8ff;text-shadow:2px 2px 0 #050f2e;letter-spacing:.22em;}
+  #s-rush .rush-title{font-family:var(--font-disp);font-size:clamp(9px,1.6vw,12px);color:#dff0ff;letter-spacing:.12em;margin:0 0 4px;}
+  #s-rush .sub{color:#dff0ff;text-shadow:1px 1px 0 #050f2e;}
+  /* 5列：カプセル2つ｜まん中にゲート（2段ぶち抜き）｜カプセル2つ。参考＝ワイリーのテレポート部屋 */
+  .rush-room{
+    position:relative;width:min(100%,470px);
+    display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(4px,1.2vw,10px);
+  }
+  #rush-grid{display:contents;}
+  .capsule{
+    position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:6px 4px 4px;border:0;border-radius:6px 6px 3px 3px;
+    background:linear-gradient(180deg,#2b8f5a,#176b3f 55%,#0f4a2c);
+    box-shadow:inset 0 0 0 2px #8fe6b5, inset 0 0 0 4px #0b3a22, 0 2px 0 #041c10;
+    color:#fff;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+    font-family:var(--font-ui);
+  }
+  .capsule canvas{width:100%;height:auto;aspect-ratio:1/1;display:block;background:#0d2236;box-shadow:inset 0 0 0 2px #0b1118;image-rendering:pixelated;}
+  .capsule .nm{font-family:var(--font-disp);font-size:clamp(7px,1.3vw,10px);font-weight:700;line-height:1.2;color:#fff;text-shadow:1px 1px 0 #041c10;}
+  .capsule.done{filter:grayscale(.85) brightness(.55);}
+  .capsule.done::after{content:"CLEAR";position:absolute;top:3px;right:3px;font-family:var(--font-disp);font-size:8px;letter-spacing:.1em;color:var(--ink);background:var(--mint);border-radius:3px;padding:1px 3px;}
+  .capsule:active{transform:translateY(2px);}
+  .capsule.picked{filter:brightness(1.4);box-shadow:0 0 0 3px #fff,0 0 22px #9fe8ff;}
+  .gate{
+    grid-column:3; grid-row:1 / span 2;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    min-height:64px;border:0;border-radius:8px;
+    background:linear-gradient(180deg,#3a3f47,#1c2026);
+    box-shadow:inset 0 0 0 2px #6b7280, inset 0 0 0 4px #0b1118, 0 2px 0 #050f2e;
+    color:#9aa3b2;font-family:var(--font-disp);cursor:not-allowed;
+  }
+  .gate .gate-door{width:46%;height:26px;border-radius:4px 4px 0 0;background:repeating-linear-gradient(90deg,#4a5160 0 6px,#2a2f38 6px 12px);box-shadow:inset 0 0 0 2px #0b1118;}
+  .gate .gate-label{font-size:clamp(8px,1.5vw,11px);letter-spacing:.14em;}
+  .gate.open{
+    cursor:pointer;color:#fff;
+    background:linear-gradient(180deg,#ffd447,#b8862a);
+    box-shadow:inset 0 0 0 2px #fff2b0, inset 0 0 0 4px #7a4a1e, 0 0 22px rgba(255,212,71,.6);
+  }
+  .gate.open .gate-door{background:linear-gradient(180deg,#9fe8ff,#2bd6ff);box-shadow:inset 0 0 0 2px #0b1118, 0 0 12px #9fe8ff;}
+  .gate.picked{filter:brightness(1.4);}
+
   /* ---- 特殊武器の切り替え ---- */
   #wbar{
     width:100%; max-width:760px;
@@ -635,7 +684,22 @@
       <button class="go ghost" id="btn-title">タイトルへ</button>
     </div>
 
-    
+    <!-- ボスラッシュ：ワイリーのテレポート部屋（院長指示 2026-09-13）。8つのカプセル＋まん中のゲート -->
+    <div class="screen" id="s-rush">
+      <p class="kicker">BOSS  RUSH</p>
+      <p class="rush-title">テレポート・システム　— 8体と再戦 —</p>
+      <div class="rush-room">
+        <div id="rush-grid"></div>
+        <button class="gate" id="rush-gate" type="button" disabled>
+          <span class="gate-door"></span>
+          <span class="gate-label">大魔王の門</span>
+        </button>
+      </div>
+      <p class="sub" id="rush-msg">カプセルに入って ボスと再戦。8体たおすと まん中の門が ひらく。</p>
+      <button class="go ghost" id="btn-rush-back">ボス選択へ</button>
+    </div>
+
+
 
     <div class="screen" id="s-end">
       <p class="kicker">All Clear</p>
@@ -944,7 +1008,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-13 17:33";
+var BUILD_AT="2026-09-13 17:40";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -1953,7 +2017,7 @@ function wantTrack(){
   if(state==="clear")  return "clear";
   if(state==="over")   return "over";
   if(state==="ending") return "end";
-  if(state==="select") return "select";   /* ボスを選ぶ画面 */
+  if(state==="select"||state==="rush") return "select";   /* ボスを選ぶ画面 */
   if(state==="play"||state==="pause"){
     if(boss && boss.dead===0) return (stageIdx===8)?"final":"boss";
     return "s"+stageIdx;
@@ -7779,6 +7843,11 @@ function drawWin(){
 
 function endVictory(){
   winConf=[];
+  if(rushMode){                                /* ボスラッシュ：武器のお披露目は無し。部屋へ戻る */
+    rushCleared[stageIdx]=true;
+    gotoRush();
+    return;
+  }
   startWeaponDemo(weaponOfStage(stageIdx));   /* 第2章は添字がずれるので対応表から引く */
 }
 
@@ -8762,7 +8831,7 @@ function ch2Shown(){ return finalOpen(); }
 function ch2Open(){ return finalOpen() && !!cleared[8]; }
 
 /* ============================ 画面 ============================ */
-var SCREENS=["s-title","s-select","s-over","s-clear","s-pause","s-end"];
+var SCREENS=["s-title","s-select","s-over","s-clear","s-pause","s-end","s-rush"];
 function showScreen(id){
   SCREENS.forEach(function(s){
     document.getElementById(s).classList.toggle("on", s===id);
@@ -8838,6 +8907,8 @@ function makeCell(i,lock,note,msg){
       document.getElementById("sel-msg").textContent=S.name+"は もうたおした。残っている相手を選ぶ。";
       return;
     }
+    /* 大魔王は、ボスラッシュ（8体との再戦）を抜けてから（院長指示 2026-09-13） */
+    if(i===8 && !rushAllDone()){ gotoRush(); return; }
     openStage(i,cell);
   });
   return cell;
@@ -8923,6 +8994,7 @@ function startGame(withIntro){
 /* 登場シーンが終わったら、実際にステージを始める */
 function beginStage(){
   reset();
+  rushPlace();                                  /* ボスラッシュ中はボス部屋の入口から */
   state="play"; hideScreens();
 }
 function togglePause(){
@@ -8972,7 +9044,7 @@ function onBossDown(){
   b.addEventListener("click",function(){
     audioInit();
     /* ステージを読み込んでいないとき（タイトル・ボス選択・オープニング・エンディング）は何もしない */
-    if(state==="title"||state==="select"||state==="opening"||state==="ending"){ calm(); return; }
+    if(state==="title"||state==="select"||state==="rush"||state==="opening"||state==="ending"){ calm(); return; }
     var now=Date.now();
     if(armed && now-armed<2600){
       calm();
@@ -9056,6 +9128,122 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
+/* ===== 52_rush.js ===== */
+/* ============================ ボスラッシュ（院長指示 2026-09-13） ============================
+   8体をたおしたあと、大魔王へ行く前に「ワイリーのテレポート部屋」方式の画面を挟む。
+   8つのカプセル（テレポーター）に入ると、そのボスの部屋へ直接飛んで再戦。
+   8体ぜんぶ再戦で勝つと、まん中のゲートが開いて 大魔王のステージ（9面）へ行ける。
+   再戦の記録（rushCleared）は端末に残さない（起動ごとに最初から、の決まりに合わせる）。 */
+var rushMode=false, rushCleared=[false,false,false,false,false,false,false,false];
+var RUSH_ORDER=[0,1,2,3,4,5,6,7];
+
+function rushAllDone(){
+  for(var i=0;i<8;i++) if(!rushCleared[i]) return false;
+  return true;
+}
+
+/* テレポート部屋の画面を出す */
+function gotoRush(){
+  audioInit();
+  rushMode=false;
+  state="rush"; setTag("");
+  buildRush();
+  showScreen("s-rush");
+}
+
+function buildRush(){
+  var g=document.getElementById("rush-grid");
+  if(!g) return;
+  g.innerHTML="";
+  RUSH_ORDER.forEach(function(i){
+    var lv=LEVELS[i], S=BOSSES[lv.boss];
+    var cap=document.createElement("button");
+    cap.type="button";
+    cap.className="capsule"+(rushCleared[i]?" done":"");
+    var cv=document.createElement("canvas"); cv.width=64; cv.height=64;
+    cap.appendChild(cv);
+    var nm=document.createElement("div"); nm.className="nm"; nm.textContent=S.name;
+    cap.appendChild(nm);
+    drawPortrait(lv.boss,cv.getContext("2d"),64);
+    cap.addEventListener("click",function(){
+      audioInit();
+      if(rushCleared[i]){
+        document.getElementById("rush-msg").textContent=S.name+"は もう たおした。";
+        return;
+      }
+      rushEnter(i,cap);
+    });
+    g.appendChild(cap);
+  });
+  var gate=document.getElementById("rush-gate");
+  var done=rushAllDone();
+  gate.className="gate"+(done?" open":"");
+  gate.disabled=!done;
+  var msg=document.getElementById("rush-msg");
+  var left=0; for(var k=0;k<8;k++) if(!rushCleared[k]) left++;
+  msg.textContent=done?"ゲートが ひらいた！ まん中へ進んで 大魔王に いどむ。"
+                      :"カプセルに入って ボスと再戦。あと "+left+" 体で ゲートが ひらく。";
+}
+
+/* カプセルに入る＝そのボスの部屋へ直接飛ぶ（登場シーンつき） */
+function rushEnter(i,cap){
+  if(picking) return;
+  picking=true;
+  rushMode=true;
+  pendingStage=i;
+  SFX.select();
+  if(cap) cap.classList.add("picked");
+  var fl=document.getElementById("pickflash");
+  if(fl){ fl.classList.remove("on"); void fl.offsetWidth; fl.classList.add("on"); }
+  setTimeout(function(){
+    picking=false;
+    if(cap) cap.classList.remove("picked");
+    if(fl) fl.classList.remove("on");
+    startGame(true);
+  },620);
+}
+
+/* ステージの開始位置をボス部屋の入口にする（beginStage の reset() のあとに呼ぶ） */
+function rushPlace(){
+  if(!rushMode) return;
+  var LV=LEVELS[stageIdx], r=LV.route;
+  if(!r||r.length<2) return;
+  var pt=r[r.length-2];                        /* ボス部屋の入口（route の最後から2つ目） */
+  var p=player;
+  p.x=pt[0]*TS+2; p.y=pt[1]*TS-PH_STAND; p.vx=0; p.vy=0;
+  p.cpx=p.x; p.cpy=p.y;
+  p.hp=p.maxhp;                                /* カプセルごとに体力は満タンから */
+  cam.x=Math.max(0,Math.min(LVW-VW,p.x-VW/2));
+  cam.y=Math.max(0,p.y-VH/2);
+}
+
+/* まん中のゲート：8体ぜんぶ再戦で勝ったら 大魔王のステージへ */
+function rushGate(){
+  if(!rushAllDone()) return;
+  if(picking) return;
+  picking=true;
+  rushMode=false;
+  pendingStage=8;
+  SFX.select();
+  var gate=document.getElementById("rush-gate");
+  if(gate) gate.classList.add("picked");
+  var fl=document.getElementById("pickflash");
+  if(fl){ fl.classList.remove("on"); void fl.offsetWidth; fl.classList.add("on"); }
+  setTimeout(function(){
+    picking=false;
+    if(gate) gate.classList.remove("picked");
+    if(fl) fl.classList.remove("on");
+    startGame(true);
+  },620);
+}
+
+(function(){
+  var gate=document.getElementById("rush-gate");
+  if(gate) gate.addEventListener("click",rushGate);
+  var back=document.getElementById("btn-rush-back");
+  if(back) back.addEventListener("click",function(){ audioInit(); gotoSelect(); });
+})();
 
 })();
 </script>

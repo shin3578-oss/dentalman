@@ -1016,7 +1016,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-13 21:00";
+var BUILD_AT="2026-09-13 21:12";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -2940,15 +2940,17 @@ function reset(){
 /* ============================ 生成 ============================ */
 function makeEnemy(sp){
   var b={sp:sp,type:sp.type,x:sp.x+1,y:sp.y+2,w:14,h:14,vx:0,vy:0,hp:2,hurt:0,
-         t:Math.random()*60,y0:sp.y+2,x0:sp.x+1};
+         t:Math.floor(Math.random()*60),y0:sp.y+2,x0:sp.x+1};
+  /* ⚠️ t は整数にすること。小数だと「e.t%150===0 のとき撃つ」が一度も成り立たず、吐く菌・浮遊菌・電気菌が
+     ずっと撃っていなかった（2026-09-13 院長「敵も球を打ってきて欲しい」で発覚） */
   if(sp.type==="w"){ b.vx=-0.85; }
   else if(sp.type==="f"){ }
-  else if(sp.type==="t"){ b.hp=4; b.t=60+Math.random()*60; b.warn=0; }
-  else if(sp.type==="j"){ b.hp=3; b.vx=0; b.t=Math.random()*40; }        /* 跳ねる */
+  else if(sp.type==="t"){ b.hp=4; b.t=60+Math.floor(Math.random()*60); b.warn=0; }
+  else if(sp.type==="j"){ b.hp=3; b.vx=0; b.t=Math.floor(Math.random()*40); }        /* 跳ねる */
   else if(sp.type==="r"){ b.hp=2; b.vx=-2.3; b.w=13; b.h=13; }           /* 転がる */
   else if(sp.type==="d"){ b.hp=2; b.state="hang"; b.t=0; }               /* ぶら下がって落ちる */
-  else if(sp.type==="u"){ b.hp=2; b.t=Math.random()*60; }                /* 泳ぐ */
-  else if(sp.type==="e"){ b.hp=3; b.t=Math.random()*90; b.arc=0; }       /* 電気 */
+  else if(sp.type==="u"){ b.hp=2; b.t=Math.floor(Math.random()*60); }                /* 泳ぐ */
+  else if(sp.type==="e"){ b.hp=3; b.t=Math.floor(Math.random()*90); b.arc=0; }       /* 電気 */
   return b;
 }
 function part(x,y,col,n,spd){
@@ -3364,6 +3366,16 @@ function updateEnemies(){
       var ahead=e.x+(e.vx>0?e.w+2:-2);
       if(e.grounded && !solidPx(ahead,e.y+e.h+3)) e.vx=-e.vx;
       if(e.vx===0) e.vx=-0.85;
+      /* 主人公が同じ高さで前方 170px 以内にいると、2秒ごとに横へ撃つ（院長指示 2026-09-13「敵も球を打ってきて」） */
+      if(e.t%120===100) e.warn=20;
+      if(e.warn>0) e.warn--;
+      if(e.t%120===0){
+        var wdx=(p.x+6)-(e.x+7);
+        if(Math.abs(wdx)<170 && Math.abs((p.y+p.h)-(e.y+e.h))<40 && (wdx>0)===(e.vx>0)){
+          eshot({x:e.x+(wdx>0?e.w:-6),y:e.y+5,w:6,h:6,vx:(wdx>0?1:-1)*2.4,vy:0,dmg:2,kind:"ball"});
+          SFX.shoot();
+        }
+      }
     } else if(e.type==="j"){
       /* 跳ねる菌：着地するたびに主人公のほうへ跳ぶ */
       e.vy=Math.min(MAXFALL,e.vy+GRAV);
@@ -3375,7 +3387,14 @@ function updateEnemies(){
           e.vx=(p.x>e.x?1:-1)*1.7;
           e.vy=-6.4;
           e.grounded=false;
+          e.apexShot=false;
         }
+      } else if(!e.apexShot && e.vy>=0 && Math.abs(e.x-p.x)<200){
+        /* 跳んだてっぺんで主人公へ1発（院長指示 2026-09-13「敵も球を打ってきて」） */
+        e.apexShot=true;
+        var jdx=(p.x+6)-(e.x+7), jdy=(p.y+8)-(e.y+6), jd=Math.hypot(jdx,jdy)||1;
+        eshot({x:e.x+4,y:e.y+4,w:6,h:6,vx:jdx/jd*2.0,vy:jdy/jd*2.0,dmg:2,kind:"ball"});
+        SFX.shoot();
       }
     } else if(e.type==="R"){
       /* 転がり落ちる歯石の岩（2面。発生源 o/O が出す）。
@@ -3418,6 +3437,12 @@ function updateEnemies(){
       e.vx=Math.max(-1.3,Math.min(1.3,udx*0.02));
       e.x+=e.vx;
       e.y=e.y0+Math.sin(e.t*0.07)*30+Math.sin(e.t*0.031)*10;
+      /* 180px 以内なら 2.2秒ごとに主人公へゆっくりのあわを撃つ（院長指示 2026-09-13「敵も球を打ってきて」） */
+      if(e.t%130===0 && Math.abs(udx)<180){
+        var udy=(p.y+8)-(e.y+6), ud=Math.hypot(udx,udy)||1;
+        eshot({x:e.x+4,y:e.y+4,w:6,h:6,vx:udx/ud*1.6,vy:udy/ud*1.6,dmg:2,kind:"ball",life:150});
+        SFX.shoot();
+      }
     } else if(e.type==="e"){
       /* 電気菌：その場で漂い、ときどき真下へ電撃を落とす */
       e.x=e.x0+Math.sin(e.t*0.026)*34;

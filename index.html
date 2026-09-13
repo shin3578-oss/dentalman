@@ -939,7 +939,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-13 09:31";
+var BUILD_AT="2026-09-13 09:33";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -7848,146 +7848,98 @@ function introDropY(t){
 }
 
 function drawIntro(){
+  /* ロックマン2のボス紹介画面（院長指示 2026-09-13）。
+     黒い星空 → まん中に水色の帯 → 帯の中にボスが立つ → 下に白いブロック体の名前。
+     曲との合わせ目は前のまま：54フレームで着地、215フレームで決めのポーズ。 */
   var S=BOSSES[LV.boss];
   var sx=(shake>0)?((Math.random()*2-1)*3|0):0;
   var sy=(shake>0)?((Math.random()*2-1)*3|0):0;
+  var t=introT;
 
-  /* 背景：そのステージの空の色 */
-  var g=ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,PAL.sky1); g.addColorStop(1,PAL.sky2);
-  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* --- 星空 --- */
+  ctx.fillStyle="#000000"; ctx.fillRect(0,0,W,H);
+  for(var i=0;i<54;i++){
+    var stx=(i*97+((i%3)*31))%W, sty=(i*61+((i%5)*17))%H;
+    var tw=0.35+0.65*Math.abs(Math.sin(t*0.05+i));
+    ctx.globalAlpha=tw;
+    px(stx,sty,(i%7===0)?2:1,(i%7===0)?2:1,"#ffffff");
+  }
+  ctx.globalAlpha=1;
 
   ctx.save();
   ctx.translate(sx,sy);
 
-  /* 舞台の床と、後ろから当たる光 */
-  var FLOOR=210;
-  var lit=Math.min(1,Math.max(0,(introT-54)/26));
-  ctx.globalAlpha=0.20+lit*0.28;
-  ctx.fillStyle=PAL.accent;
-  ctx.beginPath();
-  ctx.moveTo(W/2-22,30); ctx.lineTo(W/2+22,30);
-  ctx.lineTo(W/2+118,FLOOR); ctx.lineTo(W/2-118,FLOOR);
-  ctx.closePath(); ctx.fill();
-  ctx.globalAlpha=1;
-  px(0,FLOOR,W,4,PAL.tile);
-  px(0,FLOOR+4,W,10,PAL.tileLo);
-
-  /* 後ろで回る光。咆えたあとは速く回る */
-  if(introT>96){
-    var sp=(introT<INTRO_ROAR)?0.006:0.016;
-    ctx.globalAlpha=0.10;
-    ctx.fillStyle=PAL.accent;
-    for(var r2=0;r2<6;r2++){
-      var ang=introT*sp+r2/6*Math.PI*2;
-      ctx.save();
-      ctx.translate(W/2,150); ctx.rotate(ang);
-      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(420,-34); ctx.lineTo(420,34);
-      ctx.closePath(); ctx.fill();
-      ctx.restore();
-    }
-    ctx.globalAlpha=1;
+  /* --- まん中の帯。左右から開く --- */
+  var open=Math.max(0,Math.min(1,t/22));
+  var bandH=Math.round(96*open);
+  var by=Math.round(H/2-bandH/2);
+  if(bandH>2){
+    px(0,by,W,bandH,"#7fd6e8");
+    var gg=ctx.createLinearGradient(0,by,0,by+bandH);
+    gg.addColorStop(0,"rgba(255,255,255,.30)");
+    gg.addColorStop(0.45,"rgba(255,255,255,0)");
+    gg.addColorStop(1,"rgba(0,60,110,.22)");
+    ctx.fillStyle=gg; ctx.fillRect(0,by,W,bandH);
+    px(0,by,W,3,"#2f4de0"); px(0,by+bandH-3,W,3,"#2f4de0");
+    px(0,by+3,W,1,"#a8ecf7"); px(0,by+bandH-4,W,1,"#1a2f9e");
   }
 
-  /* 咆えた瞬間に広がる輪 */
-  if(introT>=INTRO_ROAR && introT<INTRO_ROAR+56){
-    for(var g2=0;g2<3;g2++){
-      var rt=introT-INTRO_ROAR-g2*12;
-      if(rt<0||rt>44) continue;
-      ctx.globalAlpha=Math.max(0,(44-rt)/44)*0.55;
-      ctx.strokeStyle=PAL.accent; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.arc(W/2,150,20+rt*5,0,Math.PI*2); ctx.stroke();
-      ctx.lineWidth=1; ctx.globalAlpha=1;
+  /* --- ボス（帯の中に立つ。54フレームで落ちてきて着地） --- */
+  if(t>10){
+    var floorY=by+bandH-34;
+    var drop=introDropY(t);
+    var squash=(t>=54&&t<66)?(1-(t-54)/12)*0.22:0;
+    var pose=(t>=INTRO_ROAR&&t<INTRO_ROAR+80);
+    var sc=2.2;
+    ctx.save();
+    ctx.translate(W/2, floorY+drop);
+    ctx.scale(sc*(1+squash), sc*(1-squash));
+    ctx.translate(-S.w/2, -S.h);
+    var ib={x:0,y:0,w:S.w,h:S.h,face:-1,kind:LV.boss,
+            mouth:pose?9:0,hurt:0,   /* ふだんは腕を下ろした「立ち」 */
+            t:t*2,phase:1,hp:S.hp,maxhp:S.hp,state:pose?"intro2":"ceil",
+            wing:1,aura:1,squash:0,step:(t>66)?t:0,wheel:t*0.1};
+    var mg=26;
+    withOutline(-mg,-(S.top||0)-mg,S.w+mg*2,S.h+(S.top||0)+mg*2,"#0b1118",function(){
+      S.draw(ib,0,0,false);
+    });
+    ctx.restore();
+
+    /* 着地の土けむり */
+    if(t===55){
+      for(var k=0;k<16;k++){
+        var ang=Math.PI+Math.random()*Math.PI;
+        parts.push({x:W/2+(Math.random()*2-1)*30,y:floorY,
+          vx:Math.cos(ang)*(1+Math.random()*2.4),vy:-Math.random()*2.0,
+          life:34+Math.random()*22,col:"#ffffff",sz:1+(Math.random()*2|0)});
+      }
     }
   }
 
-  /* ボス本体。54フレーム目まで上から落ちてくる */
-  var S2=BOSSES[LV.boss];
-  var totalH=S2.h+(S2.top||0);
-  var zoomT=Math.max(0,Math.min(1,(introT-110)/280));
-  var zoom=1+zoomT*0.14 + ((introT>=INTRO_ROAR&&introT<INTRO_ROAR+10)?(1-(introT-INTRO_ROAR)/10)*0.08:0);
-  var sc=Math.min(3.2, 152/totalH, 330/S2.w)*zoom;
-  var drop=introDropY(introT);
-  var squash=(introT>=54&&introT<66)?(1-(introT-54)/12)*0.20:0;
-
-  ctx.save();
-  ctx.translate(W/2, FLOOR+drop);
-  ctx.scale(sc*(1+squash), sc*(1-squash));
-  ctx.translate(-S2.w/2, -S2.h);
-  var ib={x:0,y:0,w:S2.w,h:S2.h,face:-1,kind:LV.boss,
-          mouth:(introT>=INTRO_ROAR&&introT<INTRO_ROAR+90)?9:(introT>110?4:0),hurt:0,
-          t:introT*2,phase:1,hp:S2.hp,maxhp:S2.hp,state:"ceil",
-          wing:1,aura:1,squash:0,step:2,wheel:introT*0.1};
-  /* 本編と同じく、縁取りと手足を付ける（2026-09-13） */
-  var img=26;
-  withOutline(-img,-(S2.top||0)-img,S2.w+img*2,S2.h+(S2.top||0)+img*2,"#0b1118",function(){
-    S2.draw(ib,0,0,false);
-  });
-  ctx.restore();
-
-  /* 着地の土けむり */
-  if(introT===55){
-    for(var k=0;k<18;k++){
-      var a=Math.PI+Math.random()*Math.PI;
-      parts.push({x:W/2+(Math.random()*2-1)*44,y:208,
-        vx:Math.cos(a)*(1+Math.random()*3),vy:-Math.random()*2.4,
-        life:22+Math.random()*18,col:PAL.tileHi,sz:1+(Math.random()*2|0)});
-    }
+  /* --- 名前（帯の下の方に、1文字ずつ） --- */
+  if(t>62 && bandH>60){
+    var nm=S.name.replace(/・/g,"  ");
+    var show=Math.min(nm.length,Math.floor((t-62)/3));
+    var txt=nm.slice(0,show);
+    ctx.save();
+    ctx.font='bold 17px "Arial Black", Impact, system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif';
+    ctx.textAlign="center";
+    var ny=by+bandH-10;
+    ctx.fillStyle="#0a2a6e"; ctx.fillText(txt,W/2+1,ny+2);
+    ctx.fillStyle="#ffffff"; ctx.fillText(txt,W/2,ny);
+    ctx.restore();
   }
+
   drawParts();
-
-  /* 暗幕。着地するまでは影絵に見せる */
-  var dark=(introT<54)?0.8:Math.max(0,0.8-(introT-54)/16*0.8);
-  if(dark>0){ ctx.globalAlpha=dark; ctx.fillStyle="#000000"; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
-
-  /* 上下の帯（幕）。開いて閉じる */
-  var band=(introT<16)?(1-introT/16):((introT>INTRO_LEN-18)?(introT-(INTRO_LEN-18))/18:0);
-  if(band>0){
-    var bh2=Math.round(H/2*band);
-    px(0,0,W,bh2,"#000000"); px(0,H-bh2,W,bh2,"#000000");
-  }
   ctx.restore();
 
-  /* 着地の閃光 */
-  if(introT>=54&&introT<62){
-    ctx.globalAlpha=(62-introT)/8*0.85;
-    ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,W,H);
-    ctx.globalAlpha=1;
-  }
+  /* --- ステージ番号（左上） --- */
+  etext("STAGE "+(stageIdx===8?"FINAL":(stageIdx<8?("0"+(stageIdx+1)):String(stageIdx+1))),
+        12, 20, 10, "#7fd6e8", 0.95, "left");
+  if(t<INTRO_LEN-40)
+    etext("タップ／どれかのキーで飛ばす", W-12, 20, 9, "rgba(255,255,255,.55)", 1, "right");
 
-  /* 名前の帯。下から立ち上がる */
-  if(introT>62){
-    var q=Math.min(1,(introT-62)/16);
-    var oy=(1-q)*(1-q)*62;
-    ctx.save();
-    ctx.translate(0,oy);
-    px(0,224,W,48,"rgba(4,18,30,.88)");
-    px(0,224,W,3,PAL.accent);
-    if(introT>=INTRO_ROAR && introT<INTRO_ROAR+14){
-      ctx.globalAlpha=(14-(introT-INTRO_ROAR))/14*0.5;
-      px(0,224,W,48,PAL.accent);
-      ctx.globalAlpha=1;
-    }
-    etext(BOSSES[LV.boss].name, W/2, 250, 24, "#ffffff", 1, "center");
-    etext(BOSSES[LV.boss].title, W/2, 266, 12, PAL.accent, 1, "center");
-    ctx.restore();
-  }
-
-  /* ステージ名。左から差し込む */
-  if(introT>90){
-    var q2=Math.min(1,(introT-90)/16);
-    var ox2=-(1-q2)*(1-q2)*240;
-    ctx.save();
-    ctx.translate(ox2,0);
-    px(0,26,214,38,"rgba(4,18,30,.78)");
-    px(0,26,3,38,PAL.accent);
-    etext("STAGE "+(stageIdx===8?"FINAL":(stageIdx<8?("0"+(stageIdx+1)):String(stageIdx+1))), 12, 42, 10, PAL.accent, 1, "left");
-    etext(LV.name, 12, 58, 15, "#ffffff", 1, "left");
-    ctx.restore();
-  }
-
-  if(introT>120 && Math.floor(introT/16)%2===0)
-    etext("押すとスキップ", W-8, 20, 10, "#9fc4cb", 0.8, "right");
+  if(flash>0){ ctx.fillStyle="rgba(255,255,255,"+(flash/26)+")"; ctx.fillRect(0,0,W,H); }
 }
 
 /* ---------------------------------------------------------------- 武器のお披露目 */

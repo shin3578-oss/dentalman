@@ -1016,7 +1016,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-13 21:37";
+var BUILD_AT="2026-09-13 21:42";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -3257,7 +3257,8 @@ function update(){
      穴に落ちたら一発でアウト（院長方針 2026-08-31）。体力に関係なくその場で終わり */
   if(p.y>LVH+20) killPlayer();
   /* 足もとと頭の両方を見る（天井のトゲ V・炎の柱・プレスは頭から当たる。2026-09-07） */
-  if(hazardPx(p.x+p.w/2,p.y+p.h-3) || hazardPx(p.x+p.w/2,p.y+3)) hurtPlayer(4,true);
+  /* トゲ（堀の底など）はロックマンと同じく一発で即死（院長指示 2026-09-13「下に落ちたらいっぱつ即死で」。以前は4ダメージで復活地点へ） */
+  if(p.inv===0 && (hazardPx(p.x+p.w/2,p.y+p.h-3) || hazardPx(p.x+p.w/2,p.y+3))) killPlayer();   /* 無敵時間中はロックマンと同じくすり抜けられる */
 
   /* --- チェックポイント --- */
   /* チェックポイント（トゲに落ちたときの戻り先）。
@@ -3808,7 +3809,7 @@ function updateLava(p){
     if(z.y>z.stopY){ z.y=Math.max(z.stopY,z.y-LAVA_V); }
     if(frame%3===0) part(z.c0*TS+Math.random()*(z.c1-z.c0+1)*TS,z.y,"#ffb03a",1,1.4);
     if(cx>=z.c0 && cx<=z.c1 && p.y+p.h-3>z.y && p.dead===0){
-      if(p.inv===0){ hurtPlayer(4,true); z.y=z.start; z.active=false; }
+      if(p.inv===0){ killPlayer(); z.y=z.start; z.active=false; }   /* 溶岩も一発で即死（2026-09-13） */
     }
     /* 主人公が遠くへ行ったら底へ戻す（戻ってきたときにもう一度） */
     if(Math.abs((p.x+p.w/2)-((z.c0+z.c1+1)*TS/2))>VW*1.5){ z.y=z.start; z.active=false; }
@@ -8069,8 +8070,9 @@ function drawIntro(){
   ctx.translate(sx,sy);
 
   /* --- まん中の帯。左右から開く --- */
+  /* 帯は 148px（画面の半分強）。ボスは必ずこの帯の中に収める（院長指示 2026-09-13「上下の青い枠に入れるように」） */
   var open=Math.max(0,Math.min(1,t/22));
-  var bandH=Math.round(96*open);
+  var bandH=Math.round(148*open);
   var by=Math.round(H/2-bandH/2);
   if(bandH>2){
     px(0,by,W,bandH,"#7fd6e8");
@@ -8085,11 +8087,12 @@ function drawIntro(){
 
   /* --- ボス（帯の中に立つ。54フレームで落ちてきて着地） --- */
   if(t>10){
-    var floorY=by+bandH-34;
+    var floorY=by+bandH-30;
     var drop=introDropY(t);
     var squash=(t>=54&&t<66)?(1-(t-54)/12)*0.22:0;
     var pose=(t>=INTRO_ROAR);
-    var sc=2.2;
+    /* 帯の上端から足もとまで（余白8px）に収まる倍率。ふつうは2.2倍、背の高いボスは少し小さく */
+    var sc=Math.min(2.2,(bandH-30-8-8)/(S.h+(S.top||0)));
     ctx.save();
     ctx.translate(W/2, floorY+drop);
     ctx.scale(sc*(1+squash), sc*(1-squash));

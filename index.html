@@ -1016,7 +1016,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-14 16:41";
+var BUILD_AT="2026-09-14 16:48";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -3339,7 +3339,7 @@ function update(){
 function shoot(level){
   var p=player;
   if(level===0 && pbullets.filter(function(b){return !b.big;}).length>=4) return;   /* 画面に4発まで（3だと連打が「発動しない」と感じる。2026-09-14） */
-  var y=p.y+(p.h===PH_SLIDE?4:9), x=p.x+(p.face>0?p.w:-4);
+  var y=p.y+(p.h===PH_SLIDE?4:2), x=p.x+(p.face>0?p.w+3:-7);   /* 撃つ絵の歯ブラシの高さ（絵の12行目＝当たり判定の3px下）に合わせる。院長指摘 2026-09-14 */
   if(level===0){ pshot({x:x,y:y,w:6,h:4,vx:p.face*5.6,dmg:1,big:0,wid:0}); SFX.shoot(); }
   else if(level===1){ pshot({x:x,y:y-2,w:10,h:8,vx:p.face*5.9,dmg:2,big:1,wid:0,pierce:true}); SFX.charge1(); }
   else if(level===2){ pshot({x:x,y:y-6,w:18,h:16,vx:p.face*6.2,dmg:4,big:2,wid:0,pierce:true,ghost:true}); SFX.charge2(); shake=6; }
@@ -4102,7 +4102,7 @@ function fireWeapon(lv){
   if(big && wEnergy[curWeapon]<use){ big=0; use=Wp.cost; }   /* 足りなければ普通に */
   if(wEnergy[curWeapon]<use){ setWeapon(0); return false; }
   wEnergy[curWeapon]-=use;
-  var y=p.y+(p.h===PH_SLIDE?4:9), x=p.x+(p.face>0?p.w:-6);
+  var y=p.y+(p.h===PH_SLIDE?4:2), x=p.x+(p.face>0?p.w+3:-9);   /* 通常弾と同じく歯ブラシの高さから（2026-09-14） */
   /* ▲を押しながら撃つと真上、▲＋←→なら斜め上へ（院長指示 2026-09-04）。
      武器ごとの fire はそのまま使い、出てきた弾の向きと並びをまとめて回す */
   var aim=aimDir(), n0=pbullets.length;
@@ -5203,7 +5203,7 @@ BOSSES.magarin={
    （1コマ 30×24／スライドは 30×16）。当たり判定は 12×21 なので、左へ9・上へ3ずらして描く。
    ポーズ：立ち／まばたき／走り3コマ／ジャンプ／落下／被弾／はしご2コマ／スライディング／
    撃つ（立ち・走り3コマ・空中）。腕はコードで足さない（全部コマに描いてある。院長指示 2026-09-13）。
-   ⚠️ 弾は p.y+9 から出る（絵の12行目＝歯ブラシの高さ）。変えるときは 25_game.js の shoot() と
+   ⚠️ 弾は p.y+2 から出る（Canva の撃つ絵の12行目＝歯ブラシの高さ。2026-09-14 に 9→2）。変えるときは 25_game.js の shoot() と
       28_weapons.js の fireWeapon() の y も一緒に直すこと。 */
 
 /* 1行ずつ、同じ色が続くところをまとめて塗る（1マスずつ塗ると数が多すぎる） */
@@ -5313,7 +5313,7 @@ function drawPlayerSprite(){
       var cs2=[null, wc2||C.mint, wc2||C.gold, "#ffffff"];
       var rr2=[0,4,6.5,9][lv2]+Math.sin(frame*0.5)*1.2;
       /* 溜めの光：撃つときは歯ブラシの先、それ以外は体のまん中（院長指示 2026-09-13「下にあるので身体の真ん中に」） */
-      var mx2=(p.shootAnim>0)?20:6, my2=(p.shootAnim>0)?9:10;
+      var mx2=(p.shootAnim>0)?15:6, my2=(p.shootAnim>0)?3:10;   /* 撃つ絵の歯ブラシの先（絵の列20・行12）に合わせる */
       if(p.slide>0){ mx2=(p.shootAnim>0)?18:8; my2=6; }   /* しゃがみ中は低い位置 */
       ctx.globalAlpha=0.85; ctx.fillStyle=cs2[lv2];
       ctx.beginPath(); ctx.arc(mx2,my2,rr2,0,Math.PI*2); ctx.fill();

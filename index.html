@@ -1016,7 +1016,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-14 12:09";
+var BUILD_AT="2026-09-14 13:07";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -8100,7 +8100,7 @@ function updateIntro(){
   introT++;
   if(introT===54){ shake=16; SFX.gate(); }   /* 曲のシンバルと同じ瞬間に着地する */
   if(introT===66) SFX.bossHit();
-  if(introT===INTRO_ROAR){ shake=22; flash=10; SFX.bossDie(); }
+  if(introT===INTRO_ROAR){ shake=22; SFX.bossDie(); }   /* 画面のフラッシュも無し（2026-09-14） */
   if(shake>0) shake--;
   if(flash>0) flash--;
   frame++;
@@ -8136,11 +8136,11 @@ function introMotion(t){
     var k=(t-196)/(R-196);
     m.sy=1-k*0.10; m.sx=1+k*0.06; m.dx=Math.sin(t*2.1)*k*1.2; return m;
   }
-  /* 決めポーズ：一瞬だけ大きく（3フレーム）→ すぐ等倍で静止。光の筋は強く出て消えていく */
+  /* 決めポーズ：大きさは変えない（院長指示 2026-09-14「一瞬アップになるけど、しなくていい」）。
+     コマが切り替わる＋光の筋＋揺れだけで決める。光の筋は強く出て消えていく */
   var pt=t-R;
-  if(pt<3){ m.sy=1.22; m.sx=1.12; m.rays=1; if(pt===0) m.dust=true; return m; }
-  if(pt<8){ var g=(pt-3)/5; m.sy=1.22-0.22*g; m.sx=1.12-0.12*g; m.rays=1; return m; }
-  m.rays=Math.max(0.2,1-(pt-8)/70);
+  if(pt===0) m.dust=true;
+  m.rays=0;                                     /* 光の筋も出さない（院長指示 2026-09-14「光る感じの演出もいらない」） */
   return m;
 }
 

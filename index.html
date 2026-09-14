@@ -1016,7 +1016,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-13 22:06";
+var BUILD_AT="2026-09-14 10:20";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -8048,6 +8048,42 @@ function introDropY(t){
   return -k*k*320;
 }
 
+/* 登場シーンの動き。t（フレーム）から 位置ずらし(dx,dy)・向き(face)・伸び縮み(sx,sy)・傾き(rot)・光の筋(rays)・土けむり(dust) を返す */
+function introMotion(t){
+  var m={dx:0,dy:introDropY(t),face:-1,sx:1,sy:1,rot:0,rays:0,dust:false};
+  var R=INTRO_ROAR;
+  if(t<54) return m;                                              /* 落ちてくる */
+  if(t<66){ var q=1-(t-54)/12; m.sx=1+q*0.22; m.sy=1-q*0.22; return m; }   /* 着地のつぶれ */
+  if(t<100){                                                      /* 息づかい */
+    var br=Math.sin((t-66)*0.19)*0.03; m.sy=1+br; m.sx=1-br*0.6; return m;
+  }
+  if(t<136){                                                      /* 左右を見る（100で右、118で左へ向き直す） */
+    m.face=(t<118)?1:-1;
+    var br2=Math.sin((t-100)*0.25)*0.02; m.sy=1+br2; return m;
+  }
+  if(t<196){                                                      /* 小さく2回跳ぶ（左へ→右へ戻る） */
+    var u=(t-136)/30, hop=u<1?u:u-1, dir=u<1?-1:1;
+    var h=Math.sin(hop*Math.PI); m.dy=-h*34; m.dx=(u<1?-1:1)*hop*44-(u<1?0:44);
+    m.face=(u<1)?-1:1;
+    m.sx=1-h*0.08; m.sy=1+h*0.10;
+    if(t===165||t===195){ m.dust=true; m.sx=1.18; m.sy=0.84; }
+    return m;
+  }
+  if(t<R){                                                        /* 力をためる（しゃがむ・小刻みに震える） */
+    var k=(t-196)/(R-196);
+    m.face=-1; m.sy=1-k*0.16; m.sx=1+k*0.12; m.dx=Math.sin(t*1.7)*k*1.5; return m;
+  }
+  /* 決めポーズ：のけぞって大きくなる → 胸を張って脈打つ。光の筋は最初強く、だんだん細く */
+  var pt=t-R;
+  m.face=-1;
+  if(pt<8){ var g=pt/8; m.sy=1.12+g*0.16; m.sx=0.92+g*0.1; m.rot=-0.10*g; m.rays=1; if(pt===0) m.dust=true; return m; }
+  var settle=Math.max(0,1-(pt-8)/20);
+  var pulse=Math.sin(pt*0.16)*0.025;
+  m.sy=1.10+settle*0.18+pulse; m.sx=1.02+pulse*0.6; m.rot=-0.10+settle*0.02;
+  m.rays=Math.max(0.25,1-pt/90);
+  return m;
+}
+
 function drawIntro(){
   /* ロックマン2のボス紹介画面（院長指示 2026-09-13）。
      黒い星空 → まん中に水色の帯 → 帯の中にボスが立つ → 下に白いブロック体の名前。
@@ -8087,21 +8123,36 @@ function drawIntro(){
     px(0,by+3,W,1,"#a8ecf7"); px(0,by+bandH-4,W,1,"#1a2f9e");
   }
 
-  /* --- ボス（帯の中に立つ。54フレームで落ちてきて着地） --- */
+  /* --- ボス（帯の中に立つ。54フレームで落ちてきて着地） ---
+     絵は「立ち」1枚だけを使い、動きで見せる（院長指示 2026-09-14「ポーズ前後で別キャラになるのをやめて」「単調だからアニメーションに」）。
+     着地 → 息づかい → 左右を見る → 小さく2回跳ぶ → 力をため → 決めポーズ（のけぞり・光の筋・揺れ）→ 脈打ちながら胸を張る */
   if(t>10){
     var floorY=by+bandH-30;
-    var drop=introDropY(t);
-    var squash=(t>=54&&t<66)?(1-(t-54)/12)*0.22:0;
+    var m=introMotion(t);                          /* dx,dy,face,sx,sy,rot,rays */
     var pose=(t>=INTRO_ROAR);
     /* 帯の上端から足もとまで（余白8px）に収まる倍率。ふつうは2.2倍、背の高いボスは少し小さく */
     var sc=Math.min(2.2,(bandH-30-8-8)/(S.h+(S.top||0)));
+    /* 決めポーズの後ろに光の筋（放射） */
+    if(m.rays>0){
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0,by,W,bandH); ctx.clip();      /* 光の筋は帯の中だけ */
+      ctx.translate(W/2+m.dx, floorY+m.dy-S.h*sc*0.55);
+      ctx.rotate((t-INTRO_ROAR)*0.02);
+      ctx.globalAlpha=0.45*m.rays; ctx.fillStyle="#ffffff";
+      for(var rr=0;rr<12;rr++){
+        ctx.rotate(Math.PI*2/12);
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(260,-9-6*m.rays); ctx.lineTo(260,9+6*m.rays); ctx.closePath(); ctx.fill();
+      }
+      ctx.restore(); ctx.globalAlpha=1;
+    }
     ctx.save();
-    ctx.translate(W/2, floorY+drop);
-    ctx.scale(sc*(1+squash), sc*(1-squash));
+    ctx.translate(W/2+m.dx, floorY+m.dy);
+    ctx.rotate(m.rot);
+    ctx.scale(sc*m.sx, sc*m.sy);
     ctx.translate(-S.w/2, -S.h);
-    var ib={x:0,y:0,w:S.w,h:S.h,face:-1,kind:LV.boss,
-            pose:pose,               /* 決めポーズ（院長指示 2026-09-13） */
-            mouth:pose?9:0,hurt:0,   /* ふだんは腕を下ろした「立ち」 */
+    var ib={x:0,y:0,w:S.w,h:S.h,face:m.face,kind:LV.boss,
+            pose:false,              /* 別生成のポーズ画像は使わない（同じ絵を動かす） */
+            mouth:pose?9:0,hurt:0,
             t:t*2,phase:1,hp:S.hp,maxhp:S.hp,state:pose?"intro2":"ceil",
             wing:1,aura:1,squash:0,step:(t>66)?t:0,wheel:t*0.1};
     var mg=26;
@@ -8109,6 +8160,15 @@ function drawIntro(){
       S.draw(ib,0,0,false);
     });
     ctx.restore();
+    /* 跳んだ着地と決めポーズの土けむり */
+    if(m.dust){
+      for(var k2=0;k2<10;k2++){
+        var ang2=Math.PI+Math.random()*Math.PI;
+        parts.push({x:W/2+m.dx+(Math.random()*2-1)*24,y:floorY,
+          vx:Math.cos(ang2)*(1+Math.random()*2),vy:-Math.random()*1.6,
+          life:26+Math.random()*16,col:"#ffffff",sz:1+(Math.random()*2|0)});
+      }
+    }
 
     /* 着地の土けむり */
     if(t===55){

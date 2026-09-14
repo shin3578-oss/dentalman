@@ -1016,7 +1016,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-14 13:07";
+var BUILD_AT="2026-09-14 13:15";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -2933,7 +2933,7 @@ function reset(){
   ready=110;
   /* ボタンを押しっぱなしのままステージが変わっても、押し直しを要らなくする */
   lastJump=false; lastSlide=false; lastFire=false;
-  taps.jump=false; taps.slide=false;
+  taps.jump=false; taps.slide=false; taps.fire=false;
   curWeapon=0; refillWeapons(); updateWeaponBar();
 }
 
@@ -3053,12 +3053,12 @@ function update(){
 
   if(p.dead>0){
     p.dead--;
-    taps.jump=false; taps.slide=false; lastFire=keys.fire;
+    taps.jump=false; taps.slide=false; taps.fire=false; lastFire=keys.fire;
     updateParts();
     if(p.dead===0){ state="over"; showScreen("s-over"); }
     return;
   }
-  if(ready>0){ taps.jump=false; taps.slide=false; lastFire=keys.fire; updateParts(); return; }
+  if(ready>0){ taps.jump=false; taps.slide=false; taps.fire=false; lastFire=keys.fire; updateParts(); return; }
 
   /* keys の立ち上がりだけでなく taps（1フレームより短いタップ）も拾う。
      画面ボタンのちょん押しがフレームの合間に消えると
@@ -3068,7 +3068,7 @@ function update(){
   updateEmitters();
   var jumpEdge=(keys.jump && !lastJump) || taps.jump;
   var slideEdge=(keys.slide && !lastSlide) || taps.slide || (keys.down && jumpEdge);
-  taps.jump=false; taps.slide=false;
+  taps.jump=false; taps.slide=false;            /* taps.fire は撃つところで消す（ここで消すと拾えない） */
   lastSlide=keys.slide;
 
   updatePlatforms();
@@ -3225,7 +3225,10 @@ function update(){
      （ジャンプのために親指を離しても暴発しない。院長指摘 2026-08-31）。
      スライディング中は撃てないが、溜めは消えない。 */
   if(p.wcd>0) p.wcd--;
-  var fireEdge=(keys.fire && !lastFire);
+  /* 画面ボタンのちょん押しが1フレームの合間に終わっても撃てるように taps.fire も見る
+     （院長報告 2026-09-14「ボタン押しても発動しない、感度悪い」。ジャンプ・スライディングは前からこの作り） */
+  var fireEdge=(keys.fire && !lastFire) || taps.fire;
+  taps.fire=false;
   if(p.slide>0){
     /* 伏せている間は何もしない（溜めはそのまま） */
   } else {
@@ -8098,9 +8101,9 @@ function skipIntro(){
 var INTRO_ROAR=215;                        /* 曲の後半が始まる瞬間＝ボスが咆える */
 function updateIntro(){
   introT++;
-  if(introT===54){ shake=16; SFX.gate(); }   /* 曲のシンバルと同じ瞬間に着地する */
+  if(introT===54){ SFX.gate(); }             /* 曲のシンバルと同じ瞬間に着地する（揺れは無し。院長指示 2026-09-14） */
   if(introT===66) SFX.bossHit();
-  if(introT===INTRO_ROAR){ shake=22; SFX.bossDie(); }   /* 画面のフラッシュも無し（2026-09-14） */
+  if(introT===INTRO_ROAR){ SFX.bossDie(); }   /* 揺れもフラッシュも無し（2026-09-14） */
   if(shake>0) shake--;
   if(flash>0) flash--;
   frame++;
@@ -8783,7 +8786,7 @@ var lastJump=false, lastSlide=false, lastFire=false;
 /* 1フレーム(16ms)より短い「ちょん押し」も取りこぼさないための掛け金。
    画面ボタンのタップは押して離すまでが数msのことがあり、
    毎フレーム keys を見るだけだと押した事実ごと消えてしまう。 */
-var taps={jump:false,slide:false};
+var taps={jump:false,slide:false,fire:false};   /* fire も1フレームより短いタップを拾う（2026-09-14） */
 function pressKey(k){
   keys[k]=true;
   if(k in taps) taps[k]=true;
@@ -8867,6 +8870,19 @@ var padSync=null, padClear=null, padMeasure=null;
     }
     return null;
   }
+  /* 押しはじめは少し甘く見る：ボタンの縁から 18px 以内なら、いちばん近いボタンを押したことにする
+     （すき間に指が落ちて何も起きない＝「感度が悪い」の一因。院長報告 2026-09-14） */
+  function hitNear(x,y){
+    var b=hit(x,y); if(b) return b;
+    var best=null, bd=1e9, PAD=18;
+    for(var i=0;i<rects.length;i++){
+      var r=rects[i]; if(!r) continue;
+      var dx=Math.max(r.l-x,0,x-r.r), dy=Math.max(r.t-y,0,y-r.b);
+      var d=Math.sqrt(dx*dx+dy*dy);
+      if(d<=PAD && d<bd){ bd=d; best=btns[i]; }
+    }
+    return best;
+  }
   function isDpad(b){ return b.parentNode && (b.parentNode.className+"").indexOf("dpad")>=0; }
 
   function keyCount(k,d){
@@ -8929,7 +8945,7 @@ var padSync=null, padClear=null, padMeasure=null;
       if(!gripCount()) measure();              /* 何も押していないうちに位置を測り直す */
       var got=false;
       for(var i=0;i<e.changedTouches.length;i++){
-        var t=e.changedTouches[i], b=hit(t.clientX,t.clientY);
+        var t=e.changedTouches[i], b=hitNear(t.clientX,t.clientY);
         if(b){ grip[t.identifier]={cur:b,held:[b]}; got=true; }
       }
       if(got){
@@ -8950,7 +8966,7 @@ var padSync=null, padClear=null, padMeasure=null;
     /* マウス・ペン用。指の一覧が無いので、同じ番号で押し直されたら前のぶんを捨てる */
     window.addEventListener("pointerdown",function(e){
       if(!gripCount()) measure();
-      var b=hit(e.clientX,e.clientY);
+      var b=hitNear(e.clientX,e.clientY);
       if(!b) return;
       if(e.preventDefault) e.preventDefault();
       audioInit();

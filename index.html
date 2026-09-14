@@ -1016,7 +1016,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-14 16:23";
+var BUILD_AT="2026-09-14 16:41";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -3081,19 +3081,13 @@ function update(){
     if(keys.up && (ladderPx(pcx,p.y+4) || ladderPx(pcx,p.y+p.h-4))) grabLadder(p,pcx);
     else if(keys.down && p.grounded && ladderPx(pcx,p.y+p.h+4)){ grabLadder(p,pcx); p.y+=3; }
   }
-  /* しゃがみ（院長指示 2026-09-14「しゃがみ打ちもしたい」）：▼を押している間、床の上で伏せる。
-     当たり判定はスライディングと同じ12px。しゃがんだまま撃てる。しゃがみ＋ジャンプ＝ダッシュ */
-  if(!p.climb && p.slide===0 && p.grounded && keys.down && !keys.jump && p.dead===0 && !ladderPx(pcx,p.y+p.h+4)){
-    p.slide=1; p.crawl=true; p.h=PH_SLIDE; p.y+=(PH_STAND-PH_SLIDE); p.vx=0;
-  }
+  /* ▼で伏せる「しゃがみ」は無し（院長指示 2026-09-14「しゃがみはもうなしでいい」）。低い天井の下だけ自動で伏せる（crawl） */
   if(p.climb){
     climbStep(p, jumpEdge);
   } else if(p.slide>0 && p.crawl){
-    /* 伏せている（低い天井の下、または ▼ を押している）。自分の操作で前にも後ろにも進める */
+    /* 天井が低くて立てない場所。自分の操作で前にも後ろにも進める */
     p.slide=1;
-    if(jumpEdge && keys.down && p.slideCool<=0 && (p.grounded||p.coyote>0)){   /* ▼を押しながらジャンプのときだけ（低い天井の下で跳ぼうとしただけでは走らない） */
-      p.slide=26; p.crawl=false; p.slideCool=6; SFX.dash();   /* しゃがみ＋ジャンプ＝ダッシュ（grounded は1フレームおきなので coyote も見る） */
-    } else if(keys.down || !endSlide(p)){
+    if(!endSlide(p)){
       var cx=(keys.right?1:0)-(keys.left?1:0);
       if(cx!==0){ p.face=cx; p.vx=cx*2.0; } else { p.vx=0; }
       moveX(p);
@@ -3106,8 +3100,7 @@ function update(){
     if(jumpEdge && p.grounded && headClear(p)){
       endSlide(p); p.vy=JUMPV; p.grounded=false; p.buf=0; p.coyote=0; p.jumpCut=9; SFX.jump();
     } else if(p.slide<=0){
-      if(keys.down){ p.slide=1; p.crawl=true; }   /* ▼を押したままならダッシュのあとしゃがみに移る */
-      else endSlide(p);
+      endSlide(p);
     }
     if(p.slide>0 && frame%3===0) part(p.x+(p.face>0?0:p.w),p.y+9,"#9fe8ff",1,1);
   } else {
@@ -3235,8 +3228,8 @@ function update(){
      （院長報告 2026-09-14「ボタン押しても発動しない、感度悪い」。ジャンプ・スライディングは前からこの作り） */
   var fireEdge=(keys.fire && !lastFire) || taps.fire;
   taps.fire=false;
-  if(p.slide>0 && !p.crawl){
-    /* ダッシュ中は何もしない（溜めはそのまま）。しゃがみ（crawl）は撃てる（2026-09-14） */
+  if(p.slide>0){
+    /* ダッシュ中・伏せている間は何もしない（溜めはそのまま） */
   } else {
     /* 特殊武器も同じ作法で溜められる（院長要望 2026-08-31）。
        押した瞬間に発射。溜まっていればその武器の溜め技が出る。 */
@@ -4243,8 +4236,7 @@ var BOSS_IMG_SRC={
   shin_walk:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAeCAYAAAAhDE4sAAADe0lEQVR4nIVUW0iUQRT+/l01TV1daY01t817GlaamlpQYRYiiFFID12goIg0iOglw+5BRPSgEfkkFkRQ9FoplRAqVkaYt5LSNi00Une9rNU2cY7+07/uv3ZgmDkz53znO2fODLCAmGNXiZysjUKr+7NV5m+QY9urFwo5JbuGeS94UTCml9sR8nmA9aZhh4+fz8b6CIsgR/eMGynBwbrRe91uiKQUUEB1zzDfqPtPAOwKJEiga4qHVuhMZacLRGxKFwfosgh0TWFAUyEKpq2fQY+2Vt4F+piwDQ2/qXUuy+RZGznVEoUdBwqwNDsBG1KtiF1p5eJTjfymNtH1mCNQoQmMRvfIDz7LT1+BocFxnukGtWx0U1MjnSzL41GwNo714up7PJ9vHYItdzNM4Vax4PWTkFF5po2jq9ICC/IwIteXam4szIjE6fqq1LQ7cOH2M9azD5+UICTatSr6dw2gcP9BJCWuQPPDWuDWVa8zSu+/QDvLT3PuJyqOIDvJipR2BxR8x+CjRtR9NwBj3brlkEDx+86IK3u2YVdhvjz8LQTKMm3o6fPAEWlBfH4BPtaf083AoILcqTzEIC3vh+QIUGaD7y4pQl9oHINWlh8VfhllmDySwbXqm1ybdWmpaNEYbkm36zLxYvSg5qIyONDPDAiEhNhRjUqKinycojbt9WElr/91VzfuNzTjQ18/ah82ydTykmNQujWPbeisB2Zen9qU4/XpyRugj+yXKRZBlmjUp89w0xVXnOIzYnb2WAWvG1rfoio3htfNHf1onAzi5yJvbfRLp5KTZRZV6TOsi46XEkQr9DyaO55IXX1zXp1Nm8SERkbldU4rQFF43HUu4bSohpeb2hRiQrPfhiRjakYC0UqGyYM3TiMcd+q8mPgFcrQ+xzWAIx8vWIOoVeu8zj98G4We+LS70ZojIpJTEGmPx9jARyROfkLXVCiis3KlzejT+1xTXUZ0a05PKOyF3n3TNpdCkCVaEDgJ3a45FoLAwtK2i0DnFyj09ziNkQiLWS6dKTqx+dF026s9lIRM/BwZ5hYZf98r7T3TLiiITBXGkHCEmGcbjWRi6LPuKzeFW8Uf22qpT4/+q5eBHEInHHKTZz9fhRqEGElw4yQ8X9vmnvdctMkwG9NcCEgthckzxjr9prOM5sQYEQViZg7T/X2lkCOBkL0KQvt/AcHDaTSwcoEJAAAAAElFTkSuQmCC",
   shin_run1:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAYAAAAsEj5rAAADb0lEQVR4nJVWXUhTYRh+zja3KZtzmvMHWzL8ISIxbGlERfQLiVTedKFE0GXQRVEXXXXTRWAQdCmJKOhFRYmElRX9GJYUIoX5k5mFf6Frbrmd6Xbifdd3Unc25wNn33e+732f87w/3zkD1sG2kjJFzFPLahR7fol6rwVJa5Gc8i1mTPqDKPrzG4s5uav202amee3z8ECMvxRPETkRSsymVfvLS8swpBh4/LQpO4ZUt5aQVBGZS6+PISMYLUZ1JLttK1KiSRixZqsOOpOOlfhm53gkhPwhXo/IEc0HGtaGmzY9ohqSExGPhS3I83h5LdVuY9KxcDjqZEtAKDAclOFa0jMZOVP4u45XoMCZj58Tk9EIBibw0WxLnEPa7PPOsgEp+OIN/FMYxvu3o2wzaHfxWF7mxOi0J3HIAtQSosrV1VWoBliZ7mAdjgJ4/OAuWh4+13JFTFGEUtF7IsSTl68i8qyVyQ5bg7i+rxBFufbkFApSt82hXOx8DbfNgUsA3KfPwi0M2puw2+4iu/VPisD++gtKMX6jY0qHK+ZRLorAU58ZjS3NCf1jyAKyrEQURRl71aXQfUP1Xj7LttI9cc+zIR5ZV+MNmIxGyKEQ8ioPwNnnQT+qUGbvBaluHOpJrij1DW1MRjhzsx1T716oe9fc0SKMICNuZLq1CzWFFlbW2fkEE/29KNx7lOeED7+W4hLFDfn2g24ea09R9wH37nfyvPbffHBqAVvz0rEh1De0cUFo1Ofs5KJQceii/NL6ufozStJFmejvRaa7DVZHFm64U9HX3sSFIdR4PqLg6zSewpz8SXnZcktyBcfV3qMjR3ml686wl3tww21z/sQh9V7kk1rol7MCcvmR6EZLc3IKCR3jflRkp6hkBFK4HiT6oe5f9AewnJoDS4YJBYoPPyUrTJtLuKLO8ipuJ9EF7y1bgZ5HCAx0aH+kTOmbFX3WFijWTHWDCuIrrowadbUiPPcdbHOsTrUxP7wJz+TwKlIDqZNNDpVM8s2zk08Qj7zD7Lc3UaeFH3CMFCv0IFr3mxywlWYr3qEeSZxvidTpCneoTwjNTCJr+3ZWx2TdTasUUF8ac/6/dSTfPI/yYhDp+oUoIYVCC4bADOSFH+u+krREAOD8c5UpP8mSrSShPAsyUkehJ/+C1FAp5hsRkhBaf5z+ApKqjcXjNZFGAAAAAElFTkSuQmCC",
   shin_run2:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAAeCAYAAADHJYVoAAAECklEQVR4nKVWXUxTZxh+zqFAW2prwUknQpmDGnoBEhQEpwWvljjjzVQyvZhZmH8X6pbILpbFkCWLGpdtyZxLzHajMjNdtpAly7KIoENhECbJYIALlT8xEWpZoWUt/cz7wjnp38E2e5LmfN97vu95n+9533NOgSRgytskYuexsUSQXrSgvHSLsI6PwbM+PyquxHr7/tDkkFYidZsKUf73HeTr0qPujYWCaqzPZtNMoEm+M9umHjuWPBaU7NbMVByXrLWhy2BjUoXY6/0XqUKXKGjK2yQq/VNAhGKLZRUrNM8FeD6bpefEFNOCnMhreWacx7EbicxoXwtbjROOsg3q/dhiv9Bzs2GN2GzQxZHv21PG45aHM9hdlI2rbUO4NjSUkEfT81eLX+Frtz8E2xqzqvTCzW5sO3UG7bnVTDygt6TmOYHaiyzC8AgOuBwcQ1E2X/qfzKI+dx4VLgc+7HyCpMmPnTwtgsVVPE4f7sTAhIcJqnLS2QbrW+/Bc+1TVCyvp3hvxH4WtCxOUgKbD3+AQ04rqmvr1IXegR5WeeWnX3Dl62/QfHArx8kWilOSHmM+Pvr8K5Xn46pcrkfndHCpoNaavWLkciMsJRVYDIdx9NKPcYmOn2pE+MFdVk8gUgIRK6f9/U4Ham1p2DXXz/WQmk4cFZN9D3B9IQ9vHqhnK5q7RlDoc6N6Zx2+uPAJ0mQZ7178ATeufof9mRNMKpe9piZW1tBJV1e+jaZ3tmNKWgUcqasRHa23BB1Jn1MU9aZr+PIm36MfjZ317ws6JSkNLS4KBTR+1t/N6yI5JHoaDzqMPCGflJcQEV0+vAuVO1zoam9j3wl0fDpdLC5+di6u13W+iT+lS0snjUKtLY09v3e7Fd/2e3Boz+toaPkL+GcSLg2yOPJEwWMnTwvykYpLyoFl5XLix1wLcU8oeasUiOAb7F1OsARXeCylBFHEkUWKHFNX/dzwhqAGoOLR6VKyhQrlHbBzv5NysoVABT3bOg67cyMeL4yivak5KbFcFOoYKqzSJdu21+B8nR2mjeWchB6g21OLkNYVRm2evN8OT8f3K39DqTd1ehPCRgvkeS983hCspSV4uaAA1I7HTzRi0G9E5ktrsW7rjqQTcJ+HAj6k5ZWoQbvToaqM3ZxVultE3h9pucHX+eE29VWirJfpq0OqFWSY9OpGMemOUzXX1yK5e7p57P7tV0gGM49JpLHYJfyDver/HC4o2UEM0vQYgtOAKCjA49FRBB8NJ/SSVD667hWC9hnM/KPSk6VyhFCJPmfh7PU8UYqaDKhOgQU9sjYsfbFImAKFR/efcTUyZsZB11QQmH7IwkL+HJ7PeUPQZwY4rqxJWqmW+oz5Z+p81v/0f/HFYaU/pc8BjE/3b60HhecAAAAASUVORK5CYII=",
-  shin_shoot:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAeCAYAAAAo5+5WAAADoUlEQVR4nJ1UWUhUURj+7tzrqBVNlk02FZJp6ciIy1QuUxQVQb4UGSG20Yv0EFkYadRDC9RLFIX4VkKFUIr00EaLWZaVlpFkZmYJrYM5hY7j6L1z4j/jvY05m31wOP/ZvvOdfznABLAhKZvlz7OycPYK4RImigKMIsPdH05I0ZHQR0moe/804HnJd5A/z8rowLNeN5bGRvI5s6BgWgTQr8joGZCRNFlC/BTvsbogYsYQ66Mk5OqBOVMBg6BA1Hnnf40oEATAEClhWoTI5+yKgLWxFna7t82vap2v2kGHk5NMj5Y4kYd5G9kqfssK3xMNr/qwFFunR3ESxfOXTDc65urVC0bn3jvl0MT6KAmiThmnkAiGdRJcriFtjlzy2y2jTQmsWDDFZLCdRgkGSUS/omhqSSmhzyVj+5Et3H58vQUNrz5ieEhG64CCr47WwFlBi82ihVEKzdd5/UuqiZBsFUTabEpFQZaZj6+XHQ6aqjx49CTZ5eY+I0K3ICFxSTJckPDRI6Lz+yDf7LT34WeiFZW3O1C05zgLSaw+iVSrAdl1YjfSd6zjT14YN2nMoYJYD78kGLS3tikSLC43t9udI3jd2ITM5ctwLW4S0mw5mLIwCzMfPgK6WpC5txgN28vGkR08WsG2rk7Fxbtv/ubxV0eroEaZ3HKotArnd5ZzUkKCUY+CglVc/cuHj/yWc89Ph2aPWzTFZDCL6HUHuWZNdhLy8q3aOvm7qOywsD85h9Hf8S8izPPxpe1T4E/IFJPBVm7biKXLsnC/9g6e36ofk16XTx7jrK+qbqBLYUE/pDFYX7iPjYzIzN31hFEGUJu7aB0ns60sYm+fPOBrZMMPApcOAEkS0WEf1sbWzGSUphlYXn4mBjpfoPJ0Cxrrq8NTqoLUkWJqFG0aN1ed4iqpndlUGDSPAyouTTPA0/Mc+gU5OFJejDhzAurau9FZc4+vl1wNrlRLN1+oarpH3UAuKU43cPvAhSaeFQgBv8QlV6sFu8WGxMU2yLKCc7W3+CWp+j4UCg4e2P8iPni0gtHzSSlhjSma91SJ1SwG/4WiPcd5wAhqr+JszU2eXqE+IL/BO7TZpilVe3IH4Xt7N+LTUhA/I7Tqca5IyV0hkE87mho0QrqAWvvbDyF/NRVBSzoh3YzYuFkwpyzg6Xal4hIa6y+HVRABN80dLV+P/Rt0xtna/Od3N8Ii1oXcYJzNS5naRBDUFb7kvghHdUjFKsglE8Efp+2jEtR8nAMAAAAASUVORK5CYII=",
-  shin_crouch:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAASCAYAAACEnoQPAAAB1klEQVR4nGNgQAMW0mr/YTSMjQswImuSYGVn4GNkAvN5mVkZPv/9zXDr13eGE09vwdUhAxZkTSANIADSBMIQ/ncGXIAJRMBsA4EXX78zmHqZMHBryzA8/fMTp60gwMKABEAaxYwVGLS93BiY775gOPn7CAPDg8sMuAATjMEpwM4gIsHNoCUvwfD5wX2GrLx8RnPWbwz4ACOIAPlbX0yAwSjAgcE7JBQscf3CGTDtGp2J39knwP5S+/9y/nYGJRVFsASzgBDD7TNnMTRk+nj/13VzY9hy5g4iqkCgvL71v7wwD5x/edcuBg9PW4YXb96BDb135z7DuQ0HGFg+/wOHD0qA5Ya5MYhrmcAFZ71/ysAlwM/A8OYdw7cPH8FiM8+fwvTGtEkT/4PA+3fv/oPYIFfgDS0GpNDWUJYA0wKC/GB61dyFDERp9orL/W9o6QoXAhkkKiRIWPO+rSv/L53QyPD1+V2GP1DBG3dfMPyRlAMbik8zy85Td8AMR68QuODDt18YWJ4/YmAQh3gFp+bOxmrG/Xrm/xPuvmCIjIkFC16+D7H5xcsXeDWDg91Mz/z/63fvGQS19RkkoLaBNL6/epHh/hPcGQMMQJrRxRRl1P6DxLHJwQAAD8GveALowTwAAAAASUVORK5CYII=",
+  shin_shoot:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAeCAYAAADD0FVVAAADM0lEQVR4nJ1V3UtTYRh/ztnZznRsZqYtlm3a1jAMlAWWog0TnF7kTQaFQYTQhRVKFARSXXjRRRf9AV500UVf1GVqZR9QICp5IeGaqbEWUzNpanNuOyeeZ57DdtrZ5n7w8rzv8777vb/n4z0DyACn2SWi7av1iNJcspnApCNq4QvldSWvJzsSWgU7X0Dra19fMTmTtpqPiscNRtAp7toUBGBZBowaDv5Eo/A4vAbe4KQqMSNNeqyNYgmrAT3LwhYkIhQEkcgQeBH6l2MxmI2EYQFEVWJOIrRwWuA1moSyaJTIeS0Ha/EYKSTE44DncNhjUfCqKOUwZClESSGqwzm/fWgusin/AKMp0mphnomp5pQdDk4wGA4qU+YS8yeFW1xnBd1uA6wIcSrat/UNdVIAoKqi0kAsKucP84mKUFnXBTe0NB6CL3qGyDPlMyX8sfA6OWYjZIjIOxeE8Q8zIMwFyeeocwH8XMhIKIf/OvIXlCi3mEgdVJSCs9Is+8f9K5ANTHLT25JyenjfHui4WA/VznLZd3/wjTwfePIwe58qiTFvnU1V0Nt9EpIx7fWD+8qttIT9Z7rEDd+vRJ9KoFxtv21bRRmFjSQIVJyJsN3eJOJ5b7q3j+g83S2e7T5H89GhUVj8kSjU02eDTDpl2BWa5Q2IlxrIpiV9PjQqek7U05zndcAyDLwYfksX3Gk/KJ+LHzgCIw8ewfm791J4OCXhsY6rRFigT7ynJe9kyj6mwB8IEREqzVSwlNDjgiAi0C7OTFCOHTVtIg7IAazSccq+i8IVRJFsmdMFeAHu+aZeMjsm7av1iAZ3OxEiJBvejECr25UL3/+kWMUGmwkikS1SKRFjfps9zZAX6aXb18ForYa179M5E2QlbbCZYOj9J1mhEnkVymitpl6kDYaRx07BJS9u3ByA4XeT9IL27jdTHpN7Nlcw6Zof7erYR1oL5jKqPF40NRvIqa04tQ3pQ+wwt4kT8yFYHfsMviwfZ9XmVwMqzhWs0tHC/4aiJV+Kr6dKBzV2S36k2DJeQQ8L80sph/C/KhQI5NdSWAR/tBCK6xrgcm8/EZRYHYAXmSwWUisVMhP+AZD+ZD7BwUcfAAAAAElFTkSuQmCC",
   shin_dash:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAWCAYAAAAvg9c4AAACwklEQVR4nJVUX0hTURj/3TVdrLWNsTHRtVoOSbCRlVAvSVS2hx7SIukPSgYKGT34VBBFPeRLIBQU+lJCIZKIEVEZaROMhQxrWKzY0OlW6pa6pUM32Y3v2J13c+H1g8M93znf9zu/3/edc4EN2k5tPi/2q6ylaT6ZDBKtIr+EF88bdh3g6QCDXAGai2M5qaAEYFXqYFGrEFpeAoEJZtqmRWBiDq0eJ8OTb4SlNzYDlTIHpRZjai/mjyMRXGbAFdESvvfnCMdtlCWZLqlEjlwG01Ez80ffjDF/JP4bn8NT0uQTU2JJdizPDKNMhcRykvkERnPh+z05K02+ADYanWcsxe0VgBDHSp2TErtPdXo3Oc5q6pqfZjJnZDEot+cyv6bxJItr9TgxH0tI736euZRXRqdS/sUyG/sai/Ph6v0GY20dXr3uhWuga335PS23Wec1lt2Q6YxoutGCWfdHPB5y41qNHZXnqwF0IrCawmWVf/nSFZ7AQp/e8gQ2PerH85d9KLQU4cWzR7CfqkqLJ+C9m3+hYY86OzN6dgRGQ/wESf6+Q6f5m81tfGAixA6ll9R2tY7FCorI1sjv9g5zhtpbPF1mmgvrk+PDXMGOwlQiKejP7UP/Bx/q7x/nxATkmaCOgUG22dnekbZOLO81ncNB+wncbXmyAmwrR5liBj/cjjQCXGYtq2vPpoG9H/yKsNcNvdWG+guV0Bs0CIciqLz+gO0PPb0j+QaR8XTI4mI8NUgFfamuept9zS9PqvEkOxOYAAuqmtnIliTLtkid/pfAeb44UzUUaq2wlqd8MTDlIVujimzlbGNBlPCwo5vtHS7Wo72rB1s1BvyJhKA90sjWibl8bvW1cf8Djc5FsWn/GeSFXQiO+diVyowlMGK95HWAQOmghUhg7f9UAA36fSwgW3kyS6XWqteP36IxSe4sxWbG/wVXk14mgh247wAAAABJRU5ErkJggg==",
   shin_jump:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAYAAAAsEj5rAAAENElEQVR4nJVWbUxbZRR+bmmB0q5AuFSgjsHGNhiDwqYJwy5B0xgCDiOZGo2LW3Q/TfyIf5b9WeYvY4xmMTGCsrhk6lgwYYFgJGaRBsg2OjoWYOhkwAp4KVnLCh2U9ppzoNfe3kL0SW7vPe/7nuc95znnvbfA/0Dz3ufleHuf9bDKJuj+K9lHlS/KL+RaVPaxvBzNOmG7aO4GlnAw04JiowGlWSaM+5cxGQrjmdwdyNWn8Lq2+3Po9w4qPPqt0nJa/yUirK5HUWw2sh2ORNlO0+uQl2FU+esTNSGSPTuMiMpgZ3KMR6KdCBXhRCSKgcUl5JjTkSUIKmedABhS1JIvrEcwvxJKTlhrq5GP5FiYzAKBI4wR0bNflrHoX1Y5k56+cFg1pktcsBh8wiQxEBFpdWvhMSYzdLzhrsP5mlQ1hFQpqioJHw/agKpb5yjEh6frYd6fjflUEWVNdvQHV+FfXUdzTb3cevZjWdM2VGFqCUqZorz/OMRRucbm4CjbiCr/7bf4PjL8JyqqSlDt9bC94pVwfexvdVEoQhKZtKT0KapXHNUo/rIbZc4K/LUQRWBz7RMpqPiVFtvg9kqoK3sqocrSkODPtMuJvfXptbPKc1vLNb5Xlws4d+EKvhrtFCJTv3O6n7f0aBubQFES6XXXNKaG5njsiPMQ30+dPqas+66tDz98+wWTjU960THYI2gIpYBHkAKANdMul5iNLMNkSw/anYcw0OtmR0J37wjqXnpO2Uj67d72Z5mQl18rF9bU4um5u2hwVjDJzaVUNL33Gs+/kepjQtrI8c77zKWJcOeBJvnE0b1wnDyujHUNV+GTyy7AUIQTR00431CIX2YNcH/zK9yu21zdGDSEz1rWcP7MywDC7DTb1YGRBRMa33Tw/KULV9DQ60bXmoj2jmGWKN5fZbjiBC5obIbr4lXsztXh+wUT91ys/0TPIBdgy5PSXFMvE1lM4LFOD1o/OKf02PTovOJAxKX28i111xNZ+09n2IgXl7R89+RxdF+8isIDeYoDRbiRfHIIREhnlMTNsFlx22bnicaqPZzy5dFlWEUz0q1mPh1z9yZAReuVBNz4+TNN2vpNLZiUUj61OdHW0oHWH3uRZtuFB3em+CzPz/ixGgxh3LMGp70cN5KlTD/UWzH9qLIU2aW+P6DLMCElpwBF+/fB7QsCu4Ei0czPDyWB3/AT0pCgIZwZ7RRefX1Nfph/UEmDTgoRxtKFL4jI4iwkFPAYISTaAGlIGyFhI/UehYiQXlKpWhx+5ONLQiUXKsVXkDzleGSl6RHKFjnVWHWpbVbuDLAEhmxRGXvQ97W2KEl0hdHnBX16pkc3bCKjjURdFDMAp04yJfPVJxukj3v/I5/aKdMuiwYDdgYk1Yc9EZq/IuREsERWVeN0ZukLR+/JZP9ptgS9suhKNkcFo2s7/38ANurRQzfE1IUAAAAASUVORK5CYII=",
   shin_fall:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAYAAAAsEj5rAAAENElEQVR4nJVWbUxbZRR+bmmB0q5AuFSgjsHGNhiDwqYJwy5B0xgCDiOZGo2LW3Q/TfyIf5b9WeYvY4xmMTGCsrhk6lgwYYFgJGaRBsg2OjoWYOhkwAp4KVnLCh2U9ppzoNfe3kL0SW7vPe/7nuc95znnvbfA/0Dz3ufleHuf9bDKJuj+K9lHlS/KL+RaVPaxvBzNOmG7aO4GlnAw04JiowGlWSaM+5cxGQrjmdwdyNWn8Lq2+3Po9w4qPPqt0nJa/yUirK5HUWw2sh2ORNlO0+uQl2FU+esTNSGSPTuMiMpgZ3KMR6KdCBXhRCSKgcUl5JjTkSUIKmedABhS1JIvrEcwvxJKTlhrq5GP5FiYzAKBI4wR0bNflrHoX1Y5k56+cFg1pktcsBh8wiQxEBFpdWvhMSYzdLzhrsP5mlQ1hFQpqioJHw/agKpb5yjEh6frYd6fjflUEWVNdvQHV+FfXUdzTb3cevZjWdM2VGFqCUqZorz/OMRRucbm4CjbiCr/7bf4PjL8JyqqSlDt9bC94pVwfexvdVEoQhKZtKT0KapXHNUo/rIbZc4K/LUQRWBz7RMpqPiVFtvg9kqoK3sqocrSkODPtMuJvfXptbPKc1vLNb5Xlws4d+EKvhrtFCJTv3O6n7f0aBubQFES6XXXNKaG5njsiPMQ30+dPqas+66tDz98+wWTjU960THYI2gIpYBHkAKANdMul5iNLMNkSw/anYcw0OtmR0J37wjqXnpO2Uj67d72Z5mQl18rF9bU4um5u2hwVjDJzaVUNL33Gs+/kepjQtrI8c77zKWJcOeBJvnE0b1wnDyujHUNV+GTyy7AUIQTR00431CIX2YNcH/zK9yu21zdGDSEz1rWcP7MywDC7DTb1YGRBRMa33Tw/KULV9DQ60bXmoj2jmGWKN5fZbjiBC5obIbr4lXsztXh+wUT91ys/0TPIBdgy5PSXFMvE1lM4LFOD1o/OKf02PTovOJAxKX28i111xNZ+09n2IgXl7R89+RxdF+8isIDeYoDRbiRfHIIREhnlMTNsFlx22bnicaqPZzy5dFlWEUz0q1mPh1z9yZAReuVBNz4+TNN2vpNLZiUUj61OdHW0oHWH3uRZtuFB3em+CzPz/ixGgxh3LMGp70cN5KlTD/UWzH9qLIU2aW+P6DLMCElpwBF+/fB7QsCu4Ei0czPDyWB3/AT0pCgIZwZ7RRefX1Nfph/UEmDTgoRxtKFL4jI4iwkFPAYISTaAGlIGyFhI/UehYiQXlKpWhx+5ONLQiUXKsVXkDzleGSl6RHKFjnVWHWpbVbuDLAEhmxRGXvQ97W2KEl0hdHnBX16pkc3bCKjjURdFDMAp04yJfPVJxukj3v/I5/aKdMuiwYDdgYk1Yc9EZq/IuREsERWVeN0ZukLR+/JZP9ptgS9suhKNkcFo2s7/38ANurRQzfE1IUAAAAASUVORK5CYII=",
@@ -5296,10 +5288,8 @@ function drawPlayerSprite(){
       nm=ck2?"climb1":"climb2";
     } else if(p.udash>0){
       nm="jump";                                    /* 上空ダッシュは前向きのジャンプの絵（院長指示 2026-09-14「後ろ向きになってる」） */
-    } else if(p.slide>0 && !p.crawl){
-      nm=shinImage("dash")?"dash":(shinImage("crouch")?"crouch":"slide");   /* ダッシュ＝前屈の絵（院長指示 2026-09-14「ダッシュは前屈で」） */
     } else if(p.slide>0){
-      nm=shinImage("crouch")?"crouch":"slide";      /* しゃがみ（伏せ）＝しゃがみ撃ちの絵 */
+      nm=shinImage("dash")?"dash":"slide";          /* ダッシュも低い天井の下も前屈の絵（院長指示 2026-09-14「ダッシュは前屈で」「しゃがみはなし」） */
     } else if(p.inv>52){
       nm="fall";
     } else if(!onG){

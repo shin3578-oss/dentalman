@@ -1016,7 +1016,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-15 09:18";
+var BUILD_AT="2026-09-15 17:52";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -1073,6 +1073,12 @@ var C={
       test/make_maps.py の色表／run_tests.js の checkPits も同時に直す（2026-09-07）。 */
 var stageIdx=0, LV=null, PAL=null, WATER=false;
 var MAP=[], COLSN=0, LVW=0, BOSS_TRIGGER=0, GATE_X=0;
+/* ボス戦の部屋（院長指示 2026-09-15「横にスクロールさせないで、来た方に壁を作って、戦うスペースを限局スペースに」）。
+   ボス部屋は40マスぶん（640px）あるが、戦いに使うのは **画面1枚ぶんだけ**。
+   入口に壁（GATE_X）、その1画面ぶん右にもう1枚の壁（GATE_X2）を出して閉じ込め、
+   カメラは BOSS_CAM に固定する＝ボス戦のあいだ横スクロールはしない。
+   壁の上下の範囲（GATE_Y0〜GATE_Y1）は、ボス部屋の床が面ごとに違うので戦いが始まったときに決める。 */
+var GATE_X2=0, BOSS_CAM=0, GATE_Y0=0, GATE_Y1=0;
 var ENEMY_CHARS="wtfjrdues";   /* s＝シールド兵（中ボス。2026-09-13） */
 /* 水面。WATER=true の面は全部が水。それ以外は WATER_ROW より下だけが水（2026-09-07）。
    TIDE があれば水面が周期で上下する（潮の満ち引き）。 */
@@ -1114,6 +1120,9 @@ function loadStage(i){
   }
   BOSS_TRIGGER=(COLSN-40)*TS;   /* 最後の2チャンク＝ボス部屋 */
   GATE_X=BOSS_TRIGGER-8;
+  BOSS_CAM=Math.max(0,Math.min(LVW-VW,GATE_X-2));   /* ボス戦のカメラ位置（入口の壁が画面の左端に来る） */
+  GATE_X2=BOSS_CAM+VW-10;                           /* 奥の壁＝画面の右端 */
+  GATE_Y0=0; GATE_Y1=0;
   crumbs={};
   scanPresses();
   scanEmitters();
@@ -1264,7 +1273,11 @@ function scanLava(){
   }
 }
 function solidPx(x,y){
-  if(gateOn && x>=GATE_X && x<GATE_X+10 && y<15*TS) return true;
+  /* ボス戦の2枚の壁。上下の範囲は戦いが始まったときに床から決める（2026-09-15）。
+     以前は y<15*TS（17行の面だったころの名残り）だったので、迷路の面では
+     壁が床のはるか上空にしか無く、実際には閉じ込められていなかった。 */
+  if(gateOn && y>=GATE_Y0 && y<GATE_Y1 &&
+     ((x>=GATE_X && x<GATE_X+10) || (x>=GATE_X2 && x<GATE_X2+10))) return true;
   var cx=Math.floor(x/TS), cy=Math.floor(y/TS);
   var t=tileAt(cx,cy);
   if(t==="B"||t==="C") return blinkOn(cx,t);   /* 消える床 */
@@ -3294,16 +3307,20 @@ function update(){
   }
 
   /* --- カメラ --- */
-  var tx=p.x+p.w/2-VW/2;
-  if(gateOn) tx=Math.max(BOSS_TRIGGER,Math.min(LVW-VW,tx));
-  cam.x += (Math.max(0,Math.min(LVW-VW,tx))-cam.x)*0.16;
-  if(cam.x<0) cam.x=0;
-  /* 横も安全網。ボス戦中はカメラを BOSS_TRIGGER より左へ動かさない作りなので、
-     ボス部屋の上の通路を左へ進むと主人公が画面の左端から消えていた
-     （2026-09-06 院長報告：プールのボス戦「上の通路をずっと進むとそうなる」）。 */
-  var scrX=p.x-cam.x;
-  if(scrX<12) cam.x=Math.max(0,Math.min(LVW-VW,p.x-12));
-  else if(scrX+p.w>VW-12) cam.x=Math.max(0,Math.min(LVW-VW,p.x+p.w-(VW-12)));
+  /* ボス戦のあいだは横スクロールしない（院長指示 2026-09-15）。
+     カメラを BOSS_CAM に止めて、戦う場所を左右の壁のあいだ1画面に限る。 */
+  if(gateOn){
+    cam.x += (BOSS_CAM-cam.x)*0.16;
+    if(Math.abs(cam.x-BOSS_CAM)<0.6) cam.x=BOSS_CAM;
+  } else {
+    var tx=p.x+p.w/2-VW/2;
+    cam.x += (Math.max(0,Math.min(LVW-VW,tx))-cam.x)*0.16;
+    if(cam.x<0) cam.x=0;
+    /* 横の安全網（ボス戦のときは左右を壁でふさいであるので要らない）。 */
+    var scrX=p.x-cam.x;
+    if(scrX<12) cam.x=Math.max(0,Math.min(LVW-VW,p.x-12));
+    else if(scrX+p.w>VW-12) cam.x=Math.max(0,Math.min(LVW-VW,p.x+p.w-(VW-12)));
+  }
   /* 縦のカメラ。17行のステージ（LVH===H）では maxY が0になり、今までどおり動かない。
      主人公を画面の少し下寄り（0.58）に置くと、上を見上げる余裕ができる。
      ボス部屋では一番下に固定して、戦いの見え方を毎回そろえる。 */
@@ -3338,6 +3355,8 @@ function update(){
   /* --- ボス開始 --- */
   if(!gateOn && LV.boss && p.x>BOSS_TRIGGER+24){
     gateOn=true; SFX.gate(); shake=20;
+    /* 壁の上下の範囲＝ボス部屋の床から上へ26マス（部屋の高さは最大24マス） */
+    GATE_Y1=bossFloorY(); GATE_Y0=GATE_Y1-26*TS;
     boss=makeBoss(LV.boss);
   }
 
@@ -4380,11 +4399,11 @@ function bossImage(kind,b,x,y,hl,tint){
   if(b.frame && BOSS_IMG[kind+b.frame]) key=kind+b.frame;          /* 4ポーズシートのコマ（登場シーン。2026-09-14） */
   var im=BOSS_IMG[key];
   if(!im) return false;
-  var flip=(b.face<0);
+  var flip=(b.face<0), sc=b.sc||1;      /* sc＝本編のボスだけ主人公と同じ大きさに縮める（2026-09-15） */
   ctx.save();
   ctx.imageSmoothingEnabled=false;
   ctx.translate(x+b.w/2, y+b.h);
-  ctx.scale(flip?-1:1, 1);
+  ctx.scale(flip?-sc:sc, sc);
   ctx.drawImage(hl?BOSS_IMG_WHITE[key]:im, -Math.round(im.width/2), -im.height);
   /* 第2形態などの色差し替え（tint）は、絵の上に色を薄くかぶせて代える */
   if(!hl && tint && tint.c){
@@ -4408,10 +4427,10 @@ function bossSprite(kind,b,x,y,hl,tint){
     else if(Math.abs(b.vx||0)>0.25){ var k=Math.floor((b.t||0)/6)%4; rows=[fr.run1,fr.run2,fr.run3,fr.run2][k]; }
     else rows=(((b.t||0)%150)<8 && fr.blink)?fr.blink:fr.stand;
   }
-  var flip=(b.face<0);
+  var flip=(b.face<0), sc2=b.sc||1;
   ctx.save();
   ctx.translate(x+b.w/2, y+b.h);
-  ctx.scale(flip?-1:1, 1);
+  ctx.scale(flip?-sc2:sc2, sc2);
   ctx.translate(-A.w/2, -A.h);      /* 絵の足もとのまん中を、当たり判定の足もとのまん中へ */
   for(var r=0;r<rows.length;r++){
     var s=rows[r], c=0, n=s.length;
@@ -4438,8 +4457,14 @@ function bossSprite(kind,b,x,y,hl,tint){
    （院長指示 2026-09-15「障害物にボスがハマる」。ボスは地形と当たらない作りなので、
      足場はボスの通り道から外す） */
 var ARENA_PAD=0;     /* 足場を置かない作りにしたので 0（2026-09-15） */
-function arenaL(){ return BOSS_TRIGGER+10+ARENA_PAD; }
-function arenaR(){ return LVW-2*TS-ARENA_PAD; }
+/* 戦う場所＝2枚の壁のあいだ（画面1枚ぶん）。院長指示 2026-09-15
+   「横にスクロールさせないで、来た方に壁を作って、戦うスペースを限局スペースに」 */
+function arenaL(){ return GATE_X+10+ARENA_PAD; }
+function arenaR(){ return GATE_X2-ARENA_PAD; }
+/* ボスの絵と当たり判定の縮尺。主人公の絵は30px、ボスの絵は36pxで描いてあるので
+   30/36 に縮めて「主人公と同じ大きさ」にする（院長指示 2026-09-15）。
+   登場シーン・タイトル・エンディングの大きさは変えない（あちらは b.sc を付けない）。 */
+var BOSS_SCALE=30/36;
 function clampX(b){
   var l=arenaL(), r=arenaR()-b.w;
   if(b.x<l){ b.x=l; b.wallHit=true; }
@@ -4893,11 +4918,30 @@ mushiburn:{
 };
 
 /* ---------------------------------------------------------------- 共通処理 */
+/* 天井のすぐ下のy。ボス部屋の天井は面ごとに高さが違い、柱が下りている所もある。
+   ここを見ずに「床から300px上」で出すと、天井の柱の上にボスが乗ったまま動けなくなる
+   （2026-09-15：部屋を1画面に狭めたら7面・12面のボスが柱の上に着地して固まった）。 */
+function bossCeilY(x,w){
+  var top=bossFloorY()-8;
+  while(top>16){
+    var hit=false;
+    for(var xx=x; xx<=x+w; xx+=8) if(solidPx(xx,top-8)){ hit=true; break; }
+    if(hit) break;
+    top-=8;
+  }
+  return top;
+}
+
 function makeBoss(kind){
   var S=BOSSES[kind];
+  var w=Math.round(S.w*BOSS_SCALE), h=Math.round(S.h*BOSS_SCALE);
+  var x=Math.round(arenaL()+(arenaR()-arenaL())*0.70)-Math.round(w/2);   /* 主人公は左から入るので右寄りに出す */
+  var y=bossOff()+(S.y0===undefined?-60:S.y0);
+  var cy=bossCeilY(x,w);
+  if(y<cy+2) y=cy+2;                                   /* 天井より上には出さない */
   var b={kind:kind,
-    x:BOSS_TRIGGER+300, y:bossOff()+(S.y0===undefined?-60:S.y0),
-    w:S.w, h:S.h, hp:S.hp, maxhp:S.hp,
+    x:x, y:y,
+    w:w, h:h, sc:BOSS_SCALE, hp:S.hp, maxhp:S.hp,
     vx:0, vy:0, face:-1, state:"intro", t:0,
     hops:0, cycle:0, hurt:0, mouth:0, dead:0, grounded:false, phase:1};
   if(S.init) S.init(b);
@@ -6091,10 +6135,13 @@ function drawTiles(){
   }
   PAL=P0;
   drawPresses(r0,r1);
+  /* ボス戦の壁。来た方（GATE_X）と奥（GATE_X2）の2枚で、戦う場所を1画面に閉じる（2026-09-15）。
+     描く範囲は床から上へ26マス（当たり判定 GATE_Y0〜GATE_Y1 と同じ）。 */
   if(gateOn){
-    for(var yy=0;yy<15*TS;yy+=8){
-      px(GATE_X,yy,10,7,(yy/8|0)%2?PAL.platLo:PAL.accent);
-      px(GATE_X+1,yy,8,1,"#ffffff");
+    for(var yy=GATE_Y0;yy<GATE_Y1;yy+=8){
+      var gc=((yy/8|0)%2)?PAL.platLo:PAL.accent;
+      px(GATE_X,yy,10,7,gc);   px(GATE_X+1,yy,8,1,"#ffffff");
+      px(GATE_X2,yy,10,7,gc);  px(GATE_X2+1,yy,8,1,"#ffffff");
     }
   }
 }
@@ -6621,7 +6668,7 @@ function drawBoss(){
   var x=Math.round(b.x), y=Math.round(b.y);
   var hl=b.hurt>0 && Math.floor(b.hurt/2)%2===0;
   ctx.fillStyle="rgba(0,0,0,.35)";
-  ctx.beginPath(); ctx.ellipse(x+b.w/2,240,b.w/2,4,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+b.w/2,bossFloorY(),b.w/2,4,0,0,Math.PI*2); ctx.fill();   /* 足もとの影（240固定は17行の面だったころの名残り。2026-09-15） */
   var m=bossMotion(b), cx=x+b.w/2, by=y+b.h;
   ctx.save();
   ctx.translate(cx,by);

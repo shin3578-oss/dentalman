@@ -87,6 +87,8 @@ body{
 #map path.pref.target{fill:var(--pop)}
 #map path.pref.ok{fill:var(--ok)}
 #map path.pref.ng{fill:var(--ng)}
+#map #deco rect{fill:none;stroke:var(--line);stroke-width:2;stroke-dasharray:8 6;vector-effect:non-scaling-stroke;opacity:.6}
+#map #deco text{font-family:inherit;fill:var(--line);opacity:.8;text-anchor:middle}
 #map text.lbl{font-family:inherit;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:5px;
   stroke-linejoin:round;text-anchor:middle;pointer-events:none}
 .pulse{animation:pulse .9s infinite alternate}
@@ -178,7 +180,7 @@ rt{font-size:.5em;opacity:.85}
     <div id="counter" style="font-size:15px;text-align:right;white-space:nowrap"></div>
   </div>
   <div id="mapWrap">
-    <svg id="map"><g id="mapg"></g><g id="marks"></g></svg>
+    <svg id="map"><g id="mapg"></g><g id="deco" pointer-events="none"></g><g id="marks"></g></svg>
     <div id="info"><button class="btn sm x" id="infoClose">とじる</button>
       <div class="nm" id="infoName"></div>
       <div class="meta" id="infoMeta"></div>

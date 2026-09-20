@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>とどうふけんクエスト</title>
+<meta name="description" content="47都道府県を地図でおぼえる子ども向け学習ゲーム">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sea:#8fd3f4; --land:#f7e7c6; --ink:#20304a; --line:#2b3a55;
+  --pop:#ffd447; --ok:#42c86a; --ng:#ff5d5d; --paper:#fffaf0; --shadow:#0d1a2e;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  font-family:"DotGothic16","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+  color:var(--ink); background:linear-gradient(#bfe9ff,#8fd3f4 60%,#6fc3ea);
+  overflow:hidden; user-select:none; -webkit-user-select:none;
+}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.screen.on{display:flex}
+
+/* ---- 共通パーツ ---- */
+.btn{
+  font-family:inherit; font-size:18px; color:var(--ink); background:var(--paper);
+  border:3px solid var(--line); border-radius:0; padding:12px 16px; cursor:pointer;
+  box-shadow:4px 4px 0 var(--shadow); transition:transform .06s, box-shadow .06s;
+}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--shadow)}
+.btn.big{font-size:24px;padding:16px 28px}
+.btn.pop{background:var(--pop)}
+.btn.sm{font-size:14px;padding:6px 10px;box-shadow:3px 3px 0 var(--shadow)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+.spacer{flex:1}
+
+/* ---- タイトル ---- */
+#title{align-items:center;justify-content:center;text-align:center;gap:14px;padding:14px}
+#title h1{
+  font-size:min(12vw,54px); margin:0; line-height:1.15; letter-spacing:2px; color:#fff;
+  text-shadow:4px 4px 0 var(--line),8px 8px 0 rgba(0,0,0,.18);
+}
+.sub{font-size:min(4.2vw,17px);background:var(--paper);border:3px solid var(--line);padding:6px 12px;box-shadow:4px 4px 0 var(--shadow)}
+#titleMap{width:min(60vw,260px);max-height:38vh;filter:drop-shadow(4px 4px 0 rgba(0,0,0,.18))}
+#titleMap path{fill:var(--land);stroke:var(--line);stroke-width:2.5;vector-effect:non-scaling-stroke}
+.heroline{display:flex;align-items:center;gap:10px}
+.hero{width:52px;image-rendering:pixelated}
+
+/* ---- 見出し・本文 ---- */
+.head{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--paper);
+  border-bottom:4px solid var(--line);min-height:54px;flex:0 0 auto
+}
+.head h2{font-size:18px;margin:0}
+.q{font-size:min(5vw,21px);line-height:1.3}
+.q b{background:var(--pop);padding:0 6px;border:2px solid var(--line)}
+.body{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;width:100%;max-width:720px}
+.card{
+  background:var(--paper);border:3px solid var(--line);box-shadow:5px 5px 0 var(--shadow);
+  padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:6px;text-align:left;
+  font-family:inherit;color:var(--ink)
+}
+.card:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--shadow)}
+.card .t{font-size:19px}
+.card .d{font-size:13px;opacity:.75;line-height:1.4}
+.medal{font-size:15px;letter-spacing:1px}
+
+/* ---- 地図 ---- */
+#mapWrap{flex:1;position:relative;overflow:hidden;touch-action:none}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block}
+#map path.pref{fill:var(--land);stroke:var(--line);stroke-width:1.4;vector-effect:non-scaling-stroke;cursor:pointer}
+#map path.pref.reg0{fill:#cfe9b0}
+#map path.pref.reg1{fill:#ffd9a8}
+#map path.pref.reg2{fill:#ffc9c9}
+#map path.pref.reg3{fill:#d9d4f5}
+#map path.pref.reg4{fill:#bfe3e8}
+#map path.pref.reg5{fill:#f5e3a8}
+#map path.pref.reg6{fill:#c9e5c2}
+#map path.pref.reg7{fill:#f3c9e4}
+#map path.pref.seen{stroke-width:3}
+#map path.pref.dim{fill:#e3dac6;opacity:.5}
+#map path.pref.hint{fill:#ffe081;opacity:1}
+#map path.pref.target{fill:var(--pop)}
+#map path.pref.ok{fill:var(--ok)}
+#map path.pref.ng{fill:var(--ng)}
+#map text.lbl{font-family:inherit;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:5px;
+  stroke-linejoin:round;text-anchor:middle;pointer-events:none}
+.pulse{animation:pulse .9s infinite alternate}
+@keyframes pulse{from{fill:var(--pop)}to{fill:#ff9d2e}}
+
+/* ---- 下バー ---- */
+.foot{flex:0 0 auto;background:var(--paper);border-top:4px solid var(--line);padding:10px;
+  display:flex;flex-direction:column;gap:8px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choices:empty{display:none}
+.choices .btn{font-size:min(4.6vw,20px);padding:14px 6px}
+.choices .btn.right{background:var(--ok);color:#fff}
+.choices .btn.wrong{background:var(--ng);color:#fff}
+.meter{display:flex;gap:10px;align-items:center;font-size:15px}
+.bar{flex:1;height:14px;background:#e6ddc8;border:3px solid var(--line)}
+.bar > i{display:block;height:100%;background:var(--ok);width:0%;transition:width .2s}
+
+/* ---- ふきだし ---- */
+#info{
+  position:absolute;left:8px;right:8px;bottom:8px;background:var(--paper);border:4px solid var(--line);
+  box-shadow:6px 6px 0 var(--shadow);padding:12px 14px;display:none;z-index:5
+}
+#info.on{display:block;animation:pop .18s}
+@keyframes pop{from{transform:translateY(14px);opacity:.3}to{transform:none;opacity:1}}
+#info .nm{font-size:min(7vw,30px);line-height:1.3}
+#info .meta{font-size:15px;margin-top:6px;line-height:1.7}
+#info .fact{font-size:15px;margin-top:8px;background:#fff3cf;border:2px dashed var(--line);padding:8px;line-height:1.5}
+#info .x{position:absolute;top:-6px;right:-6px}
+rt{font-size:.5em;opacity:.85}
+.ruby-off rt{display:none}
+
+/* ---- 演出 ---- */
+#flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:9}
+#flash span{font-size:min(16vw,100px);color:#fff;text-shadow:5px 5px 0 var(--line);opacity:0}
+#flash.go span{animation:flash .8s}
+@keyframes flash{0%{opacity:0;transform:scale(.4)}25%{opacity:1;transform:scale(1.1)}70%{opacity:1;transform:scale(1)}100%{opacity:0}}
+#hero2{position:absolute;bottom:6px;right:8px;width:46px;image-rendering:pixelated;z-index:6;pointer-events:none}
+.jump{animation:jmp .45s}
+@keyframes jmp{50%{transform:translateY(-26px)}}
+
+/* ---- 結果 ---- */
+.bigmedal{font-size:min(20vw,96px);line-height:1}
+.score{font-size:min(8vw,34px)}
+.misslist{background:var(--paper);border:3px solid var(--line);box-shadow:4px 4px 0 var(--shadow);
+  padding:10px;width:100%;max-width:520px;text-align:left;font-size:15px;line-height:1.9}
+.toast{position:absolute;top:64px;left:50%;transform:translateX(-50%);background:var(--line);color:#fff;
+  padding:8px 14px;font-size:15px;z-index:12;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:.95}
+</style>
+</head>
+<body>
+
+<!-- タイトル -->
+<section id="title" class="screen on">
+  <h1>とどうふけん<br>クエスト</h1>
+  <svg id="titleMap" viewBox="0 0 1000 1030"></svg>
+  <div class="heroline"><img class="hero" id="heroTitle" alt=""><div class="sub">47とどうふけんを あそんでおぼえよう</div></div>
+  <div class="row">
+    <button class="btn big pop" id="start">はじめる</button>
+    <button class="btn sm" id="rubyBtn">ふりがな</button>
+    <button class="btn sm" id="soundBtn">おと</button>
+  </div>
+  <div class="sub" id="titleProgress"></div>
+</section>
+
+<!-- モード選択 -->
+<section id="menu" class="screen">
+  <div class="head"><button class="btn sm" data-back="title">もどる</button><h2>あそびかたを えらぼう</h2></div>
+  <div class="body">
+    <div class="cards" id="modeCards"></div>
+    <div class="sub" style="font-size:13px;opacity:.85;text-align:center;max-width:520px">
+      メダルは「ちほう × あそびかた」ごとにもらえます。ぜんもん正かい＝きん、8わり＝ぎん、6わり＝どう
+    </div>
+  </div>
+</section>
+
+<!-- 地方選択 -->
+<section id="stage" class="screen">
+  <div class="head"><button class="btn sm" data-back="menu">もどる</button><h2 id="stageTitle">ちほうを えらぼう</h2></div>
+  <div class="body"><div class="cards" id="stageCards"></div></div>
+</section>
+
+<!-- プレイ -->
+<section id="play" class="screen">
+  <div class="head">
+    <button class="btn sm" data-back="stage">やめる</button>
+    <div class="q" id="question"></div>
+    <div class="spacer"></div>
+    <div id="counter" style="font-size:15px;text-align:right;white-space:nowrap"></div>
+  </div>
+  <div id="mapWrap">
+    <svg id="map"><g id="mapg"></g><g id="marks"></g></svg>
+    <div id="info"><button class="btn sm x" id="infoClose">とじる</button>
+      <div class="nm" id="infoName"></div>
+      <div class="meta" id="infoMeta"></div>
+      <div class="fact" id="infoFact"></div>
+    </div>
+    <div id="flash"><span></span></div>
+    <img id="hero2" alt="">
+  </div>
+  <div class="foot">
+    <div class="meter"><span id="scoreTxt"></span><div class="bar"><i id="bar"></i></div></div>
+    <div class="choices" id="choices"></div>
+    <div class="row" style="justify-content:flex-start">
+      <button class="btn sm" id="zoomOut">ぜんたい</button>
+      <button class="btn sm" id="hintBtn">ヒント</button>
+      <span class="spacer"></span>
+      <span id="hintTxt" style="font-size:14px"></span>
+    </div>
+  </div>
+</section>
+
+<!-- 結果 -->
+<section id="result" class="screen">
+  <div class="head"><button class="btn sm" data-back="stage">ちほうえらび</button><h2>けっか</h2></div>
+  <div class="body">
+    <div class="bigmedal" id="medal"></div>
+    <div class="score" id="resultScore"></div>
+    <div class="sub" id="resultMsg"></div>
+    <div class="misslist" id="missList"></div>
+    <div class="row">
+      <button class="btn pop" id="again">もういちど</button>
+      <button class="btn" id="retryMiss">まちがえた県だけ</button>
+      <button class="btn" id="nextStage">つぎのちほう</button>
+    </div>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

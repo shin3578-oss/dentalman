@@ -940,7 +940,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-20 12:05";
+var BUILD_AT="2026-09-20 17:28";
 
 /* ===== 05_jpmap.js ===== */
 /* このファイルは src/gen_jpmap.py が書き出す。手で直さないこと。 */
@@ -3813,6 +3813,58 @@ function updateEmitters(){
 }
 
 
+/* ===== 27_weapon47_data.js ===== */
+/* このファイルは src/gen_weapon47.py が書き出す。手で直さないこと。 */
+var WEAPON47=[
+ {"name": "でんぱビーム", "short": "でんぱビーム", "col": "#6346e1", "fam": "laser", "kind": "beam", "weakOf": "p14"},
+ {"name": "じょうきダッシュ", "short": "じょうきダッ", "col": "#db46e1", "fam": "dash", "kind": "shell", "weakOf": "p11"},
+ {"name": "せんべいカッター", "short": "せんべいカッ", "col": "#46e1a5", "fam": "boomer", "kind": "shell", "weakOf": "p12"},
+ {"name": "ピーナツロケット", "short": "ピーナツロケ", "col": "#46a3e1", "fam": "bomb", "kind": "cube", "weakOf": "p8"},
+ {"name": "ネバネバいと", "short": "ネバネバいと", "col": "#e16f46", "fam": "wave", "kind": "shock", "weakOf": "p9"},
+ {"name": "イチゴだん", "short": "イチゴだん", "col": "#d9e146", "fam": "bomb", "kind": "cube", "weakOf": "p10"},
+ {"name": "ゆげシールド", "short": "ゆげシールド", "col": "#60e146", "fam": "burst", "kind": "spore", "weakOf": "p23"},
+ {"name": "しゃちほこダッシュ", "short": "しゃちほこダ", "col": "#e14946", "fam": "dash", "kind": "shell", "weakOf": "p22"},
+ {"name": "おちゃバリア", "short": "おちゃバリア", "col": "#e146bd", "fam": "burst", "kind": "spore", "weakOf": "p15"},
+ {"name": "おこめミサイル", "short": "おこめミサイ", "col": "#e1466d", "fam": "homing", "kind": "spore", "weakOf": "p20"},
+ {"name": "なだれウェーブ", "short": "なだれウェー", "col": "#467ae1", "fam": "wave", "kind": "shock", "weakOf": "p19"},
+ {"name": "ぶどうチェーン", "short": "ぶどうチェー", "col": "#46e1cf", "fam": "boomer", "kind": "shell", "weakOf": "p21"},
+ {"name": "がっしょうシールド", "short": "がっしょうシ", "col": "#8c46e1", "fam": "burst", "kind": "spore", "weakOf": "p16"},
+ {"name": "ホタルライト", "short": "ホタルライト", "col": "#e19946", "fam": "laser", "kind": "beam", "weakOf": "p17"},
+ {"name": "きんぱくソード", "short": "きんぱくソー", "col": "#b0e146", "fam": "heavy", "kind": "shell", "weakOf": "p18"},
+ {"name": "きょうりゅうキック", "short": "きょうりゅう", "col": "#46e156", "fam": "dash", "kind": "shell", "weakOf": "p27"},
+ {"name": "たこやきボム", "short": "たこやきボム", "col": "#46c9e1", "fam": "bomb", "kind": "cube", "weakOf": "p26"},
+ {"name": "おうぎブーメラン", "short": "おうぎブーメ", "col": "#46e17f", "fam": "boomer", "kind": "shell", "weakOf": "p28"},
+ {"name": "しらさぎウィング", "short": "しらさぎウィ", "col": "#4651e1", "fam": "homing", "kind": "spore", "weakOf": "p24"},
+ {"name": "しんじゅシュート", "short": "しんじゅシュ", "col": "#e1c246", "fam": "spread", "kind": "wCaries", "weakOf": "p25"},
+ {"name": "みずしぶき", "short": "みずしぶき", "col": "#87e146", "fam": "wave", "kind": "shock", "weakOf": "p29"},
+ {"name": "だいぶつパンチ", "short": "だいぶつパン", "col": "#b546e1", "fam": "heavy", "kind": "shell", "weakOf": "p30"},
+ {"name": "みかんだま", "short": "みかんだま", "col": "#e14693", "fam": "bomb", "kind": "cube", "weakOf": "p34"},
+ {"name": "かきシェル", "short": "かきシェル", "col": "#46e1a8", "fam": "burst", "kind": "spore", "weakOf": "p33"},
+ {"name": "きびだんご", "short": "きびだんご", "col": "#5de146", "fam": "spread", "kind": "wCaries", "weakOf": "p35"},
+ {"name": "ふぐバルーン", "short": "ふぐバルーン", "col": "#46a0e1", "fam": "burst", "kind": "spore", "weakOf": "p31"},
+ {"name": "すなあらし", "short": "すなあらし", "col": "#e17246", "fam": "wave", "kind": "shock", "weakOf": "p32"},
+ {"name": "やまたブレス", "short": "やまたブレス", "col": "#d6e146", "fam": "laser", "kind": "beam", "weakOf": "p37"},
+ {"name": "うどんウィップ", "short": "うどんウィッ", "col": "#de46e1", "fam": "wave", "kind": "shock", "weakOf": "p36"},
+ {"name": "うずしおトルネード", "short": "うずしおトル", "col": "#6546e1", "fam": "homing", "kind": "spore", "weakOf": "p38"},
+ {"name": "ゆだまシャワー", "short": "ゆだまシャワ", "col": "#e1466a", "fam": "rain", "kind": "blob", "weakOf": "p39"},
+ {"name": "かつおブレイド", "short": "かつおブレイ", "col": "#e19b46", "fam": "heavy", "kind": "shell", "weakOf": "p40"},
+ {"name": "めんたいショット", "short": "めんたいショ", "col": "#ade146", "fam": "spread", "kind": "wCaries", "weakOf": "p43"},
+ {"name": "かこうフレイム", "short": "かこうフレイ", "col": "#4677e1", "fam": "bomb", "kind": "cube", "weakOf": "p46"},
+ {"name": "かざんだん", "short": "かざんだん", "col": "#e14b46", "fam": "rain", "kind": "blob", "weakOf": "p47"},
+ {"name": "シーサーロア", "short": "シーサーロア", "col": "#e1c446", "fam": "wave", "kind": "shock", "weakOf": "p42"},
+ {"name": "ちゃんぽんリング", "short": "ちゃんぽんリ", "col": "#46e1d1", "fam": "boomer", "kind": "shell", "weakOf": "p41"},
+ {"name": "さらブーメラン", "short": "さらブーメラ", "col": "#46e158", "fam": "boomer", "kind": "shell", "weakOf": "p44"},
+ {"name": "じごくスチーム", "short": "じごくスチー", "col": "#8e46e1", "fam": "rain", "kind": "blob", "weakOf": "p45"},
+ {"name": "マンゴーボール", "short": "マンゴーボー", "col": "#e146ba", "fam": "bomb", "kind": "cube", "weakOf": "p4"},
+ {"name": "たなばたリボン", "short": "たなばたリボ", "col": "#46cce1", "fam": "spread", "kind": "wCaries", "weakOf": "p2"},
+ {"name": "りんごシュート", "short": "りんごシュー", "col": "#89e146", "fam": "homing", "kind": "spore", "weakOf": "p5"},
+ {"name": "なまはげシャウト", "short": "なまはげシャ", "col": "#4653e1", "fam": "burst", "kind": "spore", "weakOf": "p3"},
+ {"name": "そばウィップ", "short": "そばウィップ", "col": "#46e17c", "fam": "wave", "kind": "shock", "weakOf": "p6"},
+ {"name": "さくらんぼだん", "short": "さくらんぼだ", "col": "#b246e1", "fam": "bomb", "kind": "cube", "weakOf": "p7"},
+ {"name": "あかべこタックル", "short": "あかべこタッ", "col": "#e14696", "fam": "dash", "kind": "shell", "weakOf": "p1"},
+ {"name": "ふぶきブラスト", "short": "ふぶきブラス", "col": "#e1bf46", "fam": "rain", "kind": "blob", "weakOf": ""}
+];
+
 /* ===== 28_weapons47.js ===== */
 /* ============================ 特殊武器（47種） ============================
    ボスを倒すと、その県の技を しんちゃまくん が使えるようになる。
@@ -4031,58 +4083,6 @@ function aimBullets(n0, ox, oy, aim) {
     b.x = ox; b.y = oy;
   }
 }
-
-/* ===== 29_weapon47_data.js ===== */
-/* このファイルは src/gen_weapon47.py が書き出す。手で直さないこと。 */
-var WEAPON47=[
- {"name": "でんぱビーム", "short": "でんぱビーム", "col": "#6346e1", "fam": "laser", "kind": "beam", "weakOf": "p14"},
- {"name": "じょうきダッシュ", "short": "じょうきダッ", "col": "#db46e1", "fam": "dash", "kind": "shell", "weakOf": "p11"},
- {"name": "せんべいカッター", "short": "せんべいカッ", "col": "#46e1a5", "fam": "boomer", "kind": "shell", "weakOf": "p12"},
- {"name": "ピーナツロケット", "short": "ピーナツロケ", "col": "#46a3e1", "fam": "bomb", "kind": "cube", "weakOf": "p8"},
- {"name": "ネバネバいと", "short": "ネバネバいと", "col": "#e16f46", "fam": "wave", "kind": "shock", "weakOf": "p9"},
- {"name": "イチゴだん", "short": "イチゴだん", "col": "#d9e146", "fam": "bomb", "kind": "cube", "weakOf": "p10"},
- {"name": "ゆげシールド", "short": "ゆげシールド", "col": "#60e146", "fam": "burst", "kind": "spore", "weakOf": "p23"},
- {"name": "しゃちほこダッシュ", "short": "しゃちほこダ", "col": "#e14946", "fam": "dash", "kind": "shell", "weakOf": "p22"},
- {"name": "おちゃバリア", "short": "おちゃバリア", "col": "#e146bd", "fam": "burst", "kind": "spore", "weakOf": "p15"},
- {"name": "おこめミサイル", "short": "おこめミサイ", "col": "#e1466d", "fam": "homing", "kind": "spore", "weakOf": "p20"},
- {"name": "なだれウェーブ", "short": "なだれウェー", "col": "#467ae1", "fam": "wave", "kind": "shock", "weakOf": "p19"},
- {"name": "ぶどうチェーン", "short": "ぶどうチェー", "col": "#46e1cf", "fam": "boomer", "kind": "shell", "weakOf": "p21"},
- {"name": "がっしょうシールド", "short": "がっしょうシ", "col": "#8c46e1", "fam": "burst", "kind": "spore", "weakOf": "p16"},
- {"name": "ホタルライト", "short": "ホタルライト", "col": "#e19946", "fam": "laser", "kind": "beam", "weakOf": "p17"},
- {"name": "きんぱくソード", "short": "きんぱくソー", "col": "#b0e146", "fam": "heavy", "kind": "shell", "weakOf": "p18"},
- {"name": "きょうりゅうキック", "short": "きょうりゅう", "col": "#46e156", "fam": "dash", "kind": "shell", "weakOf": "p27"},
- {"name": "たこやきボム", "short": "たこやきボム", "col": "#46c9e1", "fam": "bomb", "kind": "cube", "weakOf": "p26"},
- {"name": "おうぎブーメラン", "short": "おうぎブーメ", "col": "#46e17f", "fam": "boomer", "kind": "shell", "weakOf": "p28"},
- {"name": "しらさぎウィング", "short": "しらさぎウィ", "col": "#4651e1", "fam": "homing", "kind": "spore", "weakOf": "p24"},
- {"name": "しんじゅシュート", "short": "しんじゅシュ", "col": "#e1c246", "fam": "spread", "kind": "wCaries", "weakOf": "p25"},
- {"name": "みずしぶき", "short": "みずしぶき", "col": "#87e146", "fam": "wave", "kind": "shock", "weakOf": "p29"},
- {"name": "だいぶつパンチ", "short": "だいぶつパン", "col": "#b546e1", "fam": "heavy", "kind": "shell", "weakOf": "p30"},
- {"name": "みかんだま", "short": "みかんだま", "col": "#e14693", "fam": "bomb", "kind": "cube", "weakOf": "p34"},
- {"name": "かきシェル", "short": "かきシェル", "col": "#46e1a8", "fam": "burst", "kind": "spore", "weakOf": "p33"},
- {"name": "きびだんご", "short": "きびだんご", "col": "#5de146", "fam": "spread", "kind": "wCaries", "weakOf": "p35"},
- {"name": "ふぐバルーン", "short": "ふぐバルーン", "col": "#46a0e1", "fam": "burst", "kind": "spore", "weakOf": "p31"},
- {"name": "すなあらし", "short": "すなあらし", "col": "#e17246", "fam": "wave", "kind": "shock", "weakOf": "p32"},
- {"name": "やまたブレス", "short": "やまたブレス", "col": "#d6e146", "fam": "laser", "kind": "beam", "weakOf": "p37"},
- {"name": "うどんウィップ", "short": "うどんウィッ", "col": "#de46e1", "fam": "wave", "kind": "shock", "weakOf": "p36"},
- {"name": "うずしおトルネード", "short": "うずしおトル", "col": "#6546e1", "fam": "homing", "kind": "spore", "weakOf": "p38"},
- {"name": "ゆだまシャワー", "short": "ゆだまシャワ", "col": "#e1466a", "fam": "rain", "kind": "blob", "weakOf": "p39"},
- {"name": "かつおブレイド", "short": "かつおブレイ", "col": "#e19b46", "fam": "heavy", "kind": "shell", "weakOf": "p40"},
- {"name": "めんたいショット", "short": "めんたいショ", "col": "#ade146", "fam": "spread", "kind": "wCaries", "weakOf": "p43"},
- {"name": "かこうフレイム", "short": "かこうフレイ", "col": "#4677e1", "fam": "bomb", "kind": "cube", "weakOf": "p46"},
- {"name": "かざんだん", "short": "かざんだん", "col": "#e14b46", "fam": "rain", "kind": "blob", "weakOf": "p47"},
- {"name": "シーサーロア", "short": "シーサーロア", "col": "#e1c446", "fam": "wave", "kind": "shock", "weakOf": "p42"},
- {"name": "ちゃんぽんリング", "short": "ちゃんぽんリ", "col": "#46e1d1", "fam": "boomer", "kind": "shell", "weakOf": "p41"},
- {"name": "さらブーメラン", "short": "さらブーメラ", "col": "#46e158", "fam": "boomer", "kind": "shell", "weakOf": "p44"},
- {"name": "じごくスチーム", "short": "じごくスチー", "col": "#8e46e1", "fam": "rain", "kind": "blob", "weakOf": "p45"},
- {"name": "マンゴーボール", "short": "マンゴーボー", "col": "#e146ba", "fam": "bomb", "kind": "cube", "weakOf": "p4"},
- {"name": "たなばたリボン", "short": "たなばたリボ", "col": "#46cce1", "fam": "spread", "kind": "wCaries", "weakOf": "p2"},
- {"name": "りんごシュート", "short": "りんごシュー", "col": "#89e146", "fam": "homing", "kind": "spore", "weakOf": "p5"},
- {"name": "なまはげシャウト", "short": "なまはげシャ", "col": "#4653e1", "fam": "burst", "kind": "spore", "weakOf": "p3"},
- {"name": "そばウィップ", "short": "そばウィップ", "col": "#46e17c", "fam": "wave", "kind": "shock", "weakOf": "p6"},
- {"name": "さくらんぼだん", "short": "さくらんぼだ", "col": "#b246e1", "fam": "bomb", "kind": "cube", "weakOf": "p7"},
- {"name": "あかべこタックル", "short": "あかべこタッ", "col": "#e14696", "fam": "dash", "kind": "shell", "weakOf": "p1"},
- {"name": "ふぶきブラスト", "short": "ふぶきブラス", "col": "#e1bf46", "fam": "rain", "kind": "blob", "weakOf": ""}
-];
 
 /* ===== 29_boss47_data.js ===== */
 /* このファイルは src/gen_boss47.py が書き出す。手で直さないこと。 */
@@ -8267,6 +8267,11 @@ function regionOpen(r) {
 }
 function stageOpen(i) { return regionOpen(regionOf(i)); }
 function allClear47() {
+  if (LEVELS.length < 47) return false;        /* まだ47県ぶん作っていない間は「日本一周」にしない */
+  for (var i = 0; i < LEVELS.length; i++) if (!cleared[i]) return false;
+  return true;
+}
+function allMadeClear() {                      /* いま作ってある面をぜんぶ倒したか */
   for (var i = 0; i < LEVELS.length; i++) if (!cleared[i]) return false;
   return true;
 }
@@ -8487,7 +8492,9 @@ function showJapan(animate) {
   if (msg) {
     msg.innerHTML = allClear47()
       ? "47都道府県 ぜんぶ 制はした！　<b>日本一周 たっせい！</b>"
-      : ("ちほうを えらんでね　（いま開いているのは <b>" + regions()[now].name + "</b>　たおした "
+      : (allMadeClear()
+         ? "<b>関東ちほう 制は！</b>　つぎの ちほうは いま じゅんび中です"
+         : "ちほうを えらんでね　（いま開いているのは <b>" + regions()[now].name + "</b>　たおした "
          + clearedCount() + " ／ " + LEVELS.length + "）");
   }
   showCode();
@@ -8647,9 +8654,11 @@ function showClearCard() {
   }
   var t = document.getElementById("clear-title");
   if (t) t.textContent = lv.sub + " せいは！";
-  if (allClear47()) {
+  if (allMadeClear()) {
     var m = document.getElementById("end-msg");
-    if (m) m.innerHTML = "47都道府県、ぜんぶ たおした。<b>日本一周 たっせい！</b><br>あいことば <b>" + progCode() + "</b>";
+    if (m) m.innerHTML = allClear47()
+      ? ("47都道府県、ぜんぶ たおした。<b>日本一周 たっせい！</b><br>あいことば <b>" + progCode() + "</b>")
+      : ("<b>関東ちほう せいは！</b>　7県ぜんぶ たおした。<br>つぎの ちほうは いま じゅんび中です。<br>あいことば <b>" + progCode() + "</b>");
     showScreen("s-end");
   } else {
     showScreen("s-clear");

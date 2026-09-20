@@ -683,6 +683,8 @@
   #selpanel .go{margin-top:2px;padding:8px 14px;font-size:clamp(11px,2vw,15px);}
   .selrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
   #sel-msg{min-height:2.2em;}
+  .cardrow{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
+  #clearface{width:66px;height:66px;image-rendering:pixelated;border:2px solid #235c78;background:#04121e;}
   .card{background:rgba(11,33,54,.9);border:2px solid #235c78;border-radius:8px;padding:10px 14px;
     display:flex;flex-direction:column;gap:3px;max-width:34em;}
   .card .cardname{font-size:clamp(16px,3.4vw,24px);color:#ffd447;}
@@ -778,7 +780,7 @@
     <div class="screen" id="s-clear">
       <p class="kicker">STAGE CLEAR</p>
       <p class="big win" id="clear-title">せいは！</p>
-      <div class="sub card" id="clear-msg"></div>
+      <div class="cardrow"><canvas id="clearface" width="72" height="72"></canvas><div class="sub card" id="clear-msg"></div></div>
       <p class="codeline">あいことば <b id="code-clear">----------</b></p>
       <button class="go" id="btn-next">ちずへ もどる</button>
     </div>
@@ -938,7 +940,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-20 12:00";
+var BUILD_AT="2026-09-20 12:02";
 
 /* ===== 05_jpmap.js ===== */
 /* このファイルは src/gen_jpmap.py が書き出す。手で直さないこと。 */
@@ -8637,6 +8639,11 @@ function showClearCard() {
       "<span class='cardline'>ちほう　<b>" + lv.region + "</b></span>" +
       "<span class='cardfact'>" + lv.fact + "</span>" +
       "<span class='cardline'>" + lv.bossName + " を たおして <b>" + lv.weapon + "</b> を おぼえた！</span>";
+  }
+  var fc = document.getElementById("clearface");
+  if (fc) {
+    try { drawPortrait(lv.boss, fc.getContext("2d"), fc.width); }
+    catch (e) { fc.getContext("2d").clearRect(0, 0, fc.width, fc.height); }
   }
   var t = document.getElementById("clear-title");
   if (t) t.textContent = lv.sub + " せいは！";

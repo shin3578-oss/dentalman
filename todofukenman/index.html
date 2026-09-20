@@ -112,6 +112,7 @@
   .screen{
     position:absolute;inset:0;
     display:none;
+    overflow:auto;
     flex-direction:column;
     align-items:center;
     justify-content:center;
@@ -683,15 +684,35 @@
   #selpanel .go{margin-top:2px;padding:8px 14px;font-size:clamp(11px,2vw,15px);}
   .selrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
   #sel-msg{min-height:2.2em;}
-  .cardrow{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
-  #clearface{width:66px;height:66px;image-rendering:pixelated;border:2px solid #235c78;background:#04121e;}
+  .cardrow{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;}
+  #s-clear{gap:4px;padding:2% 4%;}
+  #s-clear .kicker{font-size:clamp(8px,1.4vw,11px);letter-spacing:.3em;}
+  #s-clear .big{font-size:clamp(15px,3.6vw,30px);}
+  #s-clear .codeline{font-size:clamp(8px,1.4vw,11px);margin:0;}
+  #s-clear .go{padding:8px 18px;}
+  .taphint{font-size:clamp(8px,1.5vw,12px);color:#9fc4cb;margin:0;}
+  /* 画面が低いとき（スマホ横持ちなど）は、カードをさらに削ってボタンを必ず見せる */
+  @media (max-height:520px){
+    #s-clear{flex-flow:row wrap;align-items:center;justify-content:center;gap:6px;}
+    #s-clear .kicker{width:100%;}
+    #s-clear .big{width:100%;}
+    #s-clear .cardrow{flex:1 1 60%;}
+    #s-clear .card{max-height:none;}
+    #s-clear .codeline, #s-clear .taphint, #clearface{display:none;}
+    #s-clear .card .cardfact{display:none;}
+    #s-clear .big{font-size:clamp(13px,3vw,20px);}
+    #s-clear .card{padding:4px 8px;}
+    #s-clear .go{padding:6px 14px;font-size:12px;}
+  }
+  #clearface{width:clamp(40px,9vw,66px);height:clamp(40px,9vw,66px);image-rendering:pixelated;border:2px solid #235c78;background:#04121e;}
   .card{background:rgba(11,33,54,.9);border:2px solid #235c78;border-radius:8px;padding:10px 14px;
     display:flex;flex-direction:column;gap:3px;max-width:34em;}
-  .card .cardname{font-size:clamp(16px,3.4vw,24px);color:#ffd447;}
+  .card{gap:1px;padding:6px 10px;}
+  .card .cardname{font-size:clamp(13px,2.8vw,22px);color:#ffd447;}
   .card .cardkana{font-size:clamp(9px,1.6vw,12px);color:#9fc4cb;}
-  .card .cardline{font-size:clamp(10px,1.9vw,14px);}
-  .card .cardfact{font-size:clamp(10px,1.9vw,14px);color:#cfe6e4;background:rgba(35,92,120,.35);
-    border-radius:6px;padding:5px 8px;margin:3px 0;}
+  .card .cardline{font-size:clamp(9px,1.7vw,13px);line-height:1.35;}
+  .card .cardfact{font-size:clamp(9px,1.7vw,13px);color:#cfe6e4;background:rgba(35,92,120,.35);
+    border-radius:6px;padding:4px 7px;margin:2px 0;line-height:1.35;}
   @media (max-width:520px){
     #selwrap{flex-direction:column;}
     #selpanel{flex:0 0 auto;max-width:none;width:100%;flex-direction:row;flex-wrap:wrap;justify-content:center;}
@@ -783,6 +804,7 @@
       <div class="cardrow"><canvas id="clearface" width="72" height="72"></canvas><div class="sub card" id="clear-msg"></div></div>
       <p class="codeline">あいことば <b id="code-clear">----------</b></p>
       <button class="go" id="btn-next">ちずへ もどる</button>
+      <p class="taphint">（画面のどこを おしても ちずへ もどります）</p>
     </div>
 
     <div class="screen" id="s-pause">
@@ -940,7 +962,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-20 17:28";
+var BUILD_AT="2026-09-21 08:22";
 
 /* ===== 05_jpmap.js ===== */
 /* このファイルは src/gen_jpmap.py が書き出す。手で直さないこと。 */
@@ -8654,6 +8676,10 @@ function showClearCard() {
   }
   var t = document.getElementById("clear-title");
   if (t) t.textContent = lv.sub + " せいは！";
+  clearTimeout(showClearCard._t);
+  showClearCard._t = setTimeout(function () {       /* ほうっておいても地図へ戻る（10秒） */
+    if (state === "clear") gotoSelect();
+  }, 10000);
   if (allMadeClear()) {
     var m = document.getElementById("end-msg");
     if (m) m.innerHTML = allClear47()
@@ -8714,6 +8740,14 @@ document.getElementById("btn-title").addEventListener("click", gotoTitle);
 document.getElementById("btn-back2").addEventListener("click", gotoSelect);
 document.getElementById("btn-retry").addEventListener("click", function () { startGame(false); });
 document.getElementById("btn-next").addEventListener("click", gotoSelect);
+/* クリア画面・全クリア画面は「どこを押しても」地図へ戻る。
+   小さい画面ではボタンが枠の外に出て押せないことがあったため（院長報告 2026-09-21）。 */
+(function () {
+  ["s-clear", "s-end"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener("click", function () { if (state === "clear") gotoSelect(); });
+  });
+})();
 document.getElementById("btn-end").addEventListener("click", gotoSelect);
 document.getElementById("btn-resume").addEventListener("click", togglePause);
 document.getElementById("btn-snd").addEventListener("click", function () { audioInit(); setMuted(!muted); });
@@ -8773,6 +8807,25 @@ reset();
 updateWeaponBar();
 state = "title";
 showScreen("s-title");
+
+
+/* 動作確認用の窓口。URL の最後に #debug を付けたときだけ有効（ふだんは何も出さない）。
+   ブラウザのタブが裏に回ると描画の呼び出し（requestAnimationFrame）が止まるので、
+   手で1コマずつ進めて調べられるようにしてある。 */
+if (location.hash === "#debug" || location.hash === "#map" || location.hash === "#allopen") {
+  window.__TF = {
+    get state() { return state; }, set state(v) { state = v; },
+    get player() { return player; }, get boss() { return boss; },
+    get cleared() { return cleared; }, get LEVELS() { return LEVELS; },
+    get stageIdx() { return stageIdx; },
+    keys: keys, pressKey: pressKey, releaseKey: releaseKey,
+    update: update, draw: draw, updateWin: updateWin, updateDemo: updateDemo, updateIntro: updateIntro,
+    startGame: startGame, beginStage: beginStage, gotoSelect: gotoSelect, showClearCard: showClearCard,
+    openStage: openStage, setPending: function (i) { pendingStage = i; },
+    onBossDown: onBossDown, weaponOfStage: weaponOfStage, weaponOwned: weaponOwned,
+    get WEAPONS() { return WEAPONS; }, get curWeapon() { return curWeapon; }
+  };
+}
 
 /* 動作確認用の入口（#map で地図、#allopen で全部開く） */
 if (location.hash === "#map") { gotoSelect(); }

@@ -68,7 +68,7 @@ function show(id) {
 function heroJump() { const h = $('#hero2'); h.src = HERO.jump; h.classList.add('jump'); setTimeout(() => { h.classList.remove('jump'); h.src = HERO.stand; }, 460); }
 
 /* ---------------- ちずをつくる ---------------- */
-const mapg = $('#mapg'), marks = $('#marks'), svg = $('#map');
+const mapg = $('#mapg'), marks = $('#marks'), deco = $('#deco'), svg = $('#map');
 const paths = {};
 PREFS.forEach((p) => {
   const el = document.createElementNS(SVGNS, 'path');
@@ -116,6 +116,23 @@ function boxOf(ids) {
     x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height);
   });
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+
+/* ---- 沖縄は本当はもっと南にある → わくで囲んで「べつわく」だとわかるようにする ---- */
+function drawOkinawaFrame() {
+  const b = paths[47].getBBox();
+  if (!b.width) return;
+  deco.innerHTML = '';
+  const m = Math.max(b.width, b.height) * 0.22;
+  const r = document.createElementNS(SVGNS, 'rect');
+  r.setAttribute('x', b.x - m); r.setAttribute('y', b.y - m);
+  r.setAttribute('width', b.width + m * 2); r.setAttribute('height', b.height + m * 2);
+  deco.appendChild(r);
+  const t = document.createElementNS(SVGNS, 'text');
+  t.setAttribute('x', b.x + b.width / 2); t.setAttribute('y', b.y - m - 6);
+  t.setAttribute('font-size', Math.max(10, b.width * 0.28));
+  t.textContent = 'ほんとうは ずっと南';
+  deco.appendChild(t);
 }
 
 /* ---- ラベル（ズームしたときだけ名前を出す） ---- */
@@ -249,6 +266,7 @@ function startStage(idx) {
   $('#info').classList.remove('on');
   show('play');
   fitBox(boxOf(st.ids), false);
+  drawOkinawaFrame();
   if (game.mode === 'explore') {
     $('#choices').innerHTML = '';
     $('#question').innerHTML = 'ちずを タップして みよう';

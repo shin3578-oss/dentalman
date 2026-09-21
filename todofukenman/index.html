@@ -1043,7 +1043,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-21 13:13";
+var BUILD_AT="2026-09-21 15:12";
 
 /* ===== 05_jpmap.js ===== */
 /* このファイルは src/gen_jpmap.py が書き出す。手で直さないこと。 */
@@ -8594,7 +8594,7 @@ function svgEl(tag, attrs, parent) {
 function label(parent, x, y, text, cls, base, kind, pid) {
   var t = svgEl("text", { x: x, y: y, class: cls }, parent);
   t.textContent = text;
-  labelEls.push({ el: t, base: base, kind: kind, pid: pid });
+  labelEls.push({ el: t, base: base, kind: kind, pid: pid, x0: x, y0: y, n: (text || "").length });
   return t;
 }
 
@@ -8711,8 +8711,77 @@ function sizeLabels() {
   var w = host ? host.getBoundingClientRect().width : 420;
   var k = (vb ? vb.w : JPMAP.w) / Math.max(1, w);      /* SVGの単位 ÷ 画面px */
   labelEls.forEach(function (q) {
-    q.el.setAttribute("font-size", (q.base * k).toFixed(2));
+    q.fs = q.base * k;
+    q.el.setAttribute("font-size", q.fs.toFixed(2));
   });
+  layoutLabels(k);
+}
+
+/* ---- 文字が重ならないように並べ直す（子どもが読めるように。院長報告 2026-09-21） ----
+   大事なものから順に置いて、ぶつかったら少しずらす。それでもぶつかるものは隠す。 */
+var LABEL_RANK = { region: 0, sea: 1, seasmall: 1, capstar: 2, pfname: 3, capname: 4,
+                   bigmt: 5, biglake: 5, mt: 6, lake: 6, river: 7, plain: 8 };
+/* 県名・県庁所在地・地方名・海の名前は「学ぶ中身」なので、重なっても消さない（ずらすだけ）。
+   山・湖・川・平野の名前は、置き場所が無ければ消す。 */
+var LABEL_KEEP = { region: 1, sea: 1, seasmall: 1, capstar: 1, pfname: 1, capname: 1 };
+
+function layoutLabels(k) {
+  var placed = [], i, q;
+  var list = labelEls.filter(function (q) {
+    return (q.el.getAttribute("class") || "").indexOf("hide") < 0;
+  });
+  list.forEach(function (q) { q.el.style.display = ""; });      /* 幅を測るために一度出す */
+  list.sort(function (a, b) {
+    /* 選んでいる県のものを先に置く（その県の勉強がいちばん大事） */
+    var pa = (a.pid && a.pid === selPref) ? -1 : 0, pb = (b.pid && b.pid === selPref) ? -1 : 0;
+    var ra = (LABEL_RANK[a.kind] === undefined ? 9 : LABEL_RANK[a.kind]) + pa * 4;
+    var rb = (LABEL_RANK[b.kind] === undefined ? 9 : LABEL_RANK[b.kind]) + pb * 4;
+    return ra - rb;
+  });
+  function rectOf(q, dx, dy) {
+    var wpx;
+    try { wpx = q.el.getComputedTextLength(); } catch (e) { wpx = 0; }
+    if (!wpx) wpx = Math.max(1, q.n) * q.fs * 0.95;
+    var h = q.fs * 1.15;
+    return { x: q.x0 + dx - wpx / 2 - 1, y: q.y0 + dy - h * 0.82 - 1, w: wpx + 2, h: h + 2 };
+  }
+  function overlapArea(r) {
+    var sum = 0;
+    for (var j = 0; j < placed.length; j++) {
+      var o = placed[j];
+      var w = Math.min(r.x + r.w, o.x + o.w) - Math.max(r.x, o.x);
+      var h = Math.min(r.y + r.h, o.y + o.h) - Math.max(r.y, o.y);
+      if (w > 0 && h > 0) sum += w * h;
+    }
+    return sum;
+  }
+  for (i = 0; i < list.length; i++) {
+    q = list[i];
+    if (q.kind === "capstar") {                 /* ★は場所そのものが情報なので動かさない */
+      placed.push(rectOf(q, 0, 0));
+      q.el.setAttribute("x", q.x0); q.el.setAttribute("y", q.y0);
+      continue;
+    }
+    var offs = [[0, 0], [0, q.fs * 1.25], [0, -q.fs * 1.25], [0, q.fs * 2.5], [0, -q.fs * 2.5],
+                [q.fs * 2.6, 0], [-q.fs * 2.6, 0], [q.fs * 2.6, q.fs * 1.25], [-q.fs * 2.6, q.fs * 1.25],
+                [q.fs * 2.6, -q.fs * 1.25], [-q.fs * 2.6, -q.fs * 1.25],
+                [0, q.fs * 3.8], [0, -q.fs * 3.8], [q.fs * 4.2, 0], [-q.fs * 4.2, 0]];
+    var best = null, bestArea = 1e18;
+    for (var oi = 0; oi < offs.length; oi++) {
+      var r = rectOf(q, offs[oi][0], offs[oi][1]);
+      var a = overlapArea(r);
+      if (a < bestArea) { bestArea = a; best = { r: r, o: offs[oi] }; }
+      if (a === 0) break;
+    }
+    if (bestArea === 0 || LABEL_KEEP[q.kind]) {   /* 置けた／消してはいけない文字 */
+      placed.push(best.r);
+      q.el.setAttribute("x", (q.x0 + best.o[0]).toFixed(1));
+      q.el.setAttribute("y", (q.y0 + best.o[1]).toFixed(1));
+      q.el.style.display = "";
+    } else {
+      q.el.style.display = "none";                /* 地形の名前は、置けなければ出さない */
+    }
+  }
 }
 
 /* ---- 色と、見せる文字を塗り直す ---- */
@@ -8730,16 +8799,44 @@ function paintMap() {
     }
     mapEls[pid].setAttribute("class", cls);
   });
-  /* 文字の出し分け：全体図＝海と地方だけ／地方アップ＝その地方の県名・県庁・山・湖・川 */
+  /* 文字の出し分け
+       全体図　　＝ 海・地方の名前（＋富士山・琵琶湖）だけ
+       地方アップ＝ その地方の県名と県庁所在地。山・湖・川・平野の名前は**選んでいる県の中だけ**
+       （ぜんぶ出すと重なって読めない。院長報告 2026-09-21） */
+  var selBox = null;
+  if (inRegion && selPref > 0 && mapEls[selPref]) {
+    var bb = mapEls[selPref].getBBox();
+    var mg = Math.max(bb.width, bb.height) * 0.12;
+    selBox = { x: bb.x - mg, y: bb.y - mg, w: bb.width + mg * 2, h: bb.height + mg * 2 };
+  }
+  function inSel(q) {
+    if (!selBox) return false;
+    if (!(q.x0 >= selBox.x && q.x0 <= selBox.x + selBox.w &&
+          q.y0 >= selBox.y && q.y0 <= selBox.y + selBox.h)) return false;
+    /* 県の形の中にあるかで判定する（四角で見るとよその県の山や湖まで出る） */
+    try {
+      var svg = document.getElementById("jpsvg");
+      var pt = svg.createSVGPoint(); pt.x = q.x0; pt.y = q.y0;
+      if (mapEls[selPref].isPointInFill(pt)) return true;
+      /* 県境のすぐ外（名札は形の外に置くことがある）は、少しだけ許す */
+      var d = Math.max(selBox.w, selBox.h) * 0.06;
+      var around = [[d, 0], [-d, 0], [0, d], [0, -d]];
+      for (var i2 = 0; i2 < around.length; i2++) {
+        pt.x = q.x0 + around[i2][0]; pt.y = q.y0 + around[i2][1];
+        if (mapEls[selPref].isPointInFill(pt)) return true;
+      }
+      return false;
+    } catch (e) { return true; }
+  }
   labelEls.forEach(function (q) {
     var show;
     if (q.kind === "sea") show = !inRegion;
-    else if (q.kind === "seasmall") show = inRegion;
+    else if (q.kind === "seasmall") show = inRegion && inSel(q);
     else if (q.kind === "region") show = !inRegion;
-    else if (q.kind === "bigmt" || q.kind === "biglake") show = true;   /* 富士山・琵琶湖などは全体図でも名前を出す */
     else if (q.kind === "pfname" || q.kind === "capname" || q.kind === "capstar")
       show = inRegion && regionIdxAll(q.pid) === selRegion;
-    else show = inRegion;          /* 山・湖・川・平野は寄ったときだけ */
+    else if (q.kind === "bigmt" || q.kind === "biglake") show = !inRegion || inSel(q);
+    else show = inRegion && inSel(q);       /* 山・湖・川・平野は 選んだ県の中だけ */
     var c = q.el.getAttribute("class") || "";
     c = c.replace(/\s*hide/g, "");
     q.el.setAttribute("class", show ? c : c + " hide");

@@ -1030,7 +1030,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-21 09:40";
+var BUILD_AT="2026-09-21 16:42";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -4465,7 +4465,15 @@ function bossSprite(kind,b,x,y,hl,tint){
 /* ===== 30_bosses.js ===== */
 /* ============================ ボス ============================
    9体。1体ずつ動きも見た目も別物にしてある。
-   共通ルール：口を開けている（b.mouth>0）あいだは弱点で、受けるダメージが2倍。 */
+   共通ルール：口を開けている（b.mouth>0）あいだは弱点で、受けるダメージが2倍。
+
+   2026-09-21 院長指示「ボスをもっと難しくして、複雑な動きをしてほしい」で全13体を作り直した。
+   守った約束は3つ：
+   ① **技の順番は袋引き（pickMove）**。これまでは cycle%3 の固定順で、3回見れば次が読めた。
+      袋から1枚ずつ引くので順番は読めないが、袋が空になるまで同じ技は出ない＝運で詰まない。
+   ② **出る技は必ず「ためる」ひと呼吸（telegraph）を挟む**。体が白く光っているあいだに
+      見てから避けられる。むずかしくはするが理不尽にはしない。
+   ③ **半分を切ると型が変わる**（速くなるだけでなく、技そのものが増える／つながる）。 */
 
 /* ボスが動ける範囲。壁ぎわ 4マス（64px）はボスが入らない＝そこに主人公用の足場を置ける
    （院長指示 2026-09-15「障害物にボスがハマる」。ボスは地形と当たらない作りなので、
@@ -4475,6 +4483,8 @@ var ARENA_PAD=0;     /* 足場を置かない作りにしたので 0（2026-09-1
    「横にスクロールさせないで、来た方に壁を作って、戦うスペースを限局スペースに」 */
 function arenaL(){ return GATE_X+10+ARENA_PAD; }
 function arenaR(){ return GATE_X2-ARENA_PAD; }
+function arenaW(){ return arenaR()-arenaL(); }
+function arenaMid(){ return (arenaL()+arenaR())/2; }
 /* ボスの絵と当たり判定の縮尺。主人公の絵は30px、ボスの絵は36pxで描いてあるので
    30/36 に縮めて「主人公と同じ大きさ」にする（院長指示 2026-09-15）。
    登場シーン・タイトル・エンディングの大きさは変えない（あちらは b.sc を付けない）。 */
@@ -4501,147 +4511,318 @@ function bounceDir(b,p){
   return (p.x+6<b.x+b.w/2)?-1:1;
 }
 
+/* ---------------------------------------------------------------- 技を組み立てる道具（2026-09-21） */
+
+/* 技の順番を袋から引く。袋が空になったら list を入れ直してよく混ぜる。
+   ⚠️ 前に引いた技が新しい袋の1枚目に来たときは1つ後ろへ回す（同じ技が2回続かない）。 */
+function pickMove(b,list){
+  if(!b.bag || !b.bag.length){
+    b.bag=list.slice();
+    for(var i=b.bag.length-1;i>0;i--){
+      var j=Math.floor(Math.random()*(i+1)), tmp=b.bag[i]; b.bag[i]=b.bag[j]; b.bag[j]=tmp;
+    }
+    if(b.bag.length>1 && b.bag[0]===b.lastMove) b.bag.push(b.bag.shift());
+  }
+  b.lastMove=b.bag.shift();
+  return b.lastMove;
+}
+/* 技に入る瞬間だけ向きを決めて、技のあいだは向きを固定する。
+   ⚠️ updateBoss は毎フレーム主人公の側へ b.face を向け直す。突進や跳躍の途中で向きが変わると、
+      主人公がボスの真横に立っているだけで左右に足ぶみして技が終わらない
+      （2026-09-21：歯石戦車がこれで一度も撃たなくなっていたのを見つけた）。 */
+function lockFace(b,p){ b.faceLock=1; b.face=(p.x+6 < b.x+b.w/2)?-1:1; return b.face; }
+function freeFace(b){ b.faceLock=0; }
+/* 技が出る前のひと呼吸。b.tell のあいだ体が白く光り、足もとに粒が出る（drawBoss が光らせる）。 */
+function telegraph(b,fr,col){
+  b.tell=fr||18;
+  part(b.x+b.w/2,b.y+b.h,col||"#ffffff",6,1.8);
+}
+/* 主人公の「少し先」。いまの位置をねらうと、走っているだけで当たらない */
+function leadX(p,fr){ return p.x+6+(p.vx||0)*(fr===undefined?14:fr); }
+function inArena(x,w){ return Math.max(arenaL(),Math.min(arenaR()-w,x)); }
+/* ねらい撃ち（1発） */
+function aimShot(b,p,sp,o){
+  o=o||{}; o.w=o.w||8; o.h=o.h||8;
+  var sx=b.x+b.w/2-o.w/2, sy=b.y+b.h*((o.oy===undefined)?0.45:o.oy);
+  var dx=(p.x+6)-(sx+o.w/2), dy=(p.y+10)-(sy+o.h/2), d=Math.hypot(dx,dy)||1;
+  o.x=sx; o.y=sy; o.vx=dx/d*sp; o.vy=dy/d*sp;
+  return eshot(o);
+}
+/* 扇に撃つ。主人公の方を真ん中にして spread（ラジアン）の幅に n 発 */
+function fanShot(b,p,n,spread,sp,o){
+  o=o||{};
+  var w=o.w||8, h=o.h||8;
+  var sx=b.x+b.w/2, sy=b.y+b.h*((o.oy===undefined)?0.45:o.oy);
+  var base=Math.atan2((p.y+10)-sy,(p.x+6)-sx);
+  for(var i=0;i<n;i++){
+    var a=base+((n<2)?0:(-spread/2+spread*i/(n-1)));
+    var c={}; for(var k in o) c[k]=o[k];
+    c.w=w; c.h=h; c.x=sx-w/2; c.y=sy-h/2; c.vx=Math.cos(a)*sp; c.vy=Math.sin(a)*sp;
+    eshot(c);
+  }
+}
+/* 足もとから左右へ走る衝撃波。ジャンプで飛び越えて避ける技 */
+function shockWave(b,sp,dmg,life){
+  for(var s=0;s<2;s++)
+    eshot({x:b.x+b.w/2-7,y:b.y+b.h-14,w:14,h:12,vx:(s?1:-1)*(sp||4.0),vy:0,
+           dmg:dmg||3,kind:"shock",life:life||200});
+}
+/* 主人公の少し先に落ちるように跳ぶ。壁ぎわでは内側へ跳ぶ */
+function leapAt(b,p,v,maxvx){
+  b.vy=v;
+  var air=Math.max(8,(-2*v)/GRAV);
+  var want=(leadX(p,10)-(b.x+b.w/2))/air;
+  var m=(maxvx===undefined)?3.0:maxvx;
+  b.vx=Math.max(-m,Math.min(m,want));
+  if(b.x<arenaL()+26) b.vx=Math.abs(b.vx);
+  else if(b.x+b.w>arenaR()-26) b.vx=-Math.abs(b.vx);
+}
+/* 半分を切ったか＝型が変わる合図 */
+function rage(b){ return b.hp<b.maxhp/2; }
+
+
 var BOSSES={
 
-/* ---------------------------------------------------------------- 1 */
+/* ---------------------------------------------------------------- 1 キング・カリエス
+   跳ねる／酸を吐く／虫歯菌を呼ぶ／もぐる。
+   もぐりは地面の中を主人公の真下まで進み、足もとから牙が生える（2026-09-21 追加）。 */
 caries:{
   name:"キング・カリエス", title:"虫歯の王",
-  hp:30, w:18, h:26, top:2,
+  hp:34, w:18, h:26, top:2, idle:"wait",
+  init:function(b){ b.sink=0; b.digs=0; b.hops=0; },
   ai:function(b,p){
     if(b.state==="wait"){
-      b.vx=0; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
-      if(b.t>46){
-        b.t=0;
-        if(b.cycle%3===2 && enemies.length<2){ b.state="summon"; b.mouth=70; }
-        else {
-          b.state="jump"; b.hops=0; b.vy=-9.2;
-          var dir=b.face;
-          if(b.x<arenaL()+30) dir=1; else if(b.x+b.w>arenaR()-30) dir=-1;
-          b.vx=dir*2.2;
-        }
+      freeFace(b); b.vx=0; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
+      if(b.t===14) telegraph(b,16,"#ffd447");
+      if(b.t>30){
+        b.t=0; lockFace(b,p);
+        var mv=pickMove(b, rage(b)?["hop","spit","dig","summon","spit"]:["hop","spit","summon","dig"]);
+        if(mv==="summon" && enemies.length>=3) mv="spit";
+        b.state=mv;
+        if(mv==="hop"){ b.hops=0; leapAt(b,p,rage(b)?-9.8:-9.2,rage(b)?3.2:2.6); }
+        else if(mv==="spit") b.mouth=90;
+        else if(mv==="summon") b.mouth=80;
+        else if(mv==="dig"){ b.dp=0; b.dt=0; b.digs=0; b.noTouch=1; }
       }
     }
-    else if(b.state==="jump"){
+    else if(b.state==="hop"){
       b.vy=Math.min(MAXFALL,b.vy+GRAV);
       moveX(b); moveY(b); clampX(b);
       if(b.wallHit) b.vx=-b.vx;
       if(b.grounded && b.vy===0){
-        b.hops++; shake=8; part(b.x+b.w*0.500,b.y+b.h*1.000,C.enamel,10,2);
-        if(b.hops>=(b.hp<b.maxhp/2?3:2)){ b.state="shoot"; b.t=0; b.vx=0; b.mouth=80; }
-        else {
-        b.vy=-9.2;
-        var d2=b.face;
-        if(b.x<arenaL()+30) d2=1; else if(b.x+b.w>arenaR()-30) d2=-1;
-        b.vx=d2*2.2;
-      }
+        b.hops++; shake=8; SFX.hit();
+        part(b.x+b.w*0.500,b.y+b.h*1.000,C.enamel,10,2);
+        if(b.hops>=2) shockWave(b,rage(b)?4.4:3.6,3,150);     /* 2回目の着地から衝撃波が走る */
+        if(b.hops>=(rage(b)?4:3)){ b.state="wait"; b.t=0; b.vx=0; }
+        else leapAt(b,p,rage(b)?-9.8:-9.2,rage(b)?3.2:2.6);
       }
     }
-    else if(b.state==="shoot"){
-      b.vx=0; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
-      if(b.t===20||b.t===40||b.t===60){
-        var n=(b.hp<b.maxhp/2)?5:3;
-        for(var i=0;i<n;i++){
-          var a=(-0.55)+(i/(n-1))*1.1;
-          eshot({x:b.x+b.w*0.500,y:b.y+b.h*0.565,vx:b.face*2.6*Math.cos(a),vy:2.6*Math.sin(a)-0.8,
-                 dmg:3,kind:"acid",grav:0.045});
-        }
+    else if(b.state==="spit"){
+      /* 撃ちながら じりじり下がる。棒立ちだと ただの的になってしまう（2026-09-21） */
+      b.vx=-b.face*0.8; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveX(b); moveY(b); clampX(b);
+      if(b.t===18||b.t===40||(rage(b)&&b.t===62)){
+        fanShot(b,p,rage(b)?5:3,1.15,2.9,{dmg:3,kind:"acid",grav:0.045,oy:0.565});
         SFX.shoot();
       }
-      if(b.t>82){ b.state="wait"; b.t=0; b.cycle++; }
+      if(b.t>(rage(b)?84:68)){ b.state="wait"; b.t=0; }
     }
     else if(b.state==="summon"){
-      b.vx=0; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
-      if(b.t===30||b.t===50){
-        enemies.push({sp:null,type:"w",x:b.x+b.w*0.385,y:b.y+b.h*0.652,w:14,h:14,vx:-1.1,vy:-3,hp:2,hurt:0,t:0});
+      b.vx=b.face*0.7; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveX(b); moveY(b); clampX(b);
+      if(b.t===22||b.t===46){
+        for(var s=0;s<2;s++)
+          enemies.push({sp:null,type:"w",x:b.x+b.w*0.385,y:b.y+b.h*0.652,w:14,h:14,
+                        vx:s?1.2:-1.2,vy:-3,hp:2,hurt:0,t:0});
         SFX.hit();
       }
-      if(b.t>72){ b.state="wait"; b.t=0; b.cycle++; }
+      if(b.t===34) aimShot(b,p,3.0,{dmg:3,kind:"acid",grav:0.03,oy:0.5});
+      if(b.t>66){ b.state="wait"; b.t=0; }
+    }
+    else if(b.state==="dig"){
+      b.dt++;
+      if(b.dp===0){                                        /* ①もぐる */
+        b.vx=0; b.sink=Math.min(1,b.dt/14);
+        if(b.dt%3===0) part(b.x+b.w/2,b.y+b.h,"#8a6a3a",4,1.6);
+        if(b.dt>16){ b.dp=1; b.dt=0; }
+      } else if(b.dp===1){                                 /* ②土の中を追いかける */
+        b.sink=1; b.y=floorY(b);
+        b.x+=Math.max(-4.2,Math.min(4.2,inArena(leadX(p,18)-b.w/2,b.w)-b.x));
+        if(b.dt%6===0) part(b.x+b.w/2,b.y+b.h,"#8a6a3a",3,1.4);
+        if(b.dt>(rage(b)?42:54)){
+          b.dp=2; b.dt=0; telegraph(b,14,"#ffd447"); shake=10; SFX.hit();
+          for(var q=0;q<3;q++)
+            eshot({x:b.x+b.w/2-4+(q-1)*18,y:b.y+b.h-12,w:8,h:14,vx:(q-1)*0.6,vy:-5.0,
+                   dmg:3,kind:"shard",grav:0.30});
+        }
+      } else {                                             /* ③牙といっしょに出てくる */
+        b.sink=Math.max(0,1-b.dt/12);
+        if(b.dt>14){
+          b.digs++; b.sink=0;
+          if(rage(b) && b.digs<2){ b.dp=0; b.dt=0; }
+          else { b.noTouch=0; b.dp=0; b.digs=0; b.state="wait"; b.t=0; }
+        }
+      }
     }
   },
-  draw:function(b,x,y,hl){ bossSprite("caries",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
+  draw:function(b,x,y,hl){
+    if(b.sink>0){ ctx.save(); ctx.globalAlpha=Math.max(0,1-b.sink*0.9); y+=Math.round(b.sink*b.h); }
+    bossSprite("caries",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null);
+    if(b.sink>0) ctx.restore();
+  }
 },
 
-/* ---------------------------------------------------------------- 2 */
+/* ---------------------------------------------------------------- 2 タルタル・タンク
+   転がる（だんだん速くなる）／2段撃ち／山なりの砲撃／フェイント突進。 */
 tank:{
   name:"タルタル・タンク", title:"歯石戦車",
-  hp:34, w:18, h:26, top:2,
-  init:function(b){ b.rolls=0; b.wheel=0; },
+  hp:44, w:18, h:26, top:2, idle:"wait",
+  init:function(b){ b.rolls=0; b.wheel=0; b.rollv=3.2; },
   ai:function(b,p){
     b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
     if(b.state==="wait"){
-      b.vx=0;
-      if(b.t>34){ b.t=0; b.state="roll"; b.rolls=0; b.face=(p.x<b.x)?-1:1; }
+      freeFace(b); b.vx=0;
+      if(b.t===12) telegraph(b,14,"#f0e0a8");
+      if(b.t>26){
+        b.t=0; lockFace(b,p);
+        b.state=pickMove(b, rage(b)?["roll","aim","mortar","feint","roll"]:["roll","aim","mortar","aim"]);
+        if(b.state==="roll"){ b.rolls=0; b.rollv=3.2; }
+        else if(b.state==="aim") b.mouth=76;
+        else if(b.state==="mortar") b.mouth=60;
+      }
     }
     else if(b.state==="roll"){
-      b.vx=b.face*3.3; b.wheel+=0.5;
+      b.rollv=Math.min(rage(b)?6.4:5.2,b.rollv+0.055);
+      b.vx=b.face*b.rollv; b.wheel+=b.rollv*0.16;
       moveX(b); clampX(b);
-      if(b.wallHit){ b.face=-b.face; b.rolls++; shake=6; SFX.hit(); }
-      if(b.rolls>=2){ b.state="aim"; b.t=0; b.vx=0; b.mouth=76; }
+      if(b.t%5===0) part(b.x+b.w/2,b.y+b.h-2,C.tartarLo,2,1.4);
+      if(b.wallHit){
+        b.face=-b.face; b.rolls++; shake=7; SFX.hit();
+        for(var s=0;s<2;s++)
+          eshot({x:b.x+b.w/2-5,y:b.y+b.h*0.30,w:10,h:8,vx:(s?1:-1)*2.6,vy:-3.6,
+                 dmg:3,kind:"shell",grav:0.22});
+      }
+      if(b.rolls>=(rage(b)?3:2)){ b.state="wait"; b.t=0; b.vx=0; }
     }
     else if(b.state==="aim"){
-      b.vx=0;
-      if(b.t===22||b.t===48){
-        var d=(p.x+6 < b.x+b.w*0.500)?-1:1;
-        b.face=d;
-        eshot({x:b.x+(d>0?b.w:-8),y:b.y+b.h*0.350,w:10,h:8,vx:d*3.6,vy:0,dmg:3,kind:"shell"});
-        eshot({x:b.x+(d>0?b.w:-8),y:b.y+b.h*0.650,w:10,h:8,vx:d*3.0,vy:0,dmg:3,kind:"shell"});
+      b.vx=-b.face*0.9; moveX(b); clampX(b);      /* 撃ちながら じりじり下がる */
+      if(b.t===34||b.t===56) lockFace(b,p);        /* 撃つ合間だけ ねらい直す */
+      if(b.t===20||b.t===44||(rage(b)&&b.t===66)){
+        var d=b.face;
+        eshot({x:b.x+(d>0?b.w:-8),y:b.y+b.h*0.30,w:10,h:8,vx:d*3.8,vy:0,dmg:3,kind:"shell"});
+        eshot({x:b.x+(d>0?b.w:-8),y:b.y+b.h*0.66,w:10,h:8,vx:d*3.1,vy:0,dmg:3,kind:"shell"});
+        if(rage(b)) aimShot(b,p,3.6,{w:10,h:8,dmg:3,kind:"shell",oy:0.48});
         SFX.shoot();
       }
-      if(b.hp<b.maxhp/2 && b.t===64){
-        eshot({x:b.x+b.w*0.429,y:b.y-b.h*0.150,w:10,h:10,vx:b.face*1.2,vy:-4.2,dmg:3,kind:"cube",grav:0.24,bomb:true});
+      if(b.t>(rage(b)?84:70)){ b.state="wait"; b.t=0; }
+    }
+    else if(b.state==="mortar"){
+      /* 山なりの砲撃。主人公の「少し先」に落ちるので、走って逃げるだけでは避けられない */
+      b.vx=Math.sin(b.t*0.07)*2.2; moveX(b); clampX(b);
+      if(b.t===16||b.t===38||b.t===60){
+        var g=0.26, vy=-5.4, air=(-2*vy)/g;
+        var dx=leadX(p,26)-(b.x+b.w/2);
+        eshot({x:b.x+b.w/2-5,y:b.y+b.h*0.10,w:10,h:10,vx:Math.max(-5.2,Math.min(5.2,dx/air)),vy:vy,
+               dmg:3,kind:"cube",grav:g,bomb:true});
+        SFX.shoot();
       }
-      if(b.t>84){ b.state="wait"; b.t=0; b.cycle++; }
+      if(b.t>80){ b.state="wait"; b.t=0; }
+    }
+    else if(b.state==="feint"){
+      /* うなる → 少しだけ出る → 止まる → 一気に突っこむ */
+      if(b.t<22){ b.vx=0; if(b.t%4===0){ shake=3; part(b.x+b.w/2,b.y+b.h,C.gold,3,1.4); } }
+      else if(b.t<34){ b.vx=b.face*2.0; moveX(b); clampX(b); }
+      else if(b.t<48){ b.vx=0; if(b.t===34){ telegraph(b,12,"#ffffff"); lockFace(b,p); } }
+      else {
+        if(b.t===48){ b.vx=b.face*7.0; SFX.dash(); }
+        moveX(b); clampX(b);
+        if(b.t%3===0) part(b.x+b.w/2,b.y+b.h-2,C.gold,2,1.6);
+        if(b.wallHit){ shake=14; SFX.hit(); shockWave(b,4.2,3,150); b.state="wait"; b.t=0; b.vx=0; }
+        if(b.t>100){ b.state="wait"; b.t=0; b.vx=0; }
+      }
     }
   },
   draw:function(b,x,y,hl){ bossSprite("tank",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
-/* ---------------------------------------------------------------- 3 */
+/* ---------------------------------------------------------------- 3 プラーク・スライム
+   跳ねる／壁を登ってから落ちてくる／ふくらんで一周にまき散らす。 */
 slime:{
   name:"プラーク・スライム", title:"歯垢のぬし",
-  hp:30, w:18, h:26, top:2,
-  init:function(b){ b.lands=0; b.squash=0; },
+  hp:34, w:18, h:26, top:2, idle:"land",
+  init:function(b){ b.lands=0; b.squash=0; b.cw=0; },
   ai:function(b,p){
     if(b.squash>0) b.squash--;
+
+    if(b.state==="cling"){
+      b.vx=0; b.vy=0; freeFace(b);
+      var wx=(b.cw>0)?(arenaR()-b.w):arenaL();
+      b.x+=Math.max(-7,Math.min(7,wx-b.x));
+      /* 天井が高い面では上がりすぎて弾が届かなくなるので、跳べば届く高さで止める */
+      var ce=Math.max(bossCeilY(b.x,b.w)+4,floorY(b)-94);
+      if(b.t<46){ b.y=Math.max(ce,b.y-2.4); if(b.t%5===0) part(b.x+b.w/2,b.y+b.h,"#cfe9b8",2,1.2); }
+      else if(b.t===46) telegraph(b,16,"#cfe9b8");
+      else if(b.t===50||b.t===64){ fanShot(b,p,3,0.9,2.6,{dmg:2,kind:"blob",grav:0.14,oy:0.6}); SFX.shoot(); }
+      else if(b.t>74){
+        b.state="hop"; b.t=0; b.vy=0.5;
+        b.vx=Math.max(-3.4,Math.min(3.4,((p.x+6)-(b.x+b.w/2))*0.05));
+      }
+      return;
+    }
+    if(b.state==="burst"){
+      b.vx=0; b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
+      if(b.t===1) telegraph(b,22,"#cfe9b8");
+      if(b.t===24||b.t===46){
+        var n=8, off=(b.t===24)?0:Math.PI/n;
+        for(var i=0;i<n;i++){
+          var a=off+i*(Math.PI*2/n);
+          eshot({x:b.x+b.w/2-4,y:b.y+b.h*0.40,vx:Math.cos(a)*2.7,vy:Math.sin(a)*2.7,
+                 dmg:2,kind:"blob",grav:0.10});
+        }
+        SFX.shoot(); shake=6;
+      }
+      if(b.t>66){ b.state="land"; b.t=0; }
+      return;
+    }
+
     b.vy=Math.min(MAXFALL,b.vy+GRAV);
     moveX(b); moveY(b); clampX(b);
     if(b.wallHit) b.vx=-b.vx;
+
     if(b.grounded && b.vy===0){
       if(b.state!=="land"){
-        b.state="land"; b.t=0; b.squash=12; shake=6;
+        b.state="land"; b.t=0; b.squash=12; shake=6; b.lands++; b.mouth=44;
         part(b.x+b.w*0.500,b.y+b.h*1.000,"#cfe9b8",10,2);
-        b.lands++;
-        b.mouth=44;
-        /* 着地のたびに粘液を3つばらまく */
-        var nb=(b.hp<b.maxhp/2)?3:2;
-        for(var i=0;i<nb;i++){
-          var a=-1.75+i*(nb>2?0.55:0.9);
-          eshot({x:b.x+b.w*0.409,y:b.y+b.h*0.278,vx:Math.cos(a)*2.9,vy:Math.sin(a)*2.9,dmg:2,kind:"blob",grav:0.17});
+        var nb=rage(b)?5:3;
+        for(var k=0;k<nb;k++){
+          var a2=-Math.PI+0.35+k*((Math.PI-0.70)/(nb-1));
+          eshot({x:b.x+b.w*0.409,y:b.y+b.h*0.278,vx:Math.cos(a2)*2.9,vy:Math.sin(a2)*2.9,
+                 dmg:2,kind:"blob",grav:0.17});
         }
         SFX.hit();
-        if(b.lands%4===0 && enemies.length<3){
-          for(var k=0;k<2;k++)
-            enemies.push({sp:null,type:"w",x:b.x+b.w*0.182+k*20,y:b.y+b.h*0.444,w:14,h:14,vx:(k?1.1:-1.1),vy:-3,hp:2,hurt:0,t:0});
+        if(b.lands%3===0 && enemies.length<3){
+          for(var m=0;m<2;m++)
+            enemies.push({sp:null,type:"w",x:b.x+b.w*0.182+m*20,y:b.y+b.h*0.444,w:14,h:14,
+                          vx:(m?1.1:-1.1),vy:-3,hp:2,hurt:0,t:0});
         }
       }
-      if(b.t>30){
-        b.state="hop"; b.t=0;
-        b.vy=(b.hp<b.maxhp/2)?-9.4:-8.6;
-        var sd=((p.x+6<b.x+b.w*0.500)?-1:1);
-        if(b.x<arenaL()+30) sd=1; else if(b.x+b.w>arenaR()-30) sd=-1;
-        b.vx=sd*(b.hp<b.maxhp/2?2.4:1.9);
+      if(b.t>(rage(b)?18:26)){
+        var mv=pickMove(b, rage(b)?["hop","hop","cling","burst"]:["hop","hop","hop","cling"]);
+        b.t=0;
+        if(mv==="cling"){ b.state="cling"; b.cw=((p.x+6)<arenaMid())?1:0; }
+        else if(mv==="burst"){ b.state="burst"; b.mouth=70; }
+        else { b.state="hop"; leapAt(b,p,rage(b)?-9.6:-8.8,rage(b)?2.8:2.2); }
       }
     }
   },
   draw:function(b,x,y,hl){ bossSprite("slime",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
-/* ---------------------------------------------------------------- 4 */
+/* ---------------------------------------------------------------- 4 ジンジバ・クイーン
+   8の字に飛ぶ／二段の急降下／横一直線のなぎ払い／手下を呼ぶ。 */
 queen:{
   name:"ジンジバ・クイーン", title:"歯周病の女王",
-  hp:26, w:18, h:26, top:2,
-  fly:true, y0:-70,
-  init:function(b){ b.hy=188; b.wing=0; },
+  hp:36, w:18, h:26, top:2,
+  fly:true, y0:-70, idle:"float",
+  init:function(b){ b.hy=188; b.wing=0; b.dives=0; },
   intro:function(b,p){
     b.y+=2.6;
     if(b.y>=b.hy){ b.y=b.hy; b.state="float"; b.t=0; shake=8; }
@@ -4649,80 +4830,144 @@ queen:{
   ai:function(b,p){
     b.wing+=0.35;
     if(b.state==="float"){
-      var ty=b.hy+Math.sin(b.t*0.045)*30;
+      freeFace(b);
+      /* 上下と左右で周期をずらした「8の字」。ただの往復より読みにくい（2026-09-21） */
+      var ty=b.hy+Math.sin(b.t*0.052)*34;
+      var tx=arenaMid()-b.w/2+Math.sin(b.t*0.026)*(arenaW()*0.30);
       b.y+=(ty-b.y)*0.12;
-      var dx=(p.x+6)-(b.x+b.w*0.500);
-      b.x+=Math.max(-1.1,Math.min(1.1,dx*0.02)); clampX(b);
-      if(b.t%96===60){
-        eshot({x:b.x+b.w*0.217,y:b.y+b.h*0.810,vx:-0.5,vy:1.4,dmg:2,kind:"spore",grav:0.07});
-        eshot({x:b.x+b.w*0.696,y:b.y+b.h*0.810,vx:0.5,vy:1.4,dmg:2,kind:"spore",grav:0.07});
-        SFX.shoot();
-      }
-      if(b.t>(b.hp<b.maxhp/2?170:230)){ b.state="scream"; b.t=0; b.mouth=54; }
-    }
-    else if(b.state==="scream"){
-      b.y+=(b.hy-24-b.y)*0.12;
-      if(b.t>46){
-        b.state="dive"; b.t=0;
-        var ddx=(p.x+6)-(b.x+b.w*0.500), ddy=(p.y+10)-(b.y+b.h*0.500);
-        var d=Math.hypot(ddx,ddy)||1;
-        b.vx=ddx/d*4.4; b.vy=ddy/d*4.4;
-        SFX.dash();
+      b.x+=Math.max(-1.9,Math.min(1.9,(tx-b.x)*0.06+((p.x+6)-(b.x+b.w/2))*0.012));
+      clampX(b);
+      if(b.t%54===40){ fanShot(b,p,rage(b)?3:2,0.85,2.2,{dmg:2,kind:"spore",grav:0.06,oy:0.80}); SFX.shoot(); }
+      if(b.t>(rage(b)?90:118)){
+        b.t=0; lockFace(b,p);
+        b.state=pickMove(b, rage(b)?["dive","sweep","swarm","dive"]:["dive","sweep","swarm"]);
+        b.mouth=(b.state==="dive")?54:(b.state==="swarm")?70:40;
+        if(b.state==="dive") b.dives=0;
+        telegraph(b,16,"#ff8fb4");
       }
     }
     else if(b.state==="dive"){
-      b.x+=b.vx; b.y+=b.vy; clampX(b);
-      if(b.y>floorY(b)-2){ b.y=floorY(b)-2; shake=10; part(b.x+b.w*0.500,b.y+b.h*1.000,C.caries,12,2.4); b.state="rise"; b.t=0; }
-      if(b.t>44){ b.state="rise"; b.t=0; }
+      if(b.t<26){ b.y+=((b.hy-26)-b.y)*0.14; b.vx=0; b.vy=0; }
+      else {
+        if(b.t===26){
+          var dx=(p.x+6)-(b.x+b.w/2), dy=(p.y+10)-(b.y+b.h/2), d=Math.hypot(dx,dy)||1;
+          b.vx=dx/d*(rage(b)?5.4:4.6); b.vy=dy/d*(rage(b)?5.4:4.6); SFX.dash();
+        }
+        b.x+=b.vx; b.y+=b.vy; clampX(b);
+        if(b.wallHit) b.vx=-b.vx;
+        if(b.t%4===0) part(b.x+b.w/2,b.y+b.h*0.80,"#ff8fb4",2,1.2);
+        if(b.y>floorY(b)-2){
+          b.y=floorY(b)-2; shake=10; SFX.hit();
+          part(b.x+b.w*0.500,b.y+b.h*1.000,C.caries,12,2.4);
+          shockWave(b,3.8,2,120);
+          b.dives++;
+          if(rage(b) && b.dives<2){ b.t=25; b.y-=8; }    /* 跳ね上がって もう一度 */
+          else { b.state="rise"; b.t=0; }
+        }
+        if(b.t>74){ b.state="rise"; b.t=0; }
+      }
+    }
+    else if(b.state==="sweep"){
+      /* 壁ぎわまで下がってから、主人公の高さを横一直線に飛ぶ */
+      if(b.t<30){
+        var wx=((p.x+6)<arenaMid())?(arenaR()-b.w):arenaL();
+        b.x+=Math.max(-6,Math.min(6,wx-b.x));
+        b.y+=((p.y-6)-b.y)*0.12;
+        b.vx=0;
+      } else {
+        if(b.t===30){ b.vx=((b.x<arenaMid())?1:-1)*(rage(b)?5.0:4.2); SFX.dash(); }
+        b.x+=b.vx; clampX(b);
+        b.y+=Math.sin(b.t*0.16)*1.1;
+        if(b.t%8===0) eshot({x:b.x+b.w/2-4,y:b.y+b.h*0.80,vx:0,vy:1.5,dmg:2,kind:"spore",grav:0.08});
+        if(b.wallHit||b.t>74){ b.state="rise"; b.t=0; b.vx=0; }
+      }
+    }
+    else if(b.state==="swarm"){
+      b.vx=0; b.y+=((b.hy-20)-b.y)*0.10;
+      if((b.t===20||b.t===46) && enemies.length<4){
+        for(var s=0;s<2;s++)
+          enemies.push({sp:null,type:"w",x:b.x+b.w*0.20+s*18,y:b.y+b.h*0.60,w:14,h:14,
+                        vx:s?1.1:-1.1,vy:-2,hp:2,hurt:0,t:0});
+        SFX.hit();
+      }
+      if(b.t>20 && b.t<72 && b.t%10===0){
+        var rx=arenaL()+14+Math.random()*(arenaW()-28);
+        eshot({x:rx,y:b.y+b.h*0.80,vx:0,vy:1.6,dmg:2,kind:"spore",grav:0.07});
+      }
+      if(b.t>80){ b.state="rise"; b.t=0; }
     }
     else if(b.state==="rise"){
-      b.y+=(b.hy-b.y)*0.09;
-      if(b.t>40){ b.state="float"; b.t=0; b.cycle++; }
+      b.y+=(b.hy-b.y)*0.10; b.vx=0; b.vy=0;
+      if(b.t>30){ b.state="float"; b.t=0; }
     }
   },
   draw:function(b,x,y,hl){ bossSprite("queen",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
-/* ---------------------------------------------------------------- 5 */
+/* ---------------------------------------------------------------- 5 シュガー・ボマー
+   壁を蹴って斜めに跳ねる／3個投げ／天井から じゅうたん爆撃。 */
 bomber:{
   name:"シュガー・ボマー", title:"砂糖の爆弾魔",
-  hp:32, w:18, h:26, top:2, start:"bounce",
+  hp:36, w:18, h:26, top:2, start:"bounce", idle:"bounce",
   init:function(b){ b.lands=0; b.dropped=false; },
   ai:function(b,p){
     b.vy=Math.min(MAXFALL,b.vy+GRAV);
-    moveX(b); moveY(b); clampX(b);
-    if(b.wallHit) b.vx=-b.vx;
 
     if(b.state==="throw"){
-      b.vx=0;
-      if(b.t===24||b.t===44||b.t===64){
-        var i=(b.t-24)/20;
-        eshot({x:b.x+b.w*0.400,y:b.y+b.h*0.100,w:10,h:10,vx:(i-1)*2.0+b.face*0.8,vy:-4.6,
+      b.vx=0; moveY(b);
+      if(b.t===22||b.t===42||b.t===62){
+        var i=(b.t-22)/20;
+        eshot({x:b.x+b.w*0.400,y:b.y+b.h*0.100,w:10,h:10,vx:(i-1)*2.2+b.face*0.9,vy:-4.8,
                dmg:3,kind:"cube",grav:0.24,bomb:true});
         SFX.shoot();
       }
-      if(b.t>86){ b.state="bounce"; b.t=0; b.vy=-10.6; b.vx=bounceDir(b,p)*2.4; b.dropped=false; }
+      if(rage(b)&&b.t===74) fanShot(b,p,3,0.9,3.0,{w:6,h:6,dmg:2,kind:"shard",grav:0.10,oy:0.40});
+      if(b.t>86){ b.state="bounce"; b.t=0; b.vy=-10.6; b.vx=bounceDir(b,p)*2.4; b.dropped=false; freeFace(b); }
       return;
     }
-    /* 跳ねながら頂点で爆弾を落とす */
+    if(b.state==="carpet"){
+      /* 天井いっぱいまで上がると弾が届かないので、跳べば届く高さで飛ぶ（2026-09-21） */
+      if(b.t<24){ b.vy=0; b.vx=0; b.y+=((Math.max(bossCeilY(b.x,b.w)+8,floorY(b)-84))-b.y)*0.18;
+                  if(b.t===1) telegraph(b,20,"#fdf6ff"); }
+      else {
+        b.vy=0;
+        if(b.t===24){ b.vx=((b.x<arenaMid())?1:-1)*(rage(b)?4.4:3.6); SFX.dash(); }
+        b.x+=b.vx; clampX(b);
+        if(b.t%(rage(b)?12:16)===0)
+          eshot({x:b.x+b.w*0.375,y:b.y+b.h*0.90,w:10,h:10,vx:0,vy:1.0,dmg:3,kind:"cube",grav:0.22,bomb:true});
+        if(b.wallHit||b.t>104){ b.state="bounce"; b.t=0; b.vx=0; b.dropped=false; freeFace(b); }
+      }
+      return;
+    }
+
+    moveX(b); moveY(b); clampX(b);
+    /* 壁を蹴って斜めに跳ね返る（ただ往復するより読みにくい。2026-09-21） */
+    if(b.wallHit){
+      b.vx=-b.vx;
+      if(!b.grounded){ b.vy=Math.min(b.vy,-6.4); part(b.x+b.w/2,b.y+b.h/2,"#ffffff",6,2); SFX.hit(); }
+    }
     if(!b.dropped && b.vy>0 && b.y<floorY(b)-40){
       b.dropped=true;
       eshot({x:b.x+b.w*0.375,y:b.y+b.h*0.850,w:10,h:10,vx:0,vy:1.2,dmg:3,kind:"cube",grav:0.26,bomb:true});
     }
     if(b.grounded && b.vy===0){
       b.lands++; shake=7; part(b.x+b.w*0.500,b.y+b.h*1.000,"#ffffff",10,2.2);
-      if(b.lands%3===0){ b.state="throw"; b.t=0; b.mouth=90; }
-      else { b.vy=-10.6; b.vx=bounceDir(b,p)*2.4; b.dropped=false; }
+      var mv=pickMove(b, rage(b)?["bounce","throw","carpet","throw"]:["bounce","bounce","throw","carpet"]);
+      b.t=0;
+      if(mv==="throw"){ b.state="throw"; b.mouth=90; lockFace(b,p); telegraph(b,16,"#ffffff"); }
+      else if(mv==="carpet"){ b.state="carpet"; b.mouth=50; }
+      else { b.state="bounce"; leapAt(b,p,rage(b)?-11.0:-10.4,rage(b)?3.0:2.4); b.dropped=false; }
     }
   },
   draw:function(b,x,y,hl){ bossSprite("bomber",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
-/* ---------------------------------------------------------------- 6 */
+/* ---------------------------------------------------------------- 6 アシッド・ドラゴン
+   なめるように吐く炎／波を描く突進／酸の雨／尻尾の叩きつけ。 */
 dragon:{
   name:"アシッド・ドラゴン", title:"酸の竜",
-  hp:32, w:18, h:26, top:2,
-  fly:true, y0:-60,
+  hp:40, w:18, h:26, top:2,
+  fly:true, y0:-60, idle:"ceil",
   init:function(b){ b.hy=150; b.swoops=0; },
   intro:function(b,p){
     b.y+=2.4;
@@ -4730,106 +4975,178 @@ dragon:{
   },
   ai:function(b,p){
     if(b.state==="ceil"){
-      b.y+=(b.hy+Math.sin(b.t*0.06)*5-b.y)*0.16;
-      var dx=(p.x+6)-(b.x+b.w*0.500);
-      b.x+=Math.max(-1.7,Math.min(1.7,dx*0.03)); clampX(b);
-      if(b.t>96){ b.t=0; b.cycle++;
-        if(b.cycle%4===3){ b.state="swoop"; b.vy=0; b.face=(p.x<b.x)?-1:1; b.mouth=30; }
-        else { b.state="breathe"; b.mouth=80; }
+      freeFace(b);
+      b.y+=((b.hy+Math.sin(b.t*0.06)*8)-b.y)*0.16;
+      b.x+=Math.max(-1.9,Math.min(1.9,((p.x+6)-(b.x+b.w/2))*0.032)); clampX(b);
+      if(b.t>(rage(b)?62:84)){
+        b.t=0; lockFace(b,p);
+        b.state=pickMove(b, rage(b)?["breathe","swoop","rain","tail","swoop"]:["breathe","swoop","rain","tail"]);
+        b.mouth=(b.state==="breathe")?90:40;
+        telegraph(b,16,C.acid);
       }
     }
     else if(b.state==="breathe"){
-      if(b.t===20||b.t===36||b.t===52){
-        for(var i=0;i<3;i++){
-          var a=1.05+i*0.45;   /* 下向きに扇 */
-          eshot({x:b.x+b.w*0.429,y:b.y+b.h*0.824,vx:Math.cos(a)*2.4*(b.face<0?1:-1)*-1,vy:Math.sin(a)*2.4,
-                 dmg:3,kind:"acid",grav:0.05});
-        }
-        SFX.shoot();
+      /* 端から端へ なめるように吐く。1発ずつ角度が動くので、立ち位置を変えて逃げる技 */
+      var s0=18, s1=s0+(rage(b)?54:42);
+      if(b.t>=s0 && b.t<s1 && b.t%3===0){
+        var a=0.70+((b.t-s0)/(s1-s0))*1.75;
+        var dirn=(b.face<0)?-1:1;
+        eshot({x:b.x+b.w*0.429,y:b.y+b.h*0.824,vx:Math.cos(a)*2.6*dirn,vy:Math.sin(a)*2.6,
+               dmg:3,kind:"acid",grav:0.045});
+        if(b.t%9===0) SFX.shoot();
       }
-      if(b.t>70){ b.state="ceil"; b.t=0; }
+      if(b.t>s1+16){ b.state="ceil"; b.t=0; }
     }
     else if(b.state==="swoop"){
-      /* 天井から降りて床すれすれを突進 */
-      if(b.t<26){ b.y+=(floorY(b)-6-b.y)*0.16; }
+      if(b.t<24){ b.y+=((floorY(b)-8)-b.y)*0.16; b.vx=0; }
       else {
-        b.vx=b.face*4.6; moveX(b); clampX(b);
-        if(b.wallHit){ b.face=-b.face; b.swoops++; }
-        if(b.t%6===0) part(b.x+b.w*0.500,b.y+b.h*0.882,C.acid,3,1.4);
-        if(b.t>110||b.swoops>=2){ b.state="up"; b.t=0; b.swoops=0; SFX.dash(); }
+        if(b.t===24){ b.vx=b.face*(rage(b)?5.4:4.6); SFX.dash(); }
+        b.x+=b.vx; clampX(b);
+        b.y=floorY(b)-8+Math.sin(b.t*0.13)*10;          /* 波を描いて突っこむ */
+        if(b.t%5===0) part(b.x+b.w*0.500,b.y+b.h*0.882,C.acid,3,1.4);
+        if(b.t%14===0) eshot({x:b.x+b.w/2-4,y:b.y+b.h*0.80,vx:0,vy:0.8,dmg:2,kind:"acid",grav:0.12});
+        if(b.wallHit){ b.vx=-b.vx; b.face=-b.face; b.swoops++; shake=8; }
+        if(b.swoops>=(rage(b)?3:2)||b.t>140){ b.state="up"; b.t=0; b.swoops=0; }
       }
     }
+    else if(b.state==="rain"){
+      b.y+=((b.hy-16)-b.y)*0.12;
+      b.x+=Math.max(-2.4,Math.min(2.4,((p.x+6)-(b.x+b.w/2))*0.04)); clampX(b);
+      if(b.t>14 && b.t<(rage(b)?86:70) && b.t%(rage(b)?7:10)===0){
+        var rx=arenaL()+14+Math.random()*(arenaW()-28);
+        eshot({x:rx,y:b.y+b.h*0.80,vx:0,vy:1.8,dmg:2,kind:"acid",grav:0.10});
+      }
+      if(b.t>96){ b.state="up"; b.t=0; }
+    }
+    else if(b.state==="tail"){
+      if(b.t<22){ b.y+=(floorY(b)-b.y)*0.22; b.vx=0; }
+      else if(b.t===22){
+        shake=16; SFX.boom(); part(b.x+b.w*0.500,b.y+b.h*1.000,C.acid,16,3);
+        shockWave(b,rage(b)?4.8:4.0,3,220);
+      }
+      else if(rage(b)&&b.t===52){
+        shake=14; SFX.boom(); shockWave(b,3.4,3,220);
+        fanShot(b,p,3,1.0,3.0,{dmg:2,kind:"acid",grav:0.08,oy:0.50});
+      }
+      if(b.t>(rage(b)?74:48)){ b.state="up"; b.t=0; }
+    }
     else if(b.state==="up"){
-      b.y+=(b.hy-b.y)*0.11;
-      if(b.t>34){ b.state="ceil"; b.t=0; }
+      b.y+=(b.hy-b.y)*0.11; b.vx=0;
+      if(b.t>28){ b.state="ceil"; b.t=0; }
     }
   },
   draw:function(b,x,y,hl){ bossSprite("dragon",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
-/* ---------------------------------------------------------------- 7 */
+/* ---------------------------------------------------------------- 7 ブレース・ワイヤーマン
+   穴の動くワイヤーの壁＋足もとの衝撃波／跳ねながらのジグザグ突進／天井から電気の柱／ふりこ渡り。 */
 wire:{
   name:"ブレース・ワイヤーマン", title:"矯正ワイヤーの怪人",
-  hp:40, w:18, h:26, top:2, start:"walk",
-  init:function(b){ b.step=0; },
+  hp:44, w:18, h:26, top:2, start:"walk", idle:"walk",
+  init:function(b){ b.step=0; b.gap=2; b.zig=0; b.ceil=0; },
   ai:function(b,p){
-    b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
+    if(b.state!=="swing"){ b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b); }
     if(b.state==="walk"){
-      b.vx=b.face*1.5; b.step+=0.2;
+      freeFace(b);
+      b.vx=b.face*1.6; b.step+=0.2;
       moveX(b); clampX(b);
-      if(b.t>54){
-        b.t=0; b.cycle++;
-        if(b.cycle%3===2){ b.state="dash"; b.vx=b.face*6.0; b.mouth=20; SFX.dash(); }
-        else { b.state="wall"; b.vx=0; b.mouth=74; b.gap=1+Math.floor(Math.random()*3); }
+      if(b.wallHit) b.vx=-b.vx;
+      if(b.t>42){
+        b.t=0; lockFace(b,p); b.vx=0;
+        b.state=pickMove(b, rage(b)?["wall","dash","grid","swing","dash"]:["wall","dash","grid","swing"]);
+        if(b.state==="wall"){ b.mouth=74; b.gap=Math.floor(Math.random()*4); }
+        else if(b.state==="dash"){ b.mouth=20; b.zig=0; }
+        else if(b.state==="grid") b.mouth=60;
+        telegraph(b,16,"#8fd7ff");
       }
     }
     else if(b.state==="wall"){
       b.vx=0;
-      /* 5本のワイヤーを縦にならべて撃つ。1本だけ穴が開いている */
-      if(b.t===30||b.t===58){
-        for(var i=0;i<5;i++){
+      /* ワイヤーの壁は4本＋穴1つ。足もとには衝撃波も走るので「跳んで穴をくぐる」技。
+         穴は撃つたびに動く（2026-09-21。前は壁が高すぎて立っているだけで当たらなかった） */
+      if(b.t===26||b.t===58||(rage(b)&&b.t===90)){
+        var fy=bossFloorY();
+        for(var i=0;i<4;i++){
           if(i===b.gap) continue;
-          eshot({x:b.x+(b.face>0?b.w:-10),y:38+i*36,w:12,h:6,vx:b.face*4.2,vy:0,dmg:2,kind:"wire"});
+          eshot({x:b.x+(b.face>0?b.w:-12),y:fy-46-i*34,w:12,h:6,vx:b.face*4.2,vy:0,dmg:2,kind:"wire"});
         }
+        eshot({x:b.x+b.w/2-7,y:fy-14,w:14,h:12,vx:b.face*3.4,vy:0,dmg:2,kind:"shock",life:210});
+        b.gap=(b.gap+1+Math.floor(Math.random()*3))%4;
         SFX.laser();
       }
-      if(b.t>78){ b.state="walk"; b.t=0; }
+      if(b.t>(rage(b)?114:84)){ b.state="walk"; b.t=0; }
     }
     else if(b.state==="dash"){
+      if(b.t===1){ b.vx=b.face*6.2; SFX.dash(); }
       moveX(b); clampX(b);
       if(b.t%4===0) part(b.x+b.w*0.500,b.y+b.h*0.909,"#8fd7ff",2,1.2);
-      if(b.wallHit){ b.face=-b.face; b.vx=b.face*6.0; shake=8; SFX.hit(); }
-      if(b.t>70){ b.state="walk"; b.t=0; b.vx=0; }
+      if(b.grounded && (b.t===22||b.t===54)) b.vy=-7.6;      /* 途中で跳ねて高さを変える */
+      if(b.wallHit){
+        b.face=-b.face; b.vx=b.face*6.2; shake=8; SFX.hit(); b.zig++;
+        eshot({x:b.x+b.w/2-6,y:b.y+b.h*0.40,w:12,h:6,vx:b.face*4.6,vy:0,dmg:2,kind:"wire"});
+      }
+      if(b.zig>=(rage(b)?3:2)||b.t>100){ b.state="walk"; b.t=0; b.vx=0; b.zig=0; }
+    }
+    else if(b.state==="grid"){
+      b.vx=0;
+      if(b.t>16 && b.t<(rage(b)?88:70) && b.t%(rage(b)?11:15)===0){
+        var gx=arenaL()+18+Math.random()*(arenaW()-36);
+        eshot({x:gx,y:bossCeilY(gx,8)+4,w:6,h:28,vx:0,vy:rage(b)?3.2:2.6,dmg:3,kind:"bolt"});
+        SFX.laser();
+      }
+      if(b.t===40||b.t===66) aimShot(b,p,4.0,{w:12,h:6,dmg:2,kind:"wire",oy:0.40});
+      if(b.t>96){ b.state="walk"; b.t=0; }
+    }
+    else if(b.state==="swing"){
+      /* 天井のワイヤーにぶら下がって、ふりこのように横切る */
+      if(b.t===1) b.ceil=Math.max(bossCeilY(arenaMid(),b.w)+6,floorY(b)-86);
+      if(b.t<18){ b.vy=0; b.y+=(b.ceil-b.y)*0.22; }
+      else {
+        b.vy=0;
+        var sw=Math.sin((b.t-18)*0.055);
+        b.x=inArena(arenaMid()-b.w/2+sw*(arenaW()*0.40),b.w);
+        b.y=b.ceil+(1-Math.abs(sw))*40;                 /* まん中でいちばん低くなる */
+        if(b.t%(rage(b)?9:13)===0)
+          eshot({x:b.x+b.w/2-3,y:b.y+b.h,w:6,h:20,vx:0,vy:2.2,dmg:2,kind:"bolt"});
+        if(b.t>(rage(b)?152:118)){ b.state="walk"; b.t=0; }
+      }
     }
   },
   draw:function(b,x,y,hl){ bossSprite("wire",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
-/* ---------------------------------------------------------------- 8 */
+/* ---------------------------------------------------------------- 8 ナイト・グラインダー
+   フェイント付きの突進／続けざまの叩きつけ／回転して衝撃波／盾をかまえて弾をはじく。
+   盾は「効く武器」だけ通る＝武器を取ってくる意味がある（2026-09-21）。 */
 knight:{
   name:"ナイト・グラインダー", title:"歯ぎしりの騎士",
-  hp:44, w:18, h:26, top:2, start:"walk",
-  init:function(b){ b.step=0; },
+  hp:48, w:18, h:26, top:2, start:"walk", idle:"walk",
+  init:function(b){ b.step=0; b.slams=0; },
   ai:function(b,p){
     b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
     if(b.state==="walk"){
-      b.vx=b.face*1.3; b.step+=0.18;
+      freeFace(b);
+      b.vx=b.face*1.4; b.step+=0.18;
       moveX(b); clampX(b);
-      if(b.t>56){
-        b.t=0; b.cycle++;
-        if(b.cycle%2===0){ b.state="charge"; b.vx=0; b.mouth=34; }
-        else { b.state="slam"; b.vx=b.face*1.6; b.vy=-10.2; }
+      if(b.t>40){
+        b.t=0; lockFace(b,p); b.vx=0;
+        b.state=pickMove(b, rage(b)?["charge","slam","spin","guard","charge"]:["charge","slam","guard","spin"]);
+        if(b.state==="slam"){ b.slams=0; b.vx=b.face*1.6; b.vy=-10.2; }
+        else if(b.state==="charge") b.mouth=34;
+        else if(b.state==="spin") b.mouth=54;
+        telegraph(b,16,"#d78bff");
       }
     }
     else if(b.state==="charge"){
-      /* ぎりぎり…と溜めてから突進 */
-      if(b.t<34){ b.vx=0; if(b.t%6===0){ shake=3; part(b.x+b.w*0.500,b.y+b.h*0.958,"#d78bff",3,1.4);} }
+      if(b.t<30){ b.vx=0; if(b.t%6===0){ shake=3; part(b.x+b.w*0.500,b.y+b.h*0.958,"#d78bff",3,1.4); } }
       else {
-        if(b.t===34){ b.vx=b.face*5.6; SFX.dash(); }
+        if(b.t===30){ b.vx=b.face*(rage(b)?6.4:5.6); SFX.dash(); }
+        if(rage(b)&&b.t===48) b.vx=0;                          /* 一瞬止まる＝フェイント */
+        if(rage(b)&&b.t===60){ lockFace(b,p); b.vx=b.face*7.0; SFX.dash(); }
         moveX(b); clampX(b);
         if(b.t%4===0) part(b.x+b.w*0.500,b.y+b.h*0.958,C.gold,2,1.6);
-        if(b.wallHit){ shake=12; b.state="walk"; b.t=0; b.vx=0; }
-        if(b.t>96){ b.state="walk"; b.t=0; b.vx=0; }
+        if(b.wallHit){ shake=14; SFX.hit(); shockWave(b,4.2,3,170); b.state="walk"; b.t=0; b.vx=0; }
+        if(b.t>112){ b.state="walk"; b.t=0; b.vx=0; }
       }
     }
     else if(b.state==="slam"){
@@ -4838,55 +5155,91 @@ knight:{
       if(b.grounded && b.vy===0){
         shake=16; SFX.boom();
         part(b.x+b.w*0.500,b.y+b.h*1.000,C.enamel,16,3);
-        /* 左右に衝撃波 */
-        var fy=b.y+b.h-10;
-        eshot({x:b.x+b.w*0.227,y:fy,w:14,h:12,vx:-3.2,vy:0,dmg:3,kind:"shock"});
-        eshot({x:b.x+b.w*0.455,y:fy,w:14,h:12,vx:3.2,vy:0,dmg:3,kind:"shock"});
-        b.state="walk"; b.t=0; b.vx=0; b.mouth=40;
+        shockWave(b,3.4,3,220);
+        b.slams++; b.mouth=40;
+        if(b.slams<(rage(b)?3:2)){ lockFace(b,p); b.vx=b.face*2.0; b.vy=-10.2; }
+        else { b.state="walk"; b.t=0; b.vx=0; b.slams=0; }
       }
+    }
+    else if(b.state==="spin"){
+      b.vx=0;
+      if(b.t===18||b.t===40||(rage(b)&&b.t===62)){
+        shake=8; SFX.hit();
+        shockWave(b,4.6,3,200);
+        fanShot(b,p,3,1.2,3.4,{w:10,h:10,dmg:3,kind:"shard",grav:0.12,oy:0.35});
+      }
+      if(b.t>(rage(b)?80:60)){ b.state="walk"; b.t=0; }
+    }
+    else if(b.state==="guard"){
+      b.vx=0; b.guard=1;
+      if(b.t===1) telegraph(b,20,"#9fe8ff");
+      if(b.t%8===0) part(b.x+b.w/2+b.face*8,b.y+b.h*0.5,"#9fe8ff",2,1.0);
+      if(b.t>(rage(b)?54:40)){ b.guard=0; b.t=0; b.state="charge"; lockFace(b,p); b.mouth=34; }
     }
   },
   draw:function(b,x,y,hl){ bossSprite("knight",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 },
 
-/* ---------------------------------------------------------------- 9 */
+/* ---------------------------------------------------------------- 9 大魔王ムシバーン
+   3段変化。①ふつう ②赤く燃えてワープを覚える ③残り1/3で暴走（2026-09-21）。 */
 mushiburn:{
   name:"大魔王ムシバーン", title:"口腔の闇",
-  hp:46, w:18, h:26, top:2,
-  fly:true, y0:-90,
+  hp:52, w:18, h:26, top:2,
+  fly:true, y0:-90, idle:"hover",
   /* 体が小さくなったので、弾の高さに入るまで低く浮かせる（2026-09-13） */
-  init:function(b){ b.hy=196; b.phase=1; b.aura=0; },
+  init:function(b){ b.hy=196; b.phase=1; b.aura=0; b.fade=1; },
   intro:function(b,p){
     b.y+=2.2;
     if(b.y>=b.hy){ b.y=b.hy; b.state="hover"; b.t=0; shake=14; flash=20; }
   },
   ai:function(b,p){
     b.aura+=0.14;
-    if(b.phase===1 && b.hp<=b.maxhp/2){
-      b.phase=2; flash=24; shake=20; SFX.bossDie();
-      b.state="hover"; b.t=0;
+    var want=(b.hp<=b.maxhp/3)?3:((b.hp<=b.maxhp*2/3)?2:1);
+    if(want>b.phase){
+      b.phase=want; flash=24; shake=20; SFX.bossDie();
+      b.state="hover"; b.t=0; b.bag=null; b.fade=1; b.noTouch=0;
+      ebullets=[];                    /* 型が変わる瞬間は画面をきれいに（理不尽よけ） */
     }
-    var fast=(b.phase===2);
+    var ph=b.phase, fast=(ph>=2);
 
     if(b.state==="hover"){
-      var ty=b.hy+Math.sin(b.t*0.05)*16;   /* 体が小さいので上下の幅も縮める（2026-09-13） */
+      freeFace(b);
+      var ty=b.hy+Math.sin(b.t*0.05)*18;
       b.y+=(ty-b.y)*0.1;
-      var dx=(p.x+6)-(b.x+b.w*0.500);
-      b.x+=Math.max(-1.3,Math.min(1.3,dx*0.02)); clampX(b);
-      if(b.t>(fast?76:104)){
-        b.t=0; b.cycle++;
-        var m=b.cycle%(fast?4:3);
-        if(m===0){ b.state="spread"; b.mouth=80; }
-        else if(m===1){ b.state="summon"; b.mouth=64; }
-        else if(m===2){ b.state="rain"; b.mouth=70; }
-        else { b.state="beam"; b.mouth=60; }
+      b.x+=Math.max(-1.5,Math.min(1.5,((p.x+6)-(b.x+b.w/2))*0.022)); clampX(b);
+      if(b.t>((ph===3)?56:(fast?74:100))){
+        b.t=0;
+        b.state=pickMove(b,(ph===1)?["spread","summon","rain"]
+                           :(ph===2)?["spread","summon","rain","beam","warp"]
+                                    :["spread","beam","warp","rain","spread","beam"]);
+        b.mouth=(b.state==="spread")?80:(b.state==="summon")?64:(b.state==="rain")?70:60;
+        telegraph(b,16,C.caries);
+      }
+    }
+    else if(b.state==="warp"){
+      /* 消えて、主人公の真上に出てから撃ち下ろす */
+      if(b.t<12){ b.fade=Math.max(0,1-b.t/10); b.noTouch=1; b.vx=0; }
+      else if(b.t===12){
+        /* 主人公の すぐ横に出る。真上に出すと ふつうの弾が届かず、ただ待つだけの時間になる（2026-09-21） */
+        b.x=inArena((p.x+6)+((b.x<p.x)?96:-96)-b.w/2,b.w);
+        b.y=Math.max(bossCeilY(b.x,b.w)+6,Math.min(floorY(b)-8,p.y-26));
+        flash=8;
+      }
+      else if(b.t<26) b.fade=Math.min(1,(b.t-12)/10);
+      else {
+        b.noTouch=0; b.fade=1;
+        if(b.t===30||b.t===46||(ph===3&&b.t===62)){
+          fanShot(b,p,(ph===3)?5:3,0.70,4.2,{w:10,h:6,dmg:2,kind:"beam",oy:0.60});
+          SFX.laser();
+        }
+        if(b.t>74){ b.state="hover"; b.t=0; }
       }
     }
     else if(b.state==="spread"){
-      if(b.t===24||b.t===46||(fast&&b.t===68)){
-        var n=fast?7:5;
+      var n=(ph===3)?9:(fast?7:5);
+      if(b.t===22||b.t===44||(fast&&b.t===66)){
         for(var i=0;i<n;i++){
-          var a=Math.PI*0.5+(-0.75+(i/(n-1))*1.5);
+          var a=Math.PI*0.5+(-0.85+(i/(n-1))*1.70);
           eshot({x:b.x+b.w*0.469,y:b.y+b.h*0.667,vx:Math.cos(a)*2.9,vy:Math.sin(a)*2.9-1.0,
                  dmg:3,kind:"dark",grav:0.05});
         }
@@ -4895,41 +5248,46 @@ mushiburn:{
       if(b.t>86){ b.state="hover"; b.t=0; }
     }
     else if(b.state==="summon"){
-      if((b.t===26||b.t===50) && enemies.length<2){
+      if((b.t===26||b.t===52) && enemies.length<4){
         enemies.push({sp:null,type:"w",x:b.x+b.w*0.250,y:b.y+b.h*0.733,w:14,h:14,vx:-1.2,vy:-3,hp:2,hurt:0,t:0});
         enemies.push({sp:null,type:"w",x:b.x+b.w*0.562,y:b.y+b.h*0.733,w:14,h:14,vx:1.2,vy:-3,hp:2,hurt:0,t:0});
         SFX.hit();
       }
-      if(b.t>72){ b.state="hover"; b.t=0; }
+      if(b.t===38) aimShot(b,p,3.4,{dmg:3,kind:"dark",grav:0.03,oy:0.55});
+      if(b.t>74){ b.state="hover"; b.t=0; }
     }
     else if(b.state==="rain"){
-      /* 天井から酸の雨 */
-      if(b.t>16 && b.t<70 && b.t%9===0){
-        var rx=arenaL()+20+Math.random()*(arenaR()-arenaL()-40);
+      /* 天井から酸の雨。暴走すると本数が増え、主人公の真上にも1本落ちる */
+      if(b.t>16 && b.t<(ph===3?88:70) && b.t%((ph===3)?6:9)===0){
+        var rx=arenaL()+20+Math.random()*(arenaW()-40);
         eshot({x:rx,y:-10,vx:0,vy:1.6,dmg:2,kind:"acid",grav:0.09});
+        if(ph===3) eshot({x:inArena(leadX(p,30),8),y:-10,vx:0,vy:2.0,dmg:2,kind:"acid",grav:0.09});
       }
-      if(b.t>86){ b.state="hover"; b.t=0; }
+      if(b.t>90){ b.state="hover"; b.t=0; }
     }
     else if(b.state==="beam"){
-      /* 主人公をねらって速い弾を連射 */
-      if(b.t>20 && b.t<62 && b.t%7===0){
-        var ddx=(p.x+6)-(b.x+b.w*0.500), ddy=(p.y+10)-(b.y+b.h*0.567);
-        var d=Math.hypot(ddx,ddy)||1;
-        eshot({x:b.x+b.w*0.438,y:b.y+b.h*0.500,w:10,h:6,vx:ddx/d*4.6,vy:ddy/d*4.6,dmg:2,kind:"beam"});
+      if(b.t>20 && b.t<(ph===3?70:62) && b.t%((ph===3)?5:7)===0){
+        aimShot(b,p,(ph===3)?5.2:4.6,{w:10,h:6,dmg:2,kind:"beam",oy:0.50});
         SFX.laser();
       }
-      if(b.t>78){ b.state="hover"; b.t=0; }
+      if(b.t>80){ b.state="hover"; b.t=0; }
     }
   },
   draw:function(b,x,y,hl){
-    /* 大魔王。半分から装甲が赤く燃える（色だけ差し替え） */
-    var t=(b.phase>=2)?{c:"#ff2a5f",d:"#8c1f42",l:"#ff9ab8",a:"#ffd447"}:null;
+    /* 大魔王。半分から装甲が赤く燃え、残り1/3でさらに白く光る（色だけ差し替え） */
+    var t=(b.phase>=3)?{c:"#ff0040",d:"#6d0020",l:"#ffb3c6",a:"#ffffff"}
+         :(b.phase>=2)?{c:"#ff2a5f",d:"#8c1f42",l:"#ff9ab8",a:"#ffd447"}:null;
     if(b.mouth>0){ t=t||{}; t.a="#ffffff"; }
+    var al=(b.fade===undefined)?1:b.fade;
+    if(al<=0.02) return;
+    if(al<1) ctx.globalAlpha=al;
     bossSprite("mushiburn",b,x,y,hl,t);
+    if(al<1) ctx.globalAlpha=1;
   }
 }
 
 };
+
 
 /* ---------------------------------------------------------------- 共通処理 */
 /* 天井のすぐ下のy。ボス部屋の天井は面ごとに高さが違い、柱が下りている所もある。
@@ -4957,11 +5315,21 @@ function makeBoss(kind){
     x:x, y:y,
     w:w, h:h, sc:BOSS_SCALE, hp:S.hp, maxhp:S.hp,
     vx:0, vy:0, face:-1, state:"intro", t:0,
-    hops:0, cycle:0, hurt:0, mouth:0, dead:0, grounded:false, phase:1};
+    hops:0, cycle:0, hurt:0, mouth:0, dead:0, grounded:false, phase:1,
+    /* 2026-09-21 追加ぶん。bag＝技の袋、tell＝ためている合図、faceLock＝向き固定、
+       guard＝盾で弾をはじく、noTouch＝体に触れてもダメージが無い（もぐり・ワープ中） */
+    bag:null, lastMove:"", tell:0, faceLock:0, guard:0, noTouch:0, sink:0, fade:1, dp:0, dt:0};
   if(S.init) S.init(b);
   /* 空を飛ぶボスの高さも、そのステージのボス部屋の床に合わせてずらす */
   if(b.hy!==undefined) b.hy+=bossOff();
   return b;
+}
+
+/* どの技も、長引いたら必ず待ちの型に戻す安全弁。
+   1つの技で固まったまま倒せない事故（2026-09-15）を二度と起こさないため。 */
+function bossIdle(b,S){
+  b.state=S.idle||S.start||"wait"; b.t=0; b.vx=0;
+  b.faceLock=0; b.guard=0; b.noTouch=0; b.sink=0; b.fade=1; b.dp=0; b.dt=0; b.tell=0;
 }
 
 function updateBoss(){
@@ -4969,6 +5337,7 @@ function updateBoss(){
   var b=boss, p=player, S=BOSSES[b.kind];
   if(b.hurt>0) b.hurt--;
   if(b.mouth>0) b.mouth--;
+  if(b.tell>0) b.tell--;
   b.t++;
 
   if(b.dead>0){
@@ -4989,8 +5358,13 @@ function updateBoss(){
     return;
   }
 
-  b.face = (p.x+6 < b.x+b.w/2) ? -1 : 1;
+  /* ⚠️ 壁に当たった印は毎フレーム消してから技を動かす。消さずにおくと、moveX を呼ばない技
+     （飛ぶボスなど）が前のフレームの印を拾って、始まった瞬間に終わる（2026-09-21） */
+  b.wallHit=false;
+  /* 技のあいだは向きを固定する（lockFace）。固定していないときだけ主人公の方を向く */
+  if(!b.faceLock) b.face = (p.x+6 < b.x+b.w/2) ? -1 : 1;
   S.ai(b,p);
+  if(b.t>420) bossIdle(b,S);                 /* 安全弁：7秒でどの技も必ず終わる */
 
   /* 落ちてきて止まった＝着地。drawBoss がつぶれる動きに使う（2026-09-12） */
   if(b.land>0) b.land--;
@@ -5005,6 +5379,12 @@ function updateBoss(){
     if(overlap(bl,b)){
       var mult=(b.mouth>0)?2:1;
       var weak=(bl.wid>0 && WEAK[b.kind]===bl.wid);   /* 効く武器なら3倍 */
+      /* 盾をかまえているあいだは、ふつうの弾ははじき返す。効く武器だけは通る（2026-09-21） */
+      if(b.guard>0 && !weak){
+        part(bl.x,bl.y,"#9fe8ff",6,2.2); SFX.hit();
+        if(bl.pierce||bl.big>=1) bl.cd=12; else pbullets.splice(k,1);
+        continue;
+      }
       if(weak) mult*=3;
       b.hp-=bl.dmg*mult; b.hurt=10;
       part(bl.x,bl.y,weak?"#ffffff":(mult>1?C.gold:C.mint),weak?12:6,weak?3:2);
@@ -5021,7 +5401,8 @@ function updateBoss(){
       }
     }
   }
-  if(b.dead===0 && overlap(p,b)) hurtPlayer(3,false,b.x+b.w/2);
+  /* もぐっている・消えているあいだは体に当たってもダメージは無い（2026-09-21） */
+  if(b.dead===0 && !b.noTouch && overlap(p,b)) hurtPlayer(3,false,b.x+b.w/2);
 }
 
 /* ===== 31_bosses2.js ===== */
@@ -5029,58 +5410,57 @@ function updateBoss(){
    小児矯正相談で流す患者説明動画「おくちクエスト」に出てくる ダラーン一味。
    絵の元は _work\2026-09-09_お口ポカン動画\quest\q2〜q5.png（院長指示 2026-09-12）。
    絵は 29_bossbody.js の共通の骨格（全ボス同じ大きさ・同じ四肢）を使う。
-   共通ルール（30_bosses.js と同じ）：口を開けている（b.mouth>0）あいだは受けるダメージが2倍。 */
+   共通ルール（30_bosses.js と同じ）：口を開けている（b.mouth>0）あいだは受けるダメージが2倍。
+   動きの作り方も 30_bosses.js と同じ（袋引き pickMove ＋ ためる telegraph ＋ 半分で型が変わる）。 */
 
 /* ---------------------------------------------------------------- 10 アケール
-   技＝くちを あけっぱなしに させる。大きく口を開けて吸い込み、
-   カピカピの風を吐く。吸い込んでいるあいだが弱点。 */
+   技＝くちを あけっぱなしに させる。吸い込む／カピカピの風／大跳ね／あくびの輪／すべり込み。 */
 BOSSES.akeeru={
   name:"アケール", title:"お口ポカンの主",
-  hp:68, w:18, h:26, top:2,
-  init:function(b){ b.step=0; b.blows=0; },
+  hp:84, w:18, h:26, top:2, idle:"wait",
+  init:function(b){ b.step=0; b.blows=0; b.hops=0; },
   ai:function(b,p){
     b.step++;
     b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
 
     if(b.state==="wait"){
+      freeFace(b);
       b.vx=b.face*0.8; moveX(b); clampX(b);
       if(b.wallHit) b.vx=-b.vx;
-      if(b.t>44){ b.t=0; b.vx=0; b.cycle=(b.cycle||0)+1;
-                  b.state=(b.cycle%3===2)?"hop":"suck"; }
+      if(b.t===22) telegraph(b,14,"#e8d7ff");
+      if(b.t>40){
+        b.t=0; b.vx=0; lockFace(b,p);
+        b.state=pickMove(b, rage(b)?["suck","hop","yawn","slip","suck"]:["suck","hop","yawn","slip"]);
+        if(b.state==="hop") b.hops=0;
+      }
     }
     else if(b.state==="suck"){
-      /* 吸い込みの後半だけ 口が開ききる＝弱点。プレイヤーをゆっくり引き寄せる */
+      /* 吸い込みの後半だけ 口が開ききる＝弱点。主人公をゆっくり引き寄せる */
       if(b.t>26) b.mouth=6;
       b.vx=0;
       var dx=(b.x+b.w/2)-(p.x+6);
-      if(Math.abs(dx)>56){
-        var sv=p.vx; p.vx=(dx>0?1:-1)*(b.hp<b.maxhp/2?1.15:0.9); moveX(p); p.vx=sv;
+      if(Math.abs(dx)>50){
+        var sv=p.vx; p.vx=(dx>0?1:-1)*(rage(b)?1.35:1.00); moveX(p); p.vx=sv;
       }
-      /* 吸い込みながら、ときどき ちぎれた風を吐く */
-      if(b.t>26 && b.t%22===0)
-        eshot({x:b.x+b.w/2-4,y:b.y+b.h*0.500,vx:b.face*4.2,vy:-1.2,dmg:2,kind:"dry",grav:0.10});
+      if(b.t>26 && b.t%18===0){
+        aimShot(b,p,4.2,{dmg:2,kind:"dry",grav:0.06,oy:0.50});
+        SFX.shoot();
+      }
       if(b.t%9===0) part(p.x+6,p.y+8,"#e8d7ff",2,1.4);
-      if(b.t>72){ b.t=0; b.state="blow"; b.blows=0; }
+      if(b.t>(rage(b)?84:70)){ b.t=0; b.state="blow"; b.blows=0; b.mouth=0; }
     }
     else if(b.state==="blow"){
-      /* カピカピの風。2〜3方向×3回 */
+      /* カピカピの風。半分からは本数も回数も増える */
       if(b.t%11===0){
-        var n=(b.hp<b.maxhp/2)?5:3;
-        for(var i=0;i<n;i++){
-          var a=-0.44+i*(0.88/(n-1));
-          eshot({x:b.x+b.w/2-4,y:b.y+b.h*0.542,vx:b.face*4.0*Math.cos(a),vy:4.0*Math.sin(a),
-                 dmg:3,kind:"dry",grav:0.02});
-        }
+        fanShot(b,p,rage(b)?5:3,0.90,4.0,{dmg:3,kind:"dry",grav:0.02,oy:0.542});
         SFX.shoot(); b.blows++;
       }
-      if(b.blows>=4){ b.t=0; b.state="wait"; b.mouth=0; }
+      if(b.blows>=(rage(b)?5:4)){ b.t=0; b.state="wait"; b.mouth=0; }
     }
     else if(b.state==="hop"){
-      /* 半分から。大きく跳ねて着地で地面をゆらす */
       if(b.grounded && b.vy===0 && b.t>4){
-        if(b.hops===undefined) b.hops=0;
-        if(b.hops<((b.hp<b.maxhp/2)?3:2)){
-          b.vy=-10.2; b.vx=bounceDir(b,p)*3.0; b.hops++;
+        if(b.hops<((rage(b))?3:2)){
+          leapAt(b,p,-10.2,3.0); b.hops++;
           if(b.hops>1){
             shake=10; SFX.hit(); part(b.x+b.w/2,b.y+b.h,"#e8d7ff",12,2.2);
             for(var s=0;s<2;s++)
@@ -5088,179 +5468,268 @@ BOSSES.akeeru={
           }
         } else {
           shake=14; SFX.hit(); part(b.x+b.w/2,b.y+b.h,"#e8d7ff",16,2.6);
-          for(var s2=0;s2<2;s2++)
-            eshot({x:b.x+b.w/2-7,y:b.y+b.h-14,vx:(s2?1:-1)*3.8,vy:0,dmg:3,kind:"shock",w:14,h:12,life:190});
-          b.hops=undefined; b.vx=0; b.t=0; b.state="wait";
+          shockWave(b,3.8,3,190);
+          b.hops=0; b.vx=0; b.t=0; b.state="wait";
         }
       }
       moveX(b); clampX(b);
       if(b.wallHit) b.vx=-b.vx;
+    }
+    else if(b.state==="yawn"){
+      /* 大あくび。まわり一周に風の輪が広がる。近くにいると逃げ場が無いので、離れて待つ技 */
+      b.vx=0; b.mouth=6;
+      if(b.t===1) telegraph(b,24,"#e8d7ff");
+      if(b.t===26||b.t===50||(rage(b)&&b.t===72)){
+        var n=10, off=((b.t/24)|0)*(Math.PI/n);
+        for(var i=0;i<n;i++){
+          var a=off+i*(Math.PI*2/n);
+          eshot({x:b.x+b.w/2-4,y:b.y+b.h*0.45,vx:Math.cos(a)*3.0,vy:Math.sin(a)*3.0,
+                 dmg:2,kind:"dry",grav:0.03});
+        }
+        SFX.shoot(); shake=7;
+      }
+      if(b.t>(rage(b)?92:70)){ b.t=0; b.state="wait"; b.mouth=0; }
+    }
+    else if(b.state==="slip"){
+      /* 口を開けたまま床をすべってくる。開いている口＝弱点 */
+      if(b.t<18){ b.vx=0; if(b.t===1) telegraph(b,16,"#e8d7ff"); }
+      else {
+        if(b.t<40) b.mouth=6;            /* 口が開いている＝弱点なのは 走り出しだけ */
+        if(b.t===18){ b.vx=b.face*(rage(b)?5.6:4.6); SFX.dash(); }
+        moveX(b); clampX(b);
+        if(b.t%4===0) part(b.x+b.w/2,b.y+b.h,"#e8d7ff",2,1.4);
+        if(b.wallHit){ b.face=-b.face; b.vx=b.face*(rage(b)?5.6:4.6); shake=8; SFX.hit(); b.slips=(b.slips||0)+1; }
+        if((b.slips||0)>=2||b.t>96){ b.slips=0; b.vx=0; b.mouth=0; b.t=0; b.state="wait"; }
+      }
     }
   },
   draw:function(b,x,y,hl){ bossSprite("akeeru",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 };
 
 /* ---------------------------------------------------------------- 11 シタオチー
-   技＝ベロを したに しずめる。両手のおもりを叩きつけて地を這う衝撃波。
-   投げたおもりは山なりに飛ぶ。 */
+   技＝ベロを したに しずめる。叩きつけ／山なりのおもり投げ／鎖のふりまわし／四連の地ならし。 */
 BOSSES.shitaochi={
   name:"シタオチー", title:"おもり使い",
-  hp:60, w:18, h:26, top:2,
-  init:function(b){ b.step=0; b.arm=0; },
+  hp:64, w:18, h:26, top:2, idle:"wait",
+  init:function(b){ b.step=0; b.arm=0; b.chainA=0; },
   ai:function(b,p){
     b.step++;
     b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
 
     if(b.state==="wait"){
+      freeFace(b);
       b.vx=b.face*1.0; moveX(b); clampX(b);
       if(b.wallHit) b.vx=-b.vx;
       b.arm=Math.sin(b.t*0.09)*4;
+      if(b.t===20) telegraph(b,14,"#bfe9f5");
       if(b.t>34){
-        b.t=0; b.vx=0; b.cycle=(b.cycle||0)+1;
-        b.state=(b.cycle%2===0)?"slam":"throw";
+        b.t=0; b.vx=0; lockFace(b,p);
+        b.state=pickMove(b, rage(b)?["slam","throw","chain","quake","throw"]:["slam","throw","chain","quake"]);
       }
     }
     else if(b.state==="slam"){
-      /* おもりを振り上げて（0〜26）叩きつける */
       b.arm=(b.t<18)?(-b.t*0.8):6;
-      if(b.t===18 || (b.t===40 && b.hp<b.maxhp/2)){
+      if(b.t===18 || (b.t===40 && rage(b))){
         shake=12; SFX.hit(); part(b.x+b.w/2,b.y+b.h,"#bfe9f5",14,2.4);
-        for(var s=0;s<2;s++)
-          eshot({x:b.x+b.w/2-7,y:b.y+b.h-14,vx:(s?1:-1)*4.4,vy:0,dmg:4,kind:"shock",w:14,h:12,life:230});
-        /* 叩きつけた衝撃で、おもりの破片が山なりに散る */
+        shockWave(b,4.4,4,230);
         for(var q=0;q<2;q++)
           eshot({x:b.x+b.w/2-6,y:b.y+b.h*0.435,vx:(q?1:-1)*2.2,vy:-5.2,dmg:3,kind:"omori",w:11,h:11,grav:0.28});
         b.mouth=30;                     /* 力んで口が開く＝弱点 */
       }
-      if(b.t>46){ b.t=0; b.arm=0; b.state="wait"; }
+      if(b.t>(rage(b)?56:46)){ b.t=0; b.arm=0; b.state="wait"; }
     }
     else if(b.state==="throw"){
-      /* おもりを山なりに投げる。半分からは2個 */
-      if(b.t===14 || b.t===30 || (b.hp<b.maxhp/2 && b.t===46)){
-        var sp=3.0+((b.t/16)|0)*0.9;
-        eshot({x:b.x+b.w/2-6,y:b.y+b.h*0.348,vx:b.face*sp,vy:-4.6,dmg:4,kind:"omori",w:13,h:13,grav:0.26});
+      /* おもりを山なりに投げる。主人公の「少し先」に落ちる */
+      if(b.t===14 || b.t===32 || (rage(b) && b.t===50)){
+        var g=0.26, vy=-5.0, air=(-2*vy)/g;
+        var dx=leadX(p,24)-(b.x+b.w/2);
+        eshot({x:b.x+b.w/2-6,y:b.y+b.h*0.348,w:13,h:13,vy:vy,
+               vx:Math.max(-5.4,Math.min(5.4,dx/air)),dmg:4,kind:"omori",grav:g});
         SFX.shoot();
       }
       b.arm=(b.t<14)?(-b.t*0.9):4;
-      if(b.t>52){ b.t=0; b.arm=0; b.state="wait"; }
+      if(b.t>56){ b.t=0; b.arm=0; b.state="wait"; }
+    }
+    else if(b.state==="chain"){
+      /* おもりを鎖でぐるぐる回しながら にじり寄る。近づけない＝離れて待つ技（2026-09-21） */
+      b.vx=b.face*(rage(b)?1.2:0.8); moveX(b); clampX(b);
+      if(b.wallHit) b.face=-b.face;
+      if(b.t===1) telegraph(b,20,"#bfe9f5");
+      if(b.t>20){
+        b.chainA+=(rage(b)?0.20:0.15);
+        b.arm=Math.sin(b.chainA)*6;
+        for(var s2=0;s2<2;s2++){
+          var a2=b.chainA+s2*Math.PI;
+          eshot({x:b.x+b.w/2-6+Math.cos(a2)*40,y:b.y+b.h*0.45-6+Math.sin(a2)*40,
+                 w:13,h:13,vx:0,vy:0,dmg:3,kind:"omori",life:2});
+        }
+      }
+      if(b.t>(rage(b)?112:86)){ b.t=0; b.arm=0; b.vx=0; b.state="wait"; }
+    }
+    else if(b.state==="quake"){
+      /* 地ならし。間をおいて4回、左右に衝撃波が走る */
+      b.vx=0; b.arm=(b.t%20<10)?-4:6;
+      if(b.t%(rage(b)?18:24)===10 && b.t<(rage(b)?80:100)){
+        shake=10; SFX.hit(); part(b.x+b.w/2,b.y+b.h,"#bfe9f5",8,2.0);
+        shockWave(b,rage(b)?4.8:3.8,3,240);
+      }
+      if(b.t>(rage(b)?96:112)){ b.t=0; b.arm=0; b.state="wait"; }
     }
   },
   draw:function(b,x,y,hl){ bossSprite("shitaochi",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 };
 
 /* ---------------------------------------------------------------- 12 マルノミン
-   技＝かまずに のみこませる。口を開けたまま突進し、
-   立ち止まって カミカミ してから 食べものを吐き出す。突進中は口＝弱点。 */
+   技＝かまずに のみこませる。フェイント突進／カミカミして吐き出す／のしかかり／吸いこみ。 */
 BOSSES.marunomin={
   name:"マルノミン", title:"まるのみ大王",
-  hp:70, w:18, h:26, top:2,
-  init:function(b){ b.step=0; b.chew=0; },
+  hp:74, w:18, h:26, top:2, idle:"wait",
+  init:function(b){ b.step=0; b.chew=0; b.rushes=0; b.spat=0; },
   ai:function(b,p){
     b.step++;
     b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b);
 
     if(b.state==="wait"){
-      b.vx=0;
-      if(b.t>22){ b.t=0; b.cycle=(b.cycle||0)+1; b.state=(b.cycle%3===0)?"jump":"rush"; }
+      freeFace(b); b.vx=0;
+      if(b.t===12) telegraph(b,14,"#e8f5a8");
+      if(b.t>22){
+        b.t=0; lockFace(b,p);
+        b.state=pickMove(b, rage(b)?["rush","jump","inhale","rush","jump"]:["rush","jump","inhale","rush"]);
+        if(b.state==="rush") b.rushes=0;
+      }
     }
     else if(b.state==="rush"){
-      /* 突進。走り出しの40フレームだけ口が開いている＝弱点 */
+      /* 走り出しの30フレームだけ口が開いている＝弱点。半分からは一度止まって見せる */
       if(b.t<30) b.mouth=6;
-      if(b.t===1){ b.rushes=0; b.vx=b.face*((b.hp<b.maxhp/2)?6.0:4.8); }
+      if(b.t===1){ b.vx=b.face*(rage(b)?6.0:4.8); }
+      if(rage(b) && b.t===20){ b.vx=0; }                       /* フェイント */
+      if(rage(b) && b.t===32){ lockFace(b,p); b.vx=b.face*6.6; SFX.dash(); }
       moveX(b); clampX(b);
       if(b.wallHit){
-        b.vx=-b.vx; b.rushes=(b.rushes||0)+1; shake=8; SFX.hit();
-        /* 壁にぶつかった はずみで 食べものを吐く */
-        eshot({x:b.x+b.w/2-5,y:b.y+b.h*0.360,vx:(b.vx>0?1:-1)*2.4,vy:-4.6,dmg:3,kind:"food",w:11,h:11,grav:0.24});
+        b.vx=-b.vx; b.rushes++; shake=8; SFX.hit();
+        eshot({x:b.x+b.w/2-5,y:b.y+b.h*0.360,vx:(b.vx>0?1:-1)*2.4,vy:-4.6,
+               dmg:3,kind:"food",w:11,h:11,grav:0.24});
       }
       if(b.rushes>=3){ b.vx=0; b.mouth=0; b.t=0; b.chew=0; b.spat=0; b.state="chewing"; }
     }
     else if(b.state==="chewing"){
-      /* カミカミのまね（パクパク）→ 食べものを3つ吐き出す */
       b.vx=0;
       if(b.t%3===0) b.chew++;
       if(b.chew>=8){
-        if(b.t%8===0 && b.spat<5){
+        if(b.t%8===0 && b.spat<(rage(b)?7:5)){
           eshot({x:b.x+b.w/2-5,y:b.y+b.h*0.360,vx:b.face*(2.2+b.spat*0.7),vy:-4.6,
                  dmg:3,kind:"food",w:11,h:11,grav:0.24});
           b.spat++; SFX.shoot();
         }
-        if(b.spat>=5){ b.chew=0; b.t=0; b.state="wait"; }
+        if(b.spat>=(rage(b)?7:5)){ b.chew=0; b.t=0; b.state="wait"; }
       }
     }
     else if(b.state==="jump"){
-      if(b.t===1){ b.vy=-11.0; b.vx=bounceDir(b,p)*2.8; }
+      if(b.t===1){ leapAt(b,p,-11.0,3.0); }
       moveX(b); clampX(b);
       if(b.wallHit) b.vx=-b.vx;
       if(b.grounded && b.vy===0 && b.t>6){
         shake=16; SFX.hit(); part(b.x+b.w/2,b.y+b.h,"#e8f5a8",16,2.8);
-        for(var s=0;s<2;s++)
-          eshot({x:b.x+b.w/2-7,y:b.y+b.h-14,vx:(s?1:-1)*4.2,vy:0,dmg:3,kind:"shock",w:14,h:12,life:200});
-        /* 着地の はずみで 食べものが降る */
+        shockWave(b,4.2,3,210);
         for(var q=0;q<3;q++)
-          eshot({x:b.x+b.w/2-5+(q-1)*14,y:b.y+b.h*0.120,vx:(q-1)*1.6,vy:-5.0,dmg:3,kind:"food",w:11,h:11,grav:0.26});
-        b.vx=0; b.t=0; b.state="wait";
+          eshot({x:b.x+b.w/2-5+(q-1)*14,y:b.y+b.h*0.120,vx:(q-1)*1.6,vy:-5.0,
+                 dmg:3,kind:"food",w:11,h:11,grav:0.26});
+        b.jumps=(b.jumps||0)+1;
+        if(rage(b) && b.jumps<2){ b.t=0; leapAt(b,p,-11.0,3.4); }   /* 半分からは続けて2回 */
+        else { b.jumps=0; b.vx=0; b.t=0; b.state="wait"; }
       }
+    }
+    else if(b.state==="inhale"){
+      /* 大きく吸いこんでから、たまった食べものを一気に吐き出す（2026-09-21） */
+      b.vx=0;
+      if(b.t<40){
+        b.mouth=6;
+        var dx2=(b.x+b.w/2)-(p.x+6);
+        if(Math.abs(dx2)>44){ var sv2=p.vx; p.vx=(dx2>0?1:-1)*(rage(b)?1.5:1.1); moveX(p); p.vx=sv2; }
+        if(b.t%8===0) part(p.x+6,p.y+8,"#e8f5a8",2,1.4);
+        if(b.t===1) telegraph(b,20,"#e8f5a8");
+      } else if(b.t===42||b.t===56||(rage(b)&&b.t===70)){
+        fanShot(b,p,rage(b)?5:3,1.10,4.2,{w:11,h:11,dmg:3,kind:"food",grav:0.10,oy:0.36});
+        SFX.shoot(); shake=6; b.mouth=0;
+      }
+      if(b.t>(rage(b)?92:76)){ b.t=0; b.mouth=0; b.state="wait"; }
     }
   },
   draw:function(b,x,y,hl){ bossSprite("marunomin",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
 };
 
 /* ---------------------------------------------------------------- 13 マガリン
-   技＝せなかを まるめさせる かくれボス。姿を消して真上から のしかかる。
-   リュックのひもを むちのように振る。 */
+   技＝せなかを まるめさせる かくれボス。三段のむち／走りながらのむち／姿を消してのしかかり。 */
 BOSSES.magarin={
   name:"マガリン", title:"かくれボス",
-  hp:76, w:18, h:26, top:2,
-  init:function(b){ b.step=0; b.fade=1; b.whip=0; },
+  hp:80, w:18, h:26, top:2, idle:"wait",
+  init:function(b){ b.step=0; b.fade=1; b.whip=0; b.drops=0; },
   ai:function(b,p){
     b.step++;
     if(b.state!=="drop"){ b.vy=Math.min(MAXFALL,b.vy+GRAV); moveY(b); }
 
     if(b.state==="wait"){
+      freeFace(b);
       b.fade=1; b.vx=b.face*1.2; moveX(b); clampX(b);
       if(b.wallHit) b.vx=-b.vx;
-      if(b.t>30){ b.t=0; b.vx=0; b.cycle=(b.cycle||0)+1; b.state=(b.cycle%2===0)?"whipup":"hide"; }
+      if(b.t===18) telegraph(b,14,"#ffd0a0");
+      if(b.t>30){
+        b.t=0; b.vx=0; lockFace(b,p);
+        b.state=pickMove(b, rage(b)?["whipup","hide","runwhip","hide","whipup"]:["whipup","hide","runwhip"]);
+      }
     }
     else if(b.state==="whipup"){
-      /* ひもを振りかぶって、前へ しならせる */
+      /* ひもを三段に しならせる。高さがずれて飛んでくるので、しゃがむ・跳ぶを選ぶ技 */
       b.whip=Math.min(1,b.t/12);
-      if(b.t===14 || (b.t===32 && b.hp<b.maxhp/2)){
-        var n=(b.hp<b.maxhp/2)?3:2;
+      if(b.t===14 || b.t===30 || (rage(b) && b.t===46)){
+        var row=((b.t-14)/16)|0;
+        var n=(rage(b)?3:2);
         for(var i=0;i<n;i++)
-          eshot({x:b.x+(b.face>0?b.w:-12),y:b.y+b.h*0.167+i*13,vx:b.face*6.2,vy:0,
+          eshot({x:b.x+(b.face>0?b.w:-12),y:b.y+b.h*0.167+((i+row)%3)*13,vx:b.face*6.2,vy:0,
                  dmg:4,kind:"himo",w:16,h:6,life:170});
         SFX.shoot();
       }
-      if(b.t>40){ b.t=0; b.whip=0; b.state="wait"; }
+      if(b.t>(rage(b)?58:44)){ b.t=0; b.whip=0; b.state="wait"; }
+    }
+    else if(b.state==="runwhip"){
+      /* 走りながら ひもを振る。逃げ場をせまくしてくる（2026-09-21） */
+      if(b.t===1){ b.vx=b.face*3.4; SFX.dash(); }
+      moveX(b); clampX(b);
+      if(b.wallHit){ b.face=-b.face; b.vx=b.face*3.4; }
+      b.whip=(b.t%18<9)?1:0.3;
+      if(b.t%18===9)
+        eshot({x:b.x+(b.face>0?b.w:-12),y:b.y+b.h*0.30,vx:b.face*5.6,vy:0,dmg:3,kind:"himo",w:16,h:6,life:150});
+      if(b.t>(rage(b)?102:78)){ b.t=0; b.whip=0; b.vx=0; b.state="wait"; }
     }
     else if(b.state==="hide"){
-      /* すーっと消える */
-      b.vx=0;
+      /* すーっと消える。消えている間は体に当たらない */
+      b.vx=0; b.noTouch=1;
       b.fade=Math.max(0,1-b.t/14);
+      if(b.t%6===0){                         /* にせの気配（どこに出るか迷わせる） */
+        var fx=arenaL()+20+Math.random()*(arenaW()-40);
+        part(fx,floorY(b)+10,"#ffd0a0",3,1.4);
+      }
       if(b.t>16){
         b.t=0; b.state="drop";
-        b.x=Math.max(arenaL(),Math.min(arenaR()-b.w,p.x+6-b.w/2));
-        b.y=Math.max(0,p.y-150);
+        b.x=inArena(leadX(p,20)-b.w/2,b.w);       /* 走った先を読んで落ちてくる */
+        b.y=Math.max(bossCeilY(b.x,b.w)+4,p.y-150);
         b.vy=0;
       }
     }
     else if(b.state==="drop"){
-      /* 真上に現れて のしかかる */
       b.fade=Math.min(1,b.t/6);
+      if(b.t>4) b.noTouch=0;
       if(b.t>7){
         b.vy=Math.min(MAXFALL,b.vy+GRAV*2.0); moveY(b);
         if(b.grounded && b.vy===0){
           shake=18; SFX.hit(); part(b.x+b.w/2,b.y+b.h,"#ffd0a0",18,3.0);
-          for(var s=0;s<2;s++)
-            eshot({x:b.x+b.w/2-7,y:b.y+b.h-14,vx:(s?1:-1)*4.6,vy:0,dmg:4,kind:"shock",w:14,h:12,life:220});
-          /* 落ちた はずみで ひもが四方へ はねる */
-          for(var q=0;q<2;q++)
-            eshot({x:b.x+b.w/2-8,y:b.y+b.h*0.292,vx:(q?1:-1)*4.0,vy:-3.4,dmg:3,kind:"himo",w:16,h:6,grav:0.22,life:120});
-          b.drops=(b.drops||0)+1;
+          shockWave(b,4.6,4,230);
+          for(var q2=0;q2<2;q2++)
+            eshot({x:b.x+b.w/2-8,y:b.y+b.h*0.292,vx:(q2?1:-1)*4.0,vy:-3.4,
+                   dmg:3,kind:"himo",w:16,h:6,grav:0.22,life:120});
+          b.drops++;
           b.mouth=38;                   /* どすんの反動で ひと息＝弱点 */
-          /* 半分から、続けてもう一度のしかかる */
-          if(b.hp<b.maxhp/2 && b.drops%2===1){ b.t=0; b.state="hide"; }
+          if(rage(b) && b.drops%3!==0){ b.t=0; b.state="hide"; }   /* 半分からは3回続けて */
           else { b.t=0; b.state="wait"; }
         }
       }
@@ -5275,6 +5744,7 @@ BOSSES.magarin={
     ctx.globalAlpha=1;
   }
 };
+
 
 /* ===== 39_shin.js ===== */
 /* ============================ 主人公「しんちゃまくん」の描画 ============================
@@ -6680,7 +7150,9 @@ function drawBoss(){
   if(!boss||boss.gone) return;                        /* やられた瞬間に体は消え、玉だけが飛ぶ */
   var b=boss, S=BOSSES[b.kind];
   var x=Math.round(b.x), y=Math.round(b.y);
-  var hl=b.hurt>0 && Math.floor(b.hurt/2)%2===0;
+  /* 白く光るのは「被弾した」ときと「つぎの技をためている」とき。
+     ためている合図が見えるから、むずかしくしても見てから避けられる（2026-09-21） */
+  var hl=(b.hurt>0 && Math.floor(b.hurt/2)%2===0) || (b.tell>0 && Math.floor(frame/3)%2===0);
   ctx.fillStyle="rgba(0,0,0,.35)";
   ctx.beginPath(); ctx.ellipse(x+b.w/2,bossFloorY(),b.w/2,4,0,0,Math.PI*2); ctx.fill();   /* 足もとの影（240固定は17行の面だったころの名残り。2026-09-15） */
   var m=bossMotion(b), cx=x+b.w/2, by=y+b.h;

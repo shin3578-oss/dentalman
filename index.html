@@ -1049,7 +1049,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-21 22:37";
+var BUILD_AT="2026-09-22 10:09";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -4502,6 +4502,10 @@ function arenaR(){ return GATE_X2-ARENA_PAD; }
    30/36 に縮めて「主人公と同じ大きさ」にする（院長指示 2026-09-15）。
    登場シーン・タイトル・エンディングの大きさは変えない（あちらは b.sc を付けない）。 */
 var BOSS_SCALE=30/36;
+/* ボスの打たれ強さ（院長指示 2026-09-22「ボス、もう少しダメージをうけにくくして」）。
+   1.0 が元の強さ。全ボス（第1章8体＋大魔王＋第2章4体）の体力にまとめて掛かるので、
+   強さの調整はこの数字1つだけ直せばよい。各ボスの素の体力は BOSSES[kind].hp */
+var BOSS_TOUGH=1.4;
 function clampX(b){
   var l=arenaL(), r=arenaR()-b.w;
   if(b.x<l){ b.x=l; b.wallHit=true; }
@@ -5007,10 +5011,11 @@ function makeBoss(kind){
   var x=Math.round(arenaL()+(arenaR()-arenaL())*0.70)-Math.round(w/2);   /* 主人公は左から入るので右寄りに出す */
   var y=bossOff()+(S.y0===undefined?-60:S.y0);
   var cy=bossCeilY(x,w);
+  var bhp=Math.round(S.hp*BOSS_TOUGH);   /* 打たれ強さを掛けた体力 */
   if(y<cy+2) y=cy+2;                                   /* 天井より上には出さない */
   var b={kind:kind,
     x:x, y:y,
-    w:w, h:h, sc:BOSS_SCALE, hp:S.hp, maxhp:S.hp,
+    w:w, h:h, sc:BOSS_SCALE, hp:bhp, maxhp:bhp,
     vx:0, vy:0, face:-1, state:"intro", t:0,
     hops:0, cycle:0, hurt:0, mouth:0, dead:0, grounded:false, phase:1};
   if(S.init) S.init(b);

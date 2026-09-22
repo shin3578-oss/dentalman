@@ -10,6 +10,33 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="デンタルマン">
 <meta name="robots" content="noindex,nofollow">
+<!-- 計測（GA4・2026-09-22）。医院HP（oval-dc.net）と同じプロパティ G-F3RXZ8RVFV。
+     ・page_path を /game/dentalman に固定＝医院HPのトップ "/" と混ざらないようにする
+     ・?src=ipad（待合のiPad）/ card（会計で渡すカード）/ cm（CMのQR）/ hp（医院HP）で入口を分ける
+     ・遊びの中身（ステージ突破・全クリア・ごほうびQRのタップ）を DMtrack() で送る
+     ※クロスドメイン計測（github.io ↔ oval-dc.net の名寄せ）は GA4 の管理画面で
+       「ドメインの設定」に両方を登録するまで効かない。未設定。 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-F3RXZ8RVFV"></script>
+<script id="dm-analytics">
+window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+(function(){
+  var m=/[?&]src=([A-Za-z0-9_-]{1,16})/.exec(location.search);
+  window.DM_SRC=m?m[1]:"direct";
+  try{
+    gtag("js", new Date());
+    gtag("config","G-F3RXZ8RVFV",{page_path:"/game/dentalman",page_title:"デンタルマン"});
+    gtag("set","user_properties",{dm_src:window.DM_SRC});
+  }catch(e){}
+})();
+function DMtrack(name,params){
+  try{
+    var p={dm_src:window.DM_SRC||"direct"}, k;
+    if(params){ for(k in params){ if(Object.prototype.hasOwnProperty.call(params,k)) p[k]=params[k]; } }
+    gtag("event",name,p);
+  }catch(e){}
+}
+</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304121e'/%3E%3Cpath d='M8 9c2-2 4-1 8-1s6-1 8 1c2 2 1 7-1 12-1 3-3 3-4 0l-2-5h-2l-2 5c-1 3-3 3-4 0C7 16 6 11 8 9z' fill='%23eaf7f6'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -734,7 +761,7 @@
         <img class="qr" alt="ごほうびページのQRコード" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAAEgCAIAAACb4TnXAAAFoklEQVR4nO3dUW7kNhBAQSvI/a88OcHOIgQf1ZKr/j2SZT/QQJvU9fl8foDGP9HnAgKDlhUMQgKDkMAgJDAICQxCAoOQwCAkMAgJDEICg5DAICQwCAkMQgKD0L8LX3Nd188z7d1d+qfnsHaVvU917z2ceW7zLTwHKxiEBAYhgUFIYBASGIQEBiGBQUhgMGzQ/MWEc4IX5ph7R59fPu3L81l4dGu3vXZ7Zz7t88zfny+sYBASGIQEBiGBQUhgEBIYhAQGIYHBcwbNw3fsnvHl3tbGsgsbjY9d6Jjrmb8/VjAICQxCAoOQwCAkMAgJDEICg5DA4BWD5odaG+YufNqCCTua+c4KBiGBQUhgEBIYhAQGIYFBSGAQMgfbP+x634bC57709XZWMAgJDEICg5DAICQwCAkMQgKDkMDgFYPm923mO/bS1403MPxCw+9hgRUMQgKDkMAgJDAICQxCAoOQwCAkMHjOoPmhW18nvHB1767q4e+qfdnvzxdWMAgJDEICg5DAICQwCAkMQgKDkMBg2KD5oXtL1+wdpO6d2D70ZbCfwfe2nRUMQgKDkMAgJDAICQxCAoOQwCB07d0VN2HEcftAafvzObYN8fYXz34GPJ+9D8EKBiGBQUhgEBIYhAQGIYFBSGAQEhi84hWyxyaSx6alE2bQez/tZT+Ia8A5wVYwCAkMQgKDkMAgJDAICQxCAoOQwOAVg+ZjU7/bN1xvv8rCINWBxD8z9tdbwSAkMAgJDEICg5DAICQwCAkM3r7hcq+1t0hudOxk3wkDt723fS09umPPZ4EVDEICg5DAICQwCAkMQgKDkMAgJDAIPXXQvDb6PPMK2WPf0d6HsPYlEw7c/dx9hPAXVjAICQxCAoOQwCAkMAgJDEICg5DA4DmD5mOjz2NbXxcuNGEj7Rd757wTBvGfrb8/e1nBICQwCAkMQgKDkMAgJDAICQxCAoPfuqN57zT5oQdxb3f7HPyz+5EufNWxh2AFg5DAICQwCAkMQgKDkMAgJDAYNgfbPkPYe6jtse2bG79kyDDnzLtYr93jzTNvvnWyL4zjT0QICQxCAoOQwCAkMAgJDEICg9A14WTWYzvz9k4kz3zayUd3+4x+zYQZ/Z9YwSAkMAgJDEICg5DAICQwCAkMQgKDYYPm7bPFM292PebYvQ0/WvizdRA/+UJfWMEgJDAICQxCAoOQwCAkMAgJDEICg+e8QnbCbtnJ+3+HT40XJraT3+X7OXWG+RdWMAgJDEICg5DAICQwCAkMQgKDt2+4fOiFju0TnbwhdfL4bgIrGIQEBiGBQUhgEBIYhAQGIYFBSGDwnA2Xa45tmPvTB65d6Nh8c+FCE2bQt3OyL7ycPxEhJDAICQxCAoOQwCAkMAgJDIbtaH6fhx4h/Kve5XttfdrHWMEgJDAICQxCAoOQwCAkMAgJDJ5zsu9wEwYjtz/V299Jec1+X+ZeVjAICQxCAoOQwCAkMAgJDEICg5DA4Dkn+06Y5N4+Bz92oOz2zY4LF9p4lWXH/lli4UJWMAgJDEICg5DAICQwCAkMQgKDkMAgdO4VssOHlbcf37vXhPfEXnd/sxP+7cEKBiGBQUhgEBIYhAQGIYFBSGAQEhi8YtD8e0w4GvqL2998e+zRTfhBWMEgJDAICQxCAoOQwCAkMAgJDELmYH+xMDDZvs/v9rfLrt3AtfW2j33a3h+fFQxCAoOQwCAkMAgJDEICg5DAICQweMWgecIxqw/9jm4/i3ftBq7//2nHtkge20JqBYOQwCAkMAgJDEICg5DAICQwCAkMnjNoPrb3dsJt335y7d7579qX7H0IEzZi29EMj+FPRBAYPJMVDEICg5DAICQwCAkMQtf7NhrDHFYwCAkMQgKDkMAgJDAICQxCAoOQwCAkMAgJDEICg5DAICQwCAkMQgKDkMDgp/MfvuE/WD54n4kAAAAASUVORK5CYII=">
         <div class="rewardtext">
           <p><b>クリアした人だけの ページがあります。</b></p>
-          <p>QRを読みこむか、<a class="rewardlink" href="https://oval-dc.net/dentalman-clear" target="_blank" rel="noopener">ここをタップ</a></p>
+          <p>QRを読みこむか、<a class="rewardlink" href="https://oval-dc.net/dentalman-clear" target="_blank" rel="noopener" onclick="DMtrack('reward_tap')">ここをタップ</a></p>
           <p class="rewardnote">あいことばは、つぎに来たとき 受付で見せてね。</p>
         </div>
       </div>
@@ -1049,7 +1076,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-22 10:09";
+var BUILD_AT="2026-09-22 20:52";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -1362,11 +1389,14 @@ function trampPx(x,y){
    WATER の面は全部が水。WATER_ROW のある面は、その行より下だけが水。
    TIDE {amp:行数, per:フレーム} で水面が上下する（8面 夜の海辺の潮）。 */
 function waterLineY(){
+  /* ボスがためた水（BFX.flood）も水面として扱う。どちらか高いほう＝浅いほうを採る
+     （2026-09-22 プラーク・スライムが部屋を水で満たす技） */
+  var bf=(typeof BFX!=="undefined")?BFX.flood:1e9;
   if(WATER) return -1e9;
-  if(WATER_ROW<0) return 1e9;
+  if(WATER_ROW<0) return Math.min(1e9,bf);
   var y=WATER_ROW*TS;
   if(TIDE) y+=Math.sin(frame*Math.PI*2/TIDE.per)*TIDE.amp*TS;
-  return y;
+  return Math.min(y,bf);
 }
 function inWaterY(y){ return y>waterLineY(); }
 
@@ -1503,6 +1533,13 @@ var SFX={
   dash:function(){noise(0.18,0.14,600);},
   crumble:function(){noise(0.22,0.18,380); beep(140,0.12,"square",0.12,60);},   /* 足場が崩れる（2026-09-07） */
   laser:function(){beep(1200,0.3,"sawtooth",0.16,180);},
+  /* ボスの新しい技の音（2026-09-22） */
+  clink:function(){beep(1900,0.06,"square",0.15,1100);},              /* 弾がはじかれた */
+  timestop:function(){beep(1500,0.55,"sine",0.22,80); noise(0.4,0.10,300);},  /* 時間が止まる */
+  wind:function(){noise(0.7,0.11,820,undefined,undefined,0.6);},      /* 風 */
+  quake:function(){noise(0.55,0.32,150,undefined,undefined,0.7);},    /* 地ならし */
+  splash:function(){noise(0.35,0.24,520); beep(300,0.2,"sine",0.14,900);},    /* 水があふれる */
+  charge_up:function(){beep(240,0.3,"square",0.16,1000);},            /* ボスが技を溜める */
   charge3:function(){beep(220,0.34,"sawtooth",0.26,1800); setTimeout(function(){beep(1600,0.16,"square",0.18,600);},90);},
   /* ボスを選んだ瞬間の決定音（ピロリロリン → ドン） */
   select:function(){
@@ -2824,8 +2861,10 @@ function moveX(e){
 }
 /* 水の中：ゆっくり沈み、何度でも water stroke で浮き上がれる */
 /* w＝その場所が水の中か（WATER の面は全部、WATER_ROW のある面は水面より下だけ。2026-09-07） */
-function gravOf(w){ return w?0.19:GRAV; }
-function fallOf(w){ return w?2.7:MAXFALL; }
+/* BFX.gmul＝ボスがかける重力の倍率（1が普通・小さいほど ふわっと浮いて滞空時間が長い。2026-09-22） */
+function gmulOf(){ return (typeof BFX!=="undefined")?BFX.gmul:1; }
+function gravOf(w){ return (w?0.19:GRAV)*gmulOf(); }
+function fallOf(w){ var g=gmulOf(); return (w?2.7:MAXFALL)*(g<1?Math.max(0.62,g):1); }
 function jumpOf(w){ return w?-5.3:JUMPV; }
 function playerInWater(){ var p=player; return inWaterY(p.y+p.h/2); }
 
@@ -2971,6 +3010,7 @@ function makeSpawns(){
 
 function reset(){
   gateOn=false; boss=null; score=0; frame=0; shake=0; flash=0;
+  bfxReset();                                   /* 風・水・時間停止を持ち越さない（2026-09-22） */
   enemies=[]; pbullets=[]; ebullets=[]; parts=[]; pickups=[]; deathOrbs=[];
   makeSpawns();
   makePlatforms();
@@ -3121,6 +3161,25 @@ function update(){
   /* keys の立ち上がりだけでなく taps（1フレームより短いタップ）も拾う。
      画面ボタンのちょん押しがフレームの合間に消えると
      「押したのにジャンプしない」になるため。 */
+  /* --- ボスの仕掛け（風・水・重力・時間停止・しびれ。2026-09-22） --- */
+  bfxUpdate();
+  if(BFX.stop>0){
+    /* フラッシュマンの時間停止：主人公だけ動けない。ボスは動いて技を仕込む */
+    BFX.stop--;
+    p.vx=0;
+    taps.jump=false; taps.slide=false; taps.fire=false; lastFire=keys.fire;
+    if(frame%4===0) part(p.x+2+Math.random()*10,p.y+2+Math.random()*14,"#bfe9ff",1,0.8);
+    updateBoss();
+    updateParts();
+    return;
+  }
+  if(BFX.stun>0){
+    /* 地ならしでしびれている：操作を受け付けない（跳んでいれば しびれない） */
+    keys.left=false; keys.right=false; keys.up=false; keys.down=false;
+    keys.jump=false; keys.fire=false; keys.slide=false;
+    taps.jump=false; taps.slide=false; taps.fire=false;
+    if(frame%3===0) part(p.x+2+Math.random()*10,p.y+Math.random()*16,"#ffe066",2,1.6);
+  }
   p.inW=playerInWater();
   updateCrumbs();
   updateEmitters();
@@ -3238,6 +3297,10 @@ function update(){
     if(ft==="K") stepCrumb(fcx,fcy);                     /* 崩れる足場を踏んでいる */
     var bd=beltPx(p.x+p.w/2,p.y+p.h+2);                  /* ベルトコンベア */
     if(bd) pushX+=bd*BELT_V;
+  }
+  if(BFX.wind){                                          /* ボスが起こす風（エアーマン。2026-09-22） */
+    pushX+=BFX.wind;
+    if(frame%3===0) part(p.x+(BFX.wind>0?-2:p.w),p.y+4+Math.random()*12,"rgba(255,255,255,.6)",1,0.8);
   }
   var flw=flowAt(p.x+p.w/2,p.y+p.h/2);                   /* 風・水流 */
   if(flw && flw.x) { pushX+=flw.x; if(frame%3===0) part(p.x+(flw.x>0?0:p.w),p.y+4+Math.random()*12,"rgba(255,255,255,.5)",1,0.6); }
@@ -3642,10 +3705,25 @@ function updateBullets(){
   }
   for(i=ebullets.length-1;i>=0;i--){
     b=ebullets[i];
+    /* 主人公を追いかける弾（2026-09-22 大魔王の闇の玉） */
+    if(b.home){
+      var hx2=(p.x+p.w/2)-(b.x+b.w/2), hy2=(p.y+p.h/2)-(b.y+b.h/2), hd2=Math.hypot(hx2,hy2)||1;
+      b.vx+=hx2/hd2*b.home; b.vy+=hy2/hd2*b.home;
+      var sp2=Math.hypot(b.vx,b.vy)||1, mx2=b.hmax||3.2;
+      if(sp2>mx2){ b.vx=b.vx/sp2*mx2; b.vy=b.vy/sp2*mx2; }
+    }
     b.x+=b.vx; b.y+=b.vy;
     if(b.grav) b.vy+=b.grav;
+    /* 張りついた爆弾の導火線（クラッシュマンのドリルボム。2026-09-22） */
+    if(b.fuse>0){ b.fuse--; if(b.fuse===0){ burst(b.x+b.w/2,b.y+b.h/2); ebullets.splice(i,1); continue; } }
     if(b.life){ b.life--; if(b.life<=0){ ebullets.splice(i,1); continue; } }
-    if(b.kind!=="shock" && solidPx(b.x+b.w/2,b.y+b.h/2)){
+    if(!b.nosolid && b.kind!=="shock" && solidPx(b.x+b.w/2,b.y+b.h/2)){
+      if(b.stick){                                  /* 床や壁に刺さって、少ししてから破裂する */
+        b.stuck=true; b.nosolid=true; b.vx=0; b.vy=0; b.grav=0; b.fuse=b.fuseLen||48;
+        part(b.x,b.y,"#ffffff",5,1.6);
+        if(typeof SFX!=="undefined") SFX.hit();
+        continue;
+      }
       if(b.bomb) burst(b.x+b.w/2,b.y+b.h/2);
       part(b.x,b.y,C.acid,4,1.4);
       ebullets.splice(i,1); continue;
@@ -3654,6 +3732,7 @@ function updateBullets(){
     if(overlap(b,p)){
       hurtPlayer(b.dmg,false,b.x+b.w/2);
       if(b.bomb) burst(b.x+b.w/2,b.y+b.h/2);
+      if(b.stay) continue;                          /* 火柱など、その場に残りつづけるもの */
       ebullets.splice(i,1); continue;
     }
     if(b.x<cam.x-60||b.x>cam.x+VW+60||b.y>LVH+30||b.y<-60) ebullets.splice(i,1);
@@ -3917,6 +3996,333 @@ function updateEmitters(){
   }
 }
 
+
+/* ===== 26_bossfx.js ===== */
+/* ============================ ボスの特別な仕掛け ============================
+   院長指示 2026-09-22
+   「ボスの動きが単調すぎてつまらない。結局 連打だけで勝ててしまう。
+     歴代ロックマンのボスを調べて、ぱくってほしい。
+     滞空時間が長い／水の中で戦う／エアーマンの空気抵抗／ヒートマンの頭突き突撃／
+     フラッシュマンの時間停止 のような工夫を」
+
+   歴代ロックマンから借りた「ただ連打しても勝てない」仕組みを、13体で使い回せる
+   共通の部品にしてここへ集めた。ボスごとの使い方は 30_bosses.js／31_bosses2.js。
+
+   | ここにあるもの | 何が起きるか                       | 元ネタ            |
+   |----------------|------------------------------------|-------------------|
+   | BFX.wind       | 主人公を横に押し流す               | エアーマン        |
+   | BFX.flood      | 部屋に水がたまる（ふわっと泳ぐ）   | バブルマン        |
+   | BFX.gmul       | 重力が軽くなる＝滞空時間が長い     | 月面／闇の重力    |
+   | BFX.stop       | 時間が止まって主人公だけ動けない   | フラッシュマン    |
+   | BFX.stun       | 地ならしで足がすくんで動けない     | ガッツマン        |
+   | b.guard        | 正面の弾をはじく＝背中を狙う       | スカルマン        |
+   | b.ivul         | 突進のあいだは弾が通らない         | ヒートマン        |
+   | b.orbs         | 体のまわりを回る盾が弾を止める     | ウッドマン        |
+   | b.ball         | 鎖でつないだ鉄球を振り回す         | ナイトマン        |
+   | b.clone        | 分身。撃ってもダメージにならない   | ジェミニマン      |
+   | marks          | 「ここに来るぞ」の予告じるし       | 子ども向けの親切  |
+
+   ⚠️ どれも必ず「ボスが倒れたら解ける」こと（bfxReset）。
+      解け忘れると、勝ったあとも風が吹いたまま次の面へ行ってしまう。 */
+
+var BFX={
+  wind:0, windT:0, windMax:0,      /* 横風（+で右へ）・残りフレーム */
+  gmul:1, gmulT:0, gmulTo:1,       /* 重力の倍率（1が普通・小さいほどふわふわ） */
+  flood:1e9, floodTo:1e9,          /* 水面のy（小さいほど深い）。1e9＝水なし */
+  stop:0, stopMax:0,               /* 時間停止の残り */
+  stun:0,                          /* しびれの残り */
+  msg:"", msgT:0,                  /* 画面に出す短い合図 */
+  marks:[]                         /* 予告じるし */
+};
+
+function bfxReset(){
+  BFX.wind=0; BFX.windT=0; BFX.windMax=0;
+  BFX.gmul=1; BFX.gmulT=0; BFX.gmulTo=1;
+  BFX.flood=1e9; BFX.floodTo=1e9;
+  BFX.stop=0; BFX.stopMax=0; BFX.stun=0;
+  BFX.msg=""; BFX.msgT=0; BFX.marks=[];
+}
+
+/* --- ボスから呼ぶ道具 ------------------------------------------------- */
+/* 風を吹かせる。dir=-1で左へ、power は1フレームに押す px、frames は長さ */
+function bfxWind(dir,power,frames,msg){
+  BFX.windMax=dir*power; BFX.windT=frames;
+  if(msg!==false) bfxSay(msg||"かぜが ふいてきた！",70);
+  if(typeof SFX!=="undefined"&&SFX.wind) SFX.wind();
+}
+/* 部屋に水をためる。topY まで上げて frames 後に引く */
+function bfxFlood(topY,frames){
+  BFX.floodTo=topY; BFX.floodT=frames;
+  if(BFX.flood>1e8) BFX.flood=topY+120;          /* 下から上がってくるように見せる */
+  bfxSay("みずが あふれてきた！",80);
+  if(typeof SFX!=="undefined"&&SFX.splash) SFX.splash();
+}
+function bfxDrain(){ BFX.floodTo=1e9; BFX.floodT=0; }
+/* 重力を軽くする（滞空時間が長くなる） */
+function bfxLowGrav(mul,frames,msg){
+  BFX.gmulTo=mul; BFX.gmulT=frames;
+  if(msg!==false) bfxSay(msg||"からだが ふわっと うく！",70);
+}
+/* 時間を止める（主人公だけ止まる。ボスは動ける） */
+function bfxStop(frames){
+  BFX.stop=frames; BFX.stopMax=frames;
+  bfxSay("ときが とまった！",frames);
+  if(typeof SFX!=="undefined"&&SFX.timestop) SFX.timestop();
+  flash=10;
+}
+/* 地ならし。地面に足がついていたら しびれる（跳んでいれば平気） */
+function bfxQuake(frames,power){
+  shake=Math.max(shake,power||16);
+  if(typeof SFX!=="undefined"&&SFX.quake) SFX.quake();
+  var p=player;
+  if(p && p.dead===0 && !p.climb && p.grounded && p.udash<=0){
+    BFX.stun=frames||22;
+    bfxSay("あしが しびれた！",frames||22);
+  }
+}
+function bfxSay(msg,frames){ BFX.msg=msg; BFX.msgT=Math.max(BFX.msgT,frames||60); }
+/* 予告じるし（ここに攻撃が来る）。子どもが見て逃げられるように必ず出す */
+function bfxMark(x,y,w,h,frames,col){
+  BFX.marks.push({x:x,y:y,w:w,h:h,t:frames||40,max:frames||40,col:col||"#ffd447"});
+}
+
+/* --- 毎フレームの世話 ------------------------------------------------- */
+function bfxUpdate(){
+  /* 風はゆっくり強くなり、ゆっくり止む（エアーマンの「だんだん速くなる」） */
+  if(BFX.windT>0){
+    BFX.windT--;
+    var up=Math.min(1,(BFX.windMax===0?1:1-BFX.windT/60));
+    BFX.wind += (BFX.windMax*Math.max(0.35,up) - BFX.wind)*0.10;
+    if(BFX.windT===0) BFX.windMax=0;
+  } else if(BFX.wind!==0){
+    BFX.wind*=0.86;
+    if(Math.abs(BFX.wind)<0.05) BFX.wind=0;
+  }
+  /* 水位。上がるときは速く、引くときはゆっくり */
+  if(BFX.floodT>0){ BFX.floodT--; if(BFX.floodT===0) bfxDrain(); }
+  if(BFX.flood!==BFX.floodTo){
+    if(BFX.floodTo>1e8){
+      if(BFX.flood<1e8){ BFX.flood+=1.6; if(BFX.flood>bossFloorY()+40) BFX.flood=1e9; }
+    } else {
+      BFX.flood += (BFX.floodTo-BFX.flood)*0.06;
+      if(Math.abs(BFX.flood-BFX.floodTo)<1) BFX.flood=BFX.floodTo;
+    }
+  }
+  /* 重力 */
+  if(BFX.gmulT>0){ BFX.gmulT--; if(BFX.gmulT===0) BFX.gmulTo=1; }
+  BFX.gmul += (BFX.gmulTo-BFX.gmul)*0.12;
+  if(Math.abs(BFX.gmul-BFX.gmulTo)<0.01) BFX.gmul=BFX.gmulTo;
+  /* しびれ・合図・予告 */
+  if(BFX.stun>0) BFX.stun--;
+  if(BFX.msgT>0){ BFX.msgT--; if(BFX.msgT===0) BFX.msg=""; }
+  for(var i=BFX.marks.length-1;i>=0;i--){ if(--BFX.marks[i].t<=0) BFX.marks.splice(i,1); }
+  /* ボスがいなくなったら仕掛けは全部おしまい */
+  if(!boss || boss.dead>0){
+    if(BFX.windT>0){ BFX.windT=0; BFX.windMax=0; }
+    if(BFX.floodTo<1e8) bfxDrain();
+    if(BFX.gmulTo!==1){ BFX.gmulTo=1; BFX.gmulT=0; }
+    BFX.stop=0; BFX.stun=0;
+  }
+}
+
+/* ============================ ボスの守り ============================ */
+/* 回る盾（ウッドマンのリーフシールド）。n個・半径r */
+function orbInit(b,n,r,col,dmg,spin){
+  b.orbs=[]; b.orbR=r; b.orbCol=col||"#ffd447"; b.orbDmg=dmg||3; b.orbSpin=spin||0.055; b.orbA=0;
+  for(var i=0;i<n;i++) b.orbs.push({a:i/n*Math.PI*2,x:b.x,y:b.y,w:11,h:11});
+}
+function orbUpdate(b){
+  if(!b.orbs||!b.orbs.length) return;
+  b.orbA+=b.orbSpin;
+  for(var i=0;i<b.orbs.length;i++){
+    var o=b.orbs[i], a=b.orbA+o.a;
+    o.x=b.x+b.w/2+Math.cos(a)*b.orbR-o.w/2;
+    o.y=b.y+b.h/2+Math.sin(a)*b.orbR-o.h/2;
+    if(player && player.dead===0 && overlap(o,player)) hurtPlayer(b.orbDmg,false,o.x);
+  }
+}
+/* 盾を主人公めがけて撃ち出す（撃ち出したあとは無防備＝ねらい目） */
+function orbFire(b,p,kind,speed){
+  if(!b.orbs||!b.orbs.length) return;
+  for(var i=0;i<b.orbs.length;i++){
+    var o=b.orbs[i];
+    var dx=(p.x+6)-(o.x+o.w/2), dy=(p.y+10)-(o.y+o.h/2), d=Math.hypot(dx,dy)||1;
+    eshot({x:o.x,y:o.y,w:o.w,h:o.h,vx:dx/d*(speed||3.6),vy:dy/d*(speed||3.6),
+           dmg:b.orbDmg,kind:kind||"orb"});
+  }
+  b.orbs=[];
+  if(typeof SFX!=="undefined") SFX.shoot();
+}
+/* 鎖でつないだ鉄球（ナイトマン）。1個だけ大きく回る */
+function ballInit(b,r,dmg){ b.ball={a:0,r:r||46,x:b.x,y:b.y,w:16,h:16,dmg:dmg||4,spin:0.045}; }
+function ballUpdate(b){
+  var q=b.ball; if(!q) return;
+  q.a+=q.spin;
+  q.x=b.x+b.w/2+Math.cos(q.a)*q.r-q.w/2;
+  q.y=b.y+b.h/2+Math.sin(q.a)*q.r*0.78-q.h/2;
+  if(player && player.dead===0 && overlap(q,player)) hurtPlayer(q.dmg,false,q.x);
+}
+
+/* 弾がボスに通るか。通らないときは「はじいた理由」を返す */
+function bossBlock(b,bl){
+  /* ⚠️ 「本当にぶつかったとき」だけ理由を返すこと。
+        当たってもいない弾まではじくと、画面じゅうの弾が消えてしまう。 */
+  var i;
+  if(b.orbs&&b.orbs.length){                        /* 回る盾に当たった */
+    for(i=0;i<b.orbs.length;i++) if(overlap(bl,b.orbs[i])) return "orb";
+  }
+  if(b.ball && overlap(bl,b.ball)) return "ball";
+  if(b.clone && overlap(bl,b.clone) && !overlap(bl,b)) return "clone";
+  if(!overlap(bl,b)) return null;
+  if(b.ivul>0) return "ivul";                       /* 突進中などは弾が通らない */
+  if(b.guard>0){
+    /* 正面（ボスが向いている側）から来た弾だけはじく。背中と真上からは通る */
+    var front=(b.face>0) ? (bl.x+bl.w/2 > b.x+b.w*0.45) : (bl.x+bl.w/2 < b.x+b.w*0.55);
+    var flat=Math.abs(bl.vx)>=Math.abs(bl.vy||0);
+    if(front&&flat) return "guard";
+  }
+  return null;
+}
+/* はじいたときの見た目と音 */
+function bossClink(b,bl,why){
+  part(bl.x,bl.y,(why==="orb")?(b.orbCol||"#ffd447"):"#dff3ff",6,2);
+  if(typeof SFX!=="undefined"&&SFX.clink) SFX.clink();
+  if(why==="ivul") shake=Math.max(shake,3);
+}
+
+/* ============================ 分身（ジェミニマン） ============================ */
+function cloneMake(b,x,y){ b.clone={x:x,y:y,w:b.w,h:b.h,face:-b.face,t:0,fade:0}; }
+function cloneUpdate(b){
+  var c=b.clone; if(!c) return;
+  c.t++; c.fade=Math.min(1,c.t/10);
+  if(player && player.dead===0 && overlap(c,player)) hurtPlayer(3,false,c.x+c.w/2);
+}
+function cloneClear(b){ b.clone=null; }
+
+/* ============================ よけ（クイックマン） ============================ */
+/* こちらへ飛んでくる弾を探す。あれば その弾を返す */
+function incomingShot(b,dist){
+  for(var i=0;i<pbullets.length;i++){
+    var q=pbullets[i];
+    var dx=(b.x+b.w/2)-(q.x+q.w/2);
+    if(Math.abs(dx)>dist||Math.abs(dx)<10) continue;
+    if(Math.abs((b.y+b.h/2)-(q.y+q.h/2))>30) continue;
+    if((dx>0&&q.vx>0.6)||(dx<0&&q.vx<-0.6)) return q;
+  }
+  return null;
+}
+/* たまに ひらりと よける（連打だけで当て続けられないように）。
+   よけたら true。cool フレームに1回まで。 */
+function bossDodge(b,p,cool,chance){
+  if(b.dcd>0){ b.dcd--; return false; }
+  if(!b.grounded) return false;
+  if(!incomingShot(b,96)) return false;
+  if(Math.random()>(chance===undefined?0.55:chance)) return false;
+  b.dcd=cool||110;
+  var away=(p.x+6<b.x+b.w/2)?1:-1;
+  if(b.x+b.w>arenaR()-40) away=-1;
+  if(b.x<arenaL()+40) away=1;
+  b.vy=-7.2; b.vx=away*3.4; b.dodging=10;
+  if(typeof SFX!=="undefined") SFX.dash();
+  part(b.x+b.w/2,b.y+b.h,"#ffffff",6,1.8);
+  return true;
+}
+
+/* ============================ 描き足し ============================ */
+/* 世界の中（カメラの中）で描くぶん：予告じるし・回る盾・鉄球・分身・風の筋 */
+function drawBfxWorld(){
+  var i;
+  /* 予告じるし。点滅しながら濃くなる */
+  for(i=0;i<BFX.marks.length;i++){
+    var m=BFX.marks[i], k=1-m.t/m.max;
+    if(Math.floor(m.t/4)%2===0) continue;
+    ctx.globalAlpha=0.25+k*0.45; ctx.fillStyle=m.col;
+    ctx.fillRect(m.x|0,m.y|0,m.w|0,m.h|0);
+    ctx.globalAlpha=1;
+    ctx.strokeStyle=m.col; ctx.lineWidth=1;
+    ctx.strokeRect((m.x|0)+0.5,(m.y|0)+0.5,(m.w|0)-1,(m.h|0)-1);
+  }
+  /* 風の筋 */
+  if(Math.abs(BFX.wind)>0.2){
+    var d=(BFX.wind>0)?1:-1;
+    ctx.globalAlpha=0.5; ctx.fillStyle="#ffffff";
+    for(i=0;i<14;i++){
+      var wy=cam.y+18+((i*37)%(VH-30));
+      var wx=cam.x+((frame*(3+Math.abs(BFX.wind)*2)*d+i*61)%VW+VW)%VW;
+      ctx.fillRect(wx|0,wy|0,10+(i%3)*6,1);
+    }
+    ctx.globalAlpha=1;
+  }
+  if(!boss||boss.gone) return;
+  var b=boss;
+  /* 分身（本物より色がうすい） */
+  if(b.clone){
+    var c=b.clone;
+    ctx.globalAlpha=0.55*c.fade;
+    var sv=b.face; b.face=c.face;
+    BOSSES[b.kind].draw(b,Math.round(c.x),Math.round(c.y),false);
+    b.face=sv;
+    ctx.globalAlpha=1;
+  }
+  /* 鎖と鉄球 */
+  if(b.ball){
+    var q=b.ball;
+    ctx.strokeStyle="#9aa3ad"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(b.x+b.w/2,b.y+b.h/2); ctx.lineTo(q.x+q.w/2,q.y+q.h/2); ctx.stroke();
+    ctx.fillStyle="#4a4f57";
+    ctx.beginPath(); ctx.arc(q.x+q.w/2,q.y+q.h/2,q.w/2,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#9aa3ad";
+    ctx.beginPath(); ctx.arc(q.x+q.w/2-2,q.y+q.h/2-2,q.w/5,0,Math.PI*2); ctx.fill();
+  }
+  /* 回る盾 */
+  if(b.orbs){
+    for(i=0;i<b.orbs.length;i++){
+      var o=b.orbs[i];
+      ctx.fillStyle=b.orbCol;
+      ctx.beginPath(); ctx.arc(o.x+o.w/2,o.y+o.h/2,o.w/2,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#ffffff";
+      ctx.beginPath(); ctx.arc(o.x+o.w/2-1.5,o.y+o.h/2-1.5,o.w/5,0,Math.PI*2); ctx.fill();
+    }
+  }
+  /* 正面の盾（はじく側が光る） */
+  if(b.guard>0){
+    ctx.globalAlpha=0.5+0.3*Math.sin(frame*0.3);
+    ctx.fillStyle="#dff3ff";
+    var gx=(b.face>0)?(b.x+b.w-2):(b.x-4);
+    ctx.fillRect(gx|0,(b.y+2)|0,6,b.h-4);
+    ctx.globalAlpha=1;
+  }
+  /* 無敵で突っ込んでくるとき（ヒートマン）は体が燃える */
+  if(b.ivul>0){
+    ctx.globalAlpha=0.45+0.25*Math.sin(frame*0.5);
+    ctx.fillStyle=b.ivulCol||"#ff9a3c";
+    ctx.beginPath(); ctx.ellipse(b.x+b.w/2,b.y+b.h/2,b.w*0.95,b.h*0.7,0,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+/* 画面の上（拡大の外）で描くぶん：時間停止の色かぶせ・合図の文字 */
+function drawBfxScreen(){
+  if(BFX.stop>0){
+    var a=0.10+0.06*Math.sin(frame*0.6);
+    ctx.fillStyle="rgba(150,220,255,"+a+")"; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.lineWidth=2;
+    var r=(BFX.stopMax-BFX.stop)*3;
+    ctx.beginPath(); ctx.arc(W/2,H/2,r%90+10,0,Math.PI*2); ctx.stroke();
+  }
+  if(BFX.stun>0 && Math.floor(frame/3)%2===0){
+    ctx.fillStyle="rgba(255,224,102,.12)"; ctx.fillRect(0,0,W,H);
+  }
+  if(BFX.msgT>0 && state==="play"){
+    ctx.font='bold 13px system-ui, sans-serif';
+    ctx.textAlign="center";
+    ctx.fillStyle="rgba(8,14,20,.7)";
+    var tw=ctx.measureText(BFX.msg).width+16;
+    ctx.fillRect(W/2-tw/2,H*0.20-13,tw,19);
+    ctx.fillStyle="#ffe066";
+    ctx.fillText(BFX.msg,W/2,H*0.20);
+    ctx.textAlign="left";
+  }
+}
 
 /* ===== 28_weapons.js ===== */
 /* ============================ 特殊武器 ============================
@@ -5029,6 +5435,10 @@ function updateBoss(){
   var b=boss, p=player, S=BOSSES[b.kind];
   if(b.hurt>0) b.hurt--;
   if(b.mouth>0) b.mouth--;
+  /* 守りの残り時間（2026-09-22） */
+  if(b.guard>0) b.guard--;
+  if(b.ivul>0) b.ivul--;
+  if(b.dodging>0) b.dodging--;
   b.t++;
 
   if(b.dead>0){
@@ -5049,8 +5459,10 @@ function updateBoss(){
     return;
   }
 
-  b.face = (p.x+6 < b.x+b.w/2) ? -1 : 1;
+  /* 向き。突進・のしかかりなど「向きを変えられたら困る」技のあいだは固定する（2026-09-22） */
+  if(!b.lockFace) b.face = (p.x+6 < b.x+b.w/2) ? -1 : 1;
   S.ai(b,p);
+  orbUpdate(b); ballUpdate(b); cloneUpdate(b);
 
   /* 落ちてきて止まった＝着地。drawBoss がつぶれる動きに使う（2026-09-12） */
   if(b.land>0) b.land--;
@@ -5058,10 +5470,20 @@ function updateBoss(){
   if(b.pvy>3 && b.vy===0) b.land=9;
   b.pvy=b.vy;
 
-  /* 被弾（口を開けているあいだは2倍） */
+  /* 時間が止まっているあいだは当たり判定も止める（止まった弾が刺さりっぱなしにならないように） */
+  if(BFX.stop>0) return;
+
+  /* 被弾（口を開けているあいだは2倍）。
+     盾・鉄球・分身・無敵の突進に当たった弾は、ここで はじかれて消える（2026-09-22） */
   for(var k=pbullets.length-1;k>=0;k--){
     var bl=pbullets[k];
     if(bl.cd>0) continue;
+    var why=bossBlock(b,bl);
+    if(why){
+      bossClink(b,bl,why);
+      if(bl.pierce||bl.big>=1) bl.cd=14; else pbullets.splice(k,1);
+      continue;
+    }
     if(overlap(bl,b)){
       var mult=(b.mouth>0)?2:1;
       var weak=(bl.wid>0 && WEAK[b.kind]===bl.wid);   /* 効く武器なら3倍 */
@@ -5071,12 +5493,15 @@ function updateBoss(){
       if(weak) shake=Math.max(shake,6);
       if(bl.pierce||bl.big>=1) bl.cd=12; else pbullets.splice(k,1);
       SFX.bossHit();
+      /* 撃たれたら怒って反撃するボス（ヒートマン式。2026-09-22） */
+      if(b.hp>0 && S.onHit) S.onHit(b,p,bl.dmg*mult);
       if(b.hp<=0){
         b.hp=0; b.dead=(b.kind==="mushiburn")?140:90; shake=30; ebullets=[];
         /* 主人公と同じく、中心から放射状に玉が飛んで消える（院長指示 2026-09-13）。体はその瞬間に消す */
         var bc=(typeof BOSS_ART!=="undefined"&&BOSS_ART[b.kind]&&BOSS_ART[b.kind].pal&&BOSS_ART[b.kind].pal.c)||C.gold;
         burstAt(b.x+b.w/2,b.y+b.h/2,bc,(b.kind==="mushiburn")?2.0:1.5);
         b.gone=true; flash=18; SFX.bossDie();
+        b.orbs=[]; b.ball=null; b.clone=null; b.guard=0; b.ivul=0; bfxReset();
         break;
       }
     }
@@ -5611,8 +6036,10 @@ function draw(){
     drawPlayerSprite();
     drawLava();
     drawParts();
+    drawBfxWorld();          /* ボスの仕掛け（予告じるし・回る盾・鉄球・分身・風。2026-09-22） */
     ctx.restore();
     drawWaterOverlay();      /* 水面の高さはカメラ基準なので、拡大の中で描く */
+    drawBfxScreen();         /* 時間停止の色かぶせ・合図の文字 */
   } finally {
     W=SW; H=SH;
     ctx=MAIN;
@@ -7964,6 +8391,8 @@ function updateEnding(){
   endT++;
   if(endT>END_LEN && !endDone){
     endDone=true;
+    /* 計測（2026-09-22）：エンディングまで到達した人＝ごほうびQRを見た人 */
+    if(window.DMtrack) DMtrack("chapter1_clear");
     showScreen("s-end");
     showCode();                      /* あいことばを全クリア画面にも出す（受付で見せてもらう） */
     document.getElementById("end-msg").textContent=
@@ -9484,6 +9913,9 @@ function openStage(i,cell){
    やり直し（Retry・もう一度）では毎回は出さない。 */
 function startGame(withIntro){
   audioInit();
+  /* 計測（2026-09-22）：どの面が何回遊ばれたか。DMtrack は index.html の head にある */
+  if(window.DMtrack) DMtrack("game_start",
+    {stage_no:pendingStage+1, stage:LEVELS[pendingStage].name});
   loadStage(pendingStage);
   reset();
   setTag(LEVELS[pendingStage].name);
@@ -9503,9 +9935,17 @@ function togglePause(){
 
 /* --- ボスを倒したとき --- */
 function onBossDown(){
+  bfxReset();                                   /* 風・水・重力を元に戻す（2026-09-22） */
   score+=4000+player.hp*100;
   SFX.bossDie(); flash=30;
   cleared[stageIdx]=true; saveProgress();
+  /* 計測（2026-09-22）：どこまで進めたか＝どこで脱落するかを見る */
+  if(window.DMtrack){
+    var dn=0, di;
+    for(di=0;di<LEVELS.length;di++) if(cleared[di]) dn++;
+    DMtrack("stage_clear", {stage_no:stageIdx+1, stage:LEVELS[stageIdx].name, cleared_total:dn});
+    if(dn>=LEVELS.length) DMtrack("all13_clear", {cleared_total:dn});
+  }
   var S=BOSSES[boss.kind];
   if(stageIdx===8){
     startEnding();

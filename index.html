@@ -1076,7 +1076,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-22 21:22";
+var BUILD_AT="2026-09-23 18:55";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -3116,7 +3116,8 @@ function startSlide(p){
   part(p.x+(p.face>0?0:p.w),p.y+10,"#bffff4",5,1.6);
 }
 /* ============================ 上空ダッシュ ============================
-   ▲＋A で、まっすぐ上へ一気に上がる（院長指示 2026-09-04）。
+   空中でBをもう一度押すと、まっすぐ上へ一気に上がる（院長指示 2026-09-04。
+   はじめは ▲＋A だったが、2026-09-23 に「Bの重ね押しで3段階まで」へ変えた）。
    地上でも空中でも出せるが、**足が地面につくまで1回だけ**。
    はしご・トランポリンでは回数を戻さない（2026-09-06。戻していたら
    「▲＋Aの連打で空中ジャンプが連続でできる」と院長から報告があった）。
@@ -3252,7 +3253,10 @@ function update(){
        空中で ▲＋A を連打したときにダッシュが何度も出てしまう（2026-09-06修正）。 */
     if(p.grounded){ p.coyote=8;                /* 崖を離れて8フレームまでジャンプ可（感度。2026-09-14） */ if(p.vy>=0){ p.udashUsed=false; p.udashN=0; } } else if(p.coyote>0) p.coyote--;
     if(p.buf>0) p.buf--;
-    if(jumpEdge) p.buf=12;                     /* 着地の12フレーム前から押しておけば跳ぶ（感度。2026-09-14） */
+    /* 空中でもう一度Bを押すと上空ダッシュ（院長指示 2026-09-23「上キー＋Aでなく、Bの重ね押しで3段階まで」）。
+       3回使い切ったあとのBは、これまでどおり着地前の先行入力として覚えておく。水の中はBで泳ぐので出さない */
+    if(jumpEdge && !p.grounded && p.coyote<=0 && !p.inW && !p.udashUsed && p.udash<=0){ startUpDash(p); }
+    else if(jumpEdge) p.buf=12;                /* 着地の12フレーム前から押しておけば跳ぶ（感度。2026-09-14） */
     /* 水の中では何度でも水をかいて浮き上がれる（泳ぐ） */
     if(p.buf>0 && (p.coyote>0 || p.inW)){
       p.vy=jumpOf(p.inW); p.buf=0; p.coyote=0; p.grounded=false; p.jumpCut=p.inW?4:9;
@@ -3264,9 +3268,8 @@ function update(){
     if(p.jumpCut>0) p.jumpCut--;
     else if(!keys.jump && p.vy<-3) p.vy=-3;
 
-    /* ▲を押しながらのAは上空ダッシュ。押していなければ地上でスライディング */
-    if(slideEdge && keys.up && !p.udashUsed && p.udash<=0){ startUpDash(p); }
-    else if(slideEdge && !keys.up && p.grounded && p.slideCool<=0){ startSlide(p); p.slideCool=6; }   /* 連続スライディングの間を短く（2026-09-14） */
+    /* Aは地上でスライディング（▲＋Aの上空ダッシュは 2026-09-23 に空中のBへ移した） */
+    if(slideEdge && p.grounded && p.slideCool<=0){ startSlide(p); p.slideCool=6; }   /* 連続スライディングの間を短く（2026-09-14） */
     moveX(p);
   }
   lastJump=keys.jump;
@@ -4931,7 +4934,8 @@ var BOSS_SCALE=30/36;
 /* ボスの打たれ強さ（院長指示 2026-09-22「ボス、もう少しダメージをうけにくくして」）。
    1.0 が元の強さ。全ボス（第1章8体＋大魔王＋第2章4体）の体力にまとめて掛かるので、
    強さの調整はこの数字1つだけ直せばよい。各ボスの素の体力は BOSSES[kind].hp */
-var BOSS_TOUGH=1.4;
+/* 2026-09-23 院長指示「ボスの被弾耐ダメージを今の2倍に」で 1.4 → 2.8 */
+var BOSS_TOUGH=2.8;
 function clampX(b){
   var l=arenaL(), r=arenaR()-b.w;
   if(b.x<l){ b.x=l; b.wallHit=true; }

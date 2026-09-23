@@ -1214,7 +1214,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-23 18:46";
+var BUILD_AT="2026-09-23 18:57";
 
 /* ===== 05_jpmap.js ===== */
 /* このファイルは src/gen_jpmap.py が書き出す。手で直さないこと。 */
@@ -3809,7 +3809,8 @@ function startSlide(p){
   part(p.x+(p.face>0?0:p.w),p.y+10,"#bffff4",5,1.6);
 }
 /* ============================ 上空ダッシュ ============================
-   ▲＋A で、まっすぐ上へ一気に上がる（院長指示 2026-09-04）。
+   空中でBをもう一度押すと、まっすぐ上へ一気に上がる（院長指示 2026-09-04。
+   はじめは ▲＋A だったが、2026-09-23 に「Bの重ね押しで3段階まで」へ変えた）。
    地上でも空中でも出せるが、**足が地面につくまで1回だけ**。
    はしご・トランポリンでは回数を戻さない（2026-09-06。戻していたら
    「▲＋Aの連打で空中ジャンプが連続でできる」と院長から報告があった）。
@@ -3943,9 +3944,12 @@ function update(){
        上へ動いている最中（vy<0）の grounded は、壁や天井にかすっただけの
        見せかけの1フレームなので数えない。ここを grounded だけで見ていると、
        空中で ▲＋A を連打したときにダッシュが何度も出てしまう（2026-09-06修正）。 */
-    if(p.grounded){ p.coyote=8;                /* 崖を離れて8フレームまでジャンプ可（感度。2026-09-14） */ if(p.vy>=0){ p.udashUsed=false; p.udashN=0; } } else if(p.coyote>0) p.coyote--;
+    if(p.grounded){ p.coyote=10;               /* 崖を離れて10フレームまでジャンプ可（感度。2026-09-14→09-23 院長「感度マックス」で8→10） */ if(p.vy>=0){ p.udashUsed=false; p.udashN=0; } } else if(p.coyote>0) p.coyote--;
     if(p.buf>0) p.buf--;
-    if(jumpEdge) p.buf=12;                     /* 着地の12フレーム前から押しておけば跳ぶ（感度。2026-09-14） */
+    /* 空中でもう一度Bを押すと上空ダッシュ（院長指示 2026-09-23「上キー＋Aでなく、Bの重ね押しで3段階まで」）。
+       3回使い切ったあとのBは、これまでどおり着地前の先行入力として覚えておく。水の中はBで泳ぐので出さない */
+    if(jumpEdge && !p.grounded && p.coyote<=0 && !p.inW && !p.udashUsed && p.udash<=0){ startUpDash(p); }
+    else if(jumpEdge) p.buf=16;                /* 着地の16フレーム前から押しておけば跳ぶ（感度。2026-09-14 12→09-23 16） */
     /* 水の中では何度でも水をかいて浮き上がれる（泳ぐ） */
     if(p.buf>0 && (p.coyote>0 || p.inW)){
       p.vy=jumpOf(p.inW); p.buf=0; p.coyote=0; p.grounded=false; p.jumpCut=p.inW?4:9;
@@ -3957,9 +3961,8 @@ function update(){
     if(p.jumpCut>0) p.jumpCut--;
     else if(!keys.jump && p.vy<-3) p.vy=-3;
 
-    /* ▲を押しながらのAは上空ダッシュ。押していなければ地上でスライディング */
-    if(slideEdge && keys.up && !p.udashUsed && p.udash<=0){ startUpDash(p); }
-    else if(slideEdge && !keys.up && p.grounded && p.slideCool<=0){ startSlide(p); p.slideCool=6; }   /* 連続スライディングの間を短く（2026-09-14） */
+    /* Aは地上でスライディング（▲＋Aの上空ダッシュは 2026-09-23 に空中のBへ移した） */
+    if(slideEdge && p.grounded && p.slideCool<=0){ startSlide(p); p.slideCool=6; }   /* 連続スライディングの間を短く（2026-09-14） */
     moveX(p);
   }
   lastJump=keys.jump;
@@ -5204,6 +5207,7 @@ function bossSprite(kind,b,x,y,hl,tint){
    | b.ball         | 鎖でつないだ鉄球を振り回す         | ナイトマン        |
    | b.clone        | 分身。撃ってもダメージにならない   | ジェミニマン      |
    | b.armor        | 氷のよろい。決まった数当てると割れる（割れている間だけ効く）| 長野（2026-09-23） |
+   | b.mist         | 湯けむりに かくれる。弾が すりぬける（体がうすくなる）| 群馬（2026-09-23） |
    | marks          | 「ここに来るぞ」の予告じるし       | 子ども向けの親切  |
 
    ⚠️ どれも必ず「ボスが倒れたら解ける」こと（bfxReset）。
@@ -5371,22 +5375,29 @@ function ballUpdate(b){
    当てる数：ふつうの弾1・溜め撃ち2・効く武器3。ひびの数＝当てた数（drawBfxWorld が描く）。
    ⚠️ 倒れたら 30_bosscore.js が b.armor=0 にする（よろいが残ったまま消えない）。 */
 var ARMOR_WARN=45;
+/* 見た目と合図（ボスごとに b.armorLook で差し替える。無ければ 長野の氷）。
+   栃木イチゴーレムの「石のから」（2026-09-23 手ごたえ合わせ）はこれを使う */
+var ARMOR_ICE={fill:"#9fdcff",edge:"#e8f8ff",crack:"#ffffff",crackLo:"#1d3f6e",bit:"#bfe9ff",
+  set:"こおりの よろい！",broke:"よろいが われた！ いまだ！",warn:"よろいが ひかりはじめた…"};
+function armorLook(b){ return b.armorLook||ARMOR_ICE; }
 function armorSet(b,n,msg){
   b.armor=n; b.armorMax=n; b.armorOff=0; b.armorHitT=0;
-  if(msg!==false) bfxSay(msg||"こおりの よろい！",50);
+  if(msg!==false) bfxSay(msg||armorLook(b).set,50);
 }
 function armorHit(b,bl){
   var n=1;
   if(bl.big>=1) n=2;
   if(bl.wid>0 && typeof WEAK!=="undefined" && WEAK[b.kind]===bl.wid) n=3;
   b.armor=Math.max(0,b.armor-n); b.armorHitT=8;
-  part(bl.x,bl.y,"#e8f8ff",4,1.8);
+  var lk=armorLook(b);
+  part(bl.x,bl.y,lk.edge,4,1.8);
   if(b.armor===0){
     b.armorOff=b.armorGap||180;
-    b.mouth=Math.max(b.mouth||0,b.armorOff);      /* 割れている間は口が開いたまま＝弱点 */
+    if(b.armorMouth!==false) b.mouth=Math.max(b.mouth||0,b.armorOff);   /* 割れている間は口が開いたまま＝弱点（2倍）。
+                                                  b.armorMouth=false のボス（栃木の石のから）は 割れても2倍にしない＝ふつうに効くだけ */
     shake=Math.max(shake,8); flash=Math.max(flash,4);
-    part(b.x+b.w/2,b.y+b.h/2,"#bfe9ff",18,3.0); part(b.x+b.w/2,b.y+b.h/2,"#ffffff",10,2.2);
-    bfxSay("よろいが われた！ いまだ！",60);
+    part(b.x+b.w/2,b.y+b.h/2,lk.bit,18,3.0); part(b.x+b.w/2,b.y+b.h/2,"#ffffff",10,2.2);
+    bfxSay(lk.broke,60);
     if(typeof SFX!=="undefined"&&SFX.boom) SFX.boom();
   }
 }
@@ -5395,10 +5406,10 @@ function armorTick(b,n){
   if(b.armorHitT>0) b.armorHitT--;
   if(!(b.armorOff>0)) return;
   b.armorOff--;
-  if(b.armorOff===ARMOR_WARN) bfxSay("よろいが ひかりはじめた…",40);
+  if(b.armorOff===ARMOR_WARN) bfxSay(armorLook(b).warn,40);
   if(b.armorOff===0){
     armorSet(b,n);
-    part(b.x+b.w/2,b.y+b.h/2,"#e8f8ff",12,1.6);
+    part(b.x+b.w/2,b.y+b.h/2,armorLook(b).edge,12,1.6);
     if(typeof SFX!=="undefined"&&SFX.charge_up) SFX.charge_up();
   }
 }
@@ -5414,6 +5425,7 @@ function bossBlock(b,bl){
   if(b.ball && overlap(bl,b.ball)) return "ball";
   if(b.clone && overlap(bl,b.clone) && !overlap(bl,b)) return "clone";
   if(!overlap(bl,b)) return null;
+  if(b.mist>0) return "mist";                       /* 湯けむり：体がうすくなっているあいだは すりぬける */
   if(b.armor>0) return "armor";                     /* 氷のよろい：どこから撃っても はじく */
   if(b.ivul>0) return "ivul";                       /* 突進中などは弾が通らない */
   if(b.guard>0){
@@ -5427,6 +5439,7 @@ function bossBlock(b,bl){
 }
 /* はじいたときの見た目と音 */
 function bossClink(b,bl,why){
+  if(why==="mist"){ part(bl.x,bl.y,"#ffffff",5,1.2); return; }   /* 湯けむり：はじく音はしない。ゆげが ふわっと散るだけ */
   part(bl.x,bl.y,(why==="orb")?(b.orbCol||"#ffd447"):(why==="armor")?"#bfe9ff":"#dff3ff",6,2);
   if(typeof SFX!=="undefined"&&SFX.clink) SFX.clink();
   if(why==="ivul") shake=Math.max(shake,3);
@@ -5550,18 +5563,18 @@ function drawBfxWorld(){
   }
   /* 氷のよろい：うすい氷の六角形。当てた数だけ ひびが入る。張り直す前は光って知らせる */
   if(b.armor>0 || (b.armorOff>0 && b.armorOff<=ARMOR_WARN)){
-    var ax=b.x+b.w/2, ay=b.y+b.h/2, ar=Math.max(b.w,b.h)*0.82, k2;
+    var ax=b.x+b.w/2, ay=b.y+b.h/2, ar=Math.max(b.w,b.h)*0.82, k2, lk2=armorLook(b);
     ctx.beginPath();
     for(k2=0;k2<6;k2++){ var aa=Math.PI/6+k2*Math.PI/3; if(k2===0) ctx.moveTo(ax+Math.cos(aa)*ar,ay+Math.sin(aa)*ar); else ctx.lineTo(ax+Math.cos(aa)*ar,ay+Math.sin(aa)*ar); }
     ctx.closePath();
     if(b.armor>0){
-      ctx.globalAlpha=(b.armorHitT>0)?0.55:0.30; ctx.fillStyle=(b.armorHitT>0)?"#ffffff":"#9fdcff"; ctx.fill();
-      ctx.globalAlpha=0.9; ctx.strokeStyle="#e8f8ff"; ctx.lineWidth=1.2; ctx.stroke();
+      ctx.globalAlpha=(b.armorHitT>0)?0.55:(lk2.alpha||0.30); ctx.fillStyle=(b.armorHitT>0)?"#ffffff":lk2.fill; ctx.fill();
+      ctx.globalAlpha=0.9; ctx.strokeStyle=lk2.edge; ctx.lineWidth=1.2; ctx.stroke();
       /* ひび：当てた数だけ、まん中から外へ ぎざぎざの線 */
       /* ⚠️ ひびは 白（縁は濃い青）。濃い青だけだと ボスの体に まぎれて見えなかった（2026-09-23 写真） */
       var cracks=(b.armorMax||0)-b.armor;
       for(var cp=0;cp<2;cp++){
-        ctx.strokeStyle=cp?"#ffffff":"#1d3f6e"; ctx.lineWidth=cp?1.1:2.4;
+        ctx.strokeStyle=cp?lk2.crack:lk2.crackLo; ctx.lineWidth=cp?1.1:2.4;
         ctx.beginPath();
         for(k2=0;k2<cracks;k2++){
           var ca=0.4+k2*2.39, r1=ar*(0.5+(k2%3)*0.1), r2=ar*0.98;
@@ -5575,7 +5588,7 @@ function drawBfxWorld(){
     } else {
       /* 張り直しの予告：点滅しながら だんだん濃く光る */
       var wk=1-b.armorOff/ARMOR_WARN, on=(Math.floor(frame/4)%2)===1;
-      ctx.globalAlpha=on?0.18+0.3*wk:0.06; ctx.fillStyle="#bfe9ff"; ctx.fill();
+      ctx.globalAlpha=on?0.18+0.3*wk:0.06; ctx.fillStyle=lk2.bit; ctx.fill();
       ctx.globalAlpha=on?0.55+0.45*wk:0.2; ctx.strokeStyle="#ffffff"; ctx.lineWidth=2; ctx.stroke();
       ctx.globalAlpha=1;
     }
@@ -5806,7 +5819,7 @@ function updateBoss(){
         var bc=(typeof BOSS_ART!=="undefined"&&BOSS_ART[b.kind]&&BOSS_ART[b.kind].pal&&BOSS_ART[b.kind].pal.c)||C.gold;
         burstAt(b.x+b.w/2,b.y+b.h/2,bc,(b.kind==="p0")?2.0:1.5);
         b.gone=true; flash=18; SFX.bossDie();
-        b.orbs=[]; b.ball=null; b.clone=null; b.guard=0; b.ivul=0; b.armor=0; b.armorOff=0; bfxReset();
+        b.orbs=[]; b.ball=null; b.clone=null; b.guard=0; b.ivul=0; b.armor=0; b.armorOff=0; b.mist=0; bfxReset();
         break;
       }
     }
@@ -6106,6 +6119,7 @@ function kbFallT(y0, h, v0, g) {
 /* ---------------------------------------------------------------- 東京：トーキョータワン
    チャージマン（無敵の突進→壁でよろける＝ねらい目）＋ エレキマン（縦の電撃）。
    鉄骨パンチ：こぶしを空へ突き上げると、少しして天井から鉄骨が降ってくる（落ちる所が光る）。 */
+var TK_WAIT = [36, 28], TK_ROD_PUNCH = 80;                             /* 東京：立ち止まる長さ［ふつう, 半分を切ったら］＝避雷針の盾の長さ */
 kb("p13", {
   hp: 26,
   init: function (b) { b.trains = 0; },
@@ -6114,7 +6128,12 @@ kb("p13", {
     b.vy = Math.min(MAXFALL, b.vy + GRAV); bossMoveY(b);
     if (b.state === "wait") {                       /* 足もとを固めて次の手を選ぶ */
       b.vx = 0;
-      if (b.t > (half ? 28 : 36)) {
+      /* 避雷針の盾（2026-09-23 手ごたえ合わせ）：立ち止まっているあいだは 正面のまっすぐな弾を はじく。
+         ななめ撃ち（▲＋←→）・背中は通る（スカルマン式＝bossBlock の guard）。盾は正面が光る（drawBfxWorld） */
+      b.guard = Math.max(b.guard || 0, 4);
+      if (b.t === 2) { b.rods = (b.rods || 0) + 1; if (b.rods <= 2) bfxSay("ひらいしんの たて！ ななめうちで ねらえ", 60); }
+      if (b.t % 6 === 0) part(b.x + (b.face > 0 ? b.w : 0), b.y + 4, "#fff3a8", 2, 1.0);
+      if (b.t > (half ? TK_WAIT[1] : TK_WAIT[0])) {
         b.t = 0; b.cycle++;
         var m = b.cycle % 3;
         b.state = (m === 0) ? "train" : (m === 1) ? "punch" : "beam";
@@ -6143,6 +6162,7 @@ kb("p13", {
       if (b.t > 50) { b.state = "wait"; b.t = 0; }
     } else if (b.state === "punch") {               /* 鉄骨パンチ：空へ突き上げる→天井から鉄骨 */
       b.vx = 0;
+      if (b.t < TK_ROD_PUNCH) b.guard = Math.max(b.guard || 0, 4);   /* 突き上げるまでは 避雷針の盾のまま */
       if (b.t === 1) {
         b.gx = [];
         var n = half ? 3 : 2;
@@ -6168,6 +6188,7 @@ kb("p13", {
       if (b.t > 96) { b.state = "wait"; b.t = 0; }
     } else if (b.state === "beam") {                /* でんぱビーム：床から天井まで 縦の電撃が3本 */
       b.vx = 0;
+      if (b.t < 34) b.guard = Math.max(b.guard || 0, 4);   /* ためているあいだは 避雷針の盾（撃ったら口が開く） */
       if (b.t === 1) {
         b.zx = [];
         var L = arenaL() + 30, R = arenaR() - 30;
@@ -6229,7 +6250,7 @@ kb("p14", {
         SFX.boom(); part(b.x + b.w / 2, b.y + b.h, "#ffffff", 16, 2.8);
         bfxQuake(half ? 24 : 18, 18);                /* 地面に立っていると足がすくむ＝跳んでよける */
         kbShock(b, half ? 3.8 : 3.2, 3);
-        b.lockFace = false; b.vx = 0; b.state = "wait"; b.t = 0; b.mouth = 50;
+        b.lockFace = false; b.vx = 0; b.state = "wait"; b.t = 0; b.mouth = Math.max(b.mouth || 0, 50);
       }
       if (b.t > 120) { b.lockFace = false; b.vx = 0; b.state = "wait"; b.t = 0; }
     } else if (b.state === "steam") {               /* 熱いゆげ：床から柱が立つ（予告つき） */
@@ -6495,14 +6516,22 @@ kb("p8", {
 
 /* ---------------------------------------------------------------- 栃木：イチゴーレム
    ガッツマン（跳んで着地→地ならしで足がすくむ・岩を投げる）＋ 無敵のころがり突進。 */
+/* 石のから（2026-09-23 手ごたえ合わせ）：ゴーレムの体を 石のからが おおっている。からがある間は 弾が効かない
+   （どこから撃っても はじく）。決まった数 当てると割れて、しばらく口が開く（弱点）。時間がたつと 光って予告→張り直す。
+   仕組みは 長野の氷のよろい（26_bossfx.js armor*）と同じ。見た目と合図だけ 石にする */
+var TG_ARMOR = [22, 26], TG_ARMOR_GAP = 90, TG_WAIT = [20, 16];
+var TG_LOOK = { fill: "#b08a6a", edge: "#e8d2b0", crack: "#fff0d8", crackLo: "#4a3222", bit: "#d8b890", alpha: 0.45,
+                set: "いわの から！ かたくなった", broke: "いわの からが われた！ いまだ！", warn: "からが また かたまりはじめた…" };
 kb("p9", {
   hp: 30,
+  init: function (b) { b.armorLook = TG_LOOK; b.armorGap = TG_ARMOR_GAP; b.armorMouth = false; armorSet(b, TG_ARMOR[0], false); },
   ai: function (b, p) {
     var half = (b.hp < b.maxhp / 2);
+    armorTick(b, TG_ARMOR[half ? 1 : 0]);
     b.vy = Math.min(MAXFALL, b.vy + GRAV); bossMoveY(b);
     if (b.state === "wait") {
       b.vx = 0;
-      if (b.t > (half ? 28 : 36)) {
+      if (b.t > (half ? TG_WAIT[1] : TG_WAIT[0])) {   /* 次の技までの間（以前 36／28） */
         b.t = 0; b.cycle++;
         var m = b.cycle % 4;
         b.state = (m === 0) ? "punch" : (m === 1) ? "throw" : (m === 2) ? "roll" : "rain";
@@ -6527,7 +6556,7 @@ kb("p9", {
             eshot({ x: rx - 7, y: ry, w: 14, h: 14, vx: 0, vy: 0.8, grav: 0.2, dmg: 3, kind: "rock" });
           }
         }
-        b.lockFace = false; b.vx = 0; b.state = "wait"; b.t = 0; b.mouth = 50;
+        b.lockFace = false; b.vx = 0; b.state = "wait"; b.t = 0; b.mouth = Math.max(b.mouth || 0, 50);
       }
       if (b.t > 120) { b.lockFace = false; b.vx = 0; b.state = "wait"; b.t = 0; }
     } else if (b.state === "throw") {               /* 岩投げ：頭の上に持ち上げて 山なりに投げる。落ちると くだける */
@@ -6537,7 +6566,7 @@ kb("p9", {
         var dx = (p.x + 6) - (b.x + b.w / 2);
         eshot({ x: b.x + b.w / 2 - 8, y: b.y - 12, w: 16, h: 16, vx: Math.max(-3.6, Math.min(3.6, dx / 44)), vy: -5.4,
                 grav: 0.24, dmg: 4, kind: "rock", bomb: true });
-        SFX.shoot(); b.mouth = 50;
+        SFX.shoot(); b.mouth = Math.max(b.mouth || 0, 50);
       }
       if (b.t > (half ? 76 : 60)) { b.state = "wait"; b.t = 0; }
     } else if (b.state === "roll") {                /* ころがり突進：ころがっているあいだは弾が効かない */
@@ -6551,7 +6580,8 @@ kb("p9", {
         bossMoveX(b); clampX(b);
         if (b.wallHit) { b.face = -b.face; b.hops++; shake = 8; SFX.hit(); }
         if (b.hops >= 2 || b.t > 170) {
-          b.hops = 0; b.ivul = 0; b.lockFace = false; b.state = "rest"; b.t = 0; b.vx = 0; b.mouth = 90;
+          /* 口が開くのは ひと休みのあいだ（44コマ）だけ。以前は90コマ＝休み終わっても2倍が続いていた（2026-09-23 手ごたえ合わせ） */
+          b.hops = 0; b.ivul = 0; b.lockFace = false; b.state = "rest"; b.t = 0; b.vx = 0; b.mouth = Math.max(b.mouth || 0, 50);
         }
       }
     } else if (b.state === "rest") {                /* 目が回って ひと休み＝ねらい目 */
@@ -6559,7 +6589,7 @@ kb("p9", {
       if (b.t % 8 === 0) part(b.x + b.w / 2, b.y - 3, "#ffe066", 2, 1.2);
       if (b.t > 44) { b.state = "wait"; b.t = 0; }
     } else if (b.state === "rain") {                /* たね連射：頭のいちごから種をまく */
-      b.vx = 0; b.mouth = 60;
+      b.vx = 0; b.mouth = Math.max(b.mouth || 0, 60);
       if (b.t === 18 || b.t === 34 || b.t === 50) {
         for (var i = 0; i < 5; i++) {
           var a = -1.2 + i * 0.6;
@@ -6575,11 +6605,29 @@ kb("p9", {
 /* ---------------------------------------------------------------- 群馬：ユモミン
    バブルマン（部屋に温泉がたまる）＋ エアーマン（からっ風・ゆげの渦）。
    湯もみ板で床をたたくと、床を衝撃波が走る。 */
+/* 湯けむりに かくれる（2026-09-23 手ごたえ合わせ）：ゆげの渦・からっ風のあいだは 湯けむりに すがたを消す。
+   体がうすくなっているあいだ（b.mist）は 弾が すりぬける（bossBlock の "mist"）。
+   予告＝合図の文字と、体が だんだん うすくなる（GM_MIST_IN コマ）。消えている長さは GM_MIST コマまで（無敵の上限126より短く）。
+   温泉・熱湯・湯もみ板のときは すがたを見せる＝ねらい目 */
+var GM_MIST = 96, GM_MIST_IN = 14;
+function gmMist(b, on) {                           /* 湯けむりの世話（毎フレーム）。on＝隠れたい技の最中 */
+  if (on && b.mistT < GM_MIST) {
+    b.mistT++;
+    if (b.mistT === 1) { b.mists = (b.mists || 0) + 1; if (b.mists <= 2) bfxSay("ゆけむりに かくれた！ でてくるのを まて", 60); }
+    if (b.mistT % 3 === 0) part(b.x + Math.random() * b.w, b.y + Math.random() * b.h, "#ffffff", 1, 1.0);
+  } else if (!on) b.mistT = 0;
+  var want = (on && b.mistT < GM_MIST) ? 0.28 : 1;
+  b.mistA = (b.mistA === undefined ? 1 : b.mistA) + (want - (b.mistA === undefined ? 1 : b.mistA)) * 0.18;
+  /* すりぬけるのは 体がうすくなりきってから（予告のあいだは まだ当たる） */
+  b.mist = (on && b.mistT >= GM_MIST_IN && b.mistT < GM_MIST) ? 2 : 0;
+}
 kb("p10", {
   hp: 31,
   floodCol: "#6fd6c4", floodA: 0.22,              /* 温泉の色（40_draw.js の水のかぶせ） */
+  init: function (b) { b.mistT = 0; b.mistA = 1; b.mist = 0; },
   ai: function (b, p) {
     var half = (b.hp < b.maxhp / 2);
+    gmMist(b, b.state === "uzu" || b.state === "wind" || b.state === "onsen");
     if (b.hy === undefined) b.hy = floorY(b) - 8;      /* 湯けむりなので少しだけ浮く（浮かせすぎると弾が下を通る） */
     b.y += (b.hy - b.y) * 0.07;
     if (b.state === "wait") {
@@ -6635,7 +6683,8 @@ kb("p10", {
       }
       if (b.t > 110) { b.state = "wait"; b.t = 0; }
     } else if (b.state === "boil") {                /* 熱湯ふんしゃ：主人公の足もとから柱（予告つき） */
-      b.mouth = 60; b.vx = 0;
+      /* 口が開くのは 柱をふき上げたあと（以前は この技のあいだ毎コマ60＝ずっと2倍だった。2026-09-23 手ごたえ合わせ） */
+      b.vx = 0;
       if (b.t === 1 || (half && b.t === 30)) {
         b.tx = kbClampX(p.x + 6 - 7, 14) + 7;
         bfxMark(b.tx - 8, bossFloorY() - 8, 16, 8, 30, "#ffd2d2");
@@ -6645,10 +6694,17 @@ kb("p10", {
         part(b.tx, bossFloorY(), "#ffd2d2", 12, 2.4);
         eshot({ x: b.tx - 8, y: bossFloorY() - 64, w: 16, h: 64, vx: 0, vy: 0, dmg: 4, kind: "steam",
                 life: 50, nosolid: true, stay: true });
-        SFX.boom(); shake = 5;
+        SFX.boom(); shake = 5; b.mouth = Math.max(b.mouth || 0, 40);
       }
       if (b.t > (half ? 96 : 70)) { b.state = "wait"; b.t = 0; }
     }
+  },
+  /* 湯けむりに かくれているあいだは 体がうすい（縁どりも いっしょに うすくなる） */
+  draw: function (b, x, y, hl) {
+    var a = (b.mistA === undefined) ? 1 : b.mistA;
+    ctx.globalAlpha = a;
+    bossSprite(b.kind, b, x, y, hl, (b.mouth > 0) ? { a: "#ffffff" } : null);
+    ctx.globalAlpha = 1;
   }
 });
 
@@ -10981,11 +11037,12 @@ var padSync=null, padClear=null, padMeasure=null;
     }
     return null;
   }
-  /* 押しはじめは少し甘く見る：ボタンの縁から 18px 以内なら、いちばん近いボタンを押したことにする
-     （すき間に指が落ちて何も起きない＝「感度が悪い」の一因。院長報告 2026-09-14） */
+  /* 押しはじめは甘く見る：ボタンの縁から PAD px 以内なら、いちばん近いボタンを押したことにする
+     （すき間に指が落ちて何も起きない＝「感度が悪い」の一因。院長報告 2026-09-14。
+      2026-09-23 院長「ボタンの感度もマックスで」で 18px → 40px） */
   function hitNear(x,y){
     var b=hit(x,y); if(b) return b;
-    var best=null, bd=1e9, PAD=18;
+    var best=null, bd=1e9, PAD=40;
     for(var i=0;i<rects.length;i++){
       var r=rects[i]; if(!r) continue;
       var dx=Math.max(r.l-x,0,x-r.r), dy=Math.max(r.t-y,0,y-r.b);
@@ -11037,7 +11094,7 @@ var padSync=null, padClear=null, padMeasure=null;
       var st=grip[id];
       if(!st) continue;                        /* パッドの外で始まった指は相手にしない */
       live[id]=1;
-      var b=hit(t.clientX,t.clientY);
+      var b=hitNear(t.clientX,t.clientY);      /* 指をすべらせたときも縁の近くで次のボタンへ（2026-09-23 感度マックス） */
       if(!b || b===st.cur) continue;           /* すき間では持ち替えない */
       if(isDpad(st.cur)){
         var k=st.held.indexOf(st.cur);

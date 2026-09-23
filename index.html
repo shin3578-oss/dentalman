@@ -1076,7 +1076,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-23 18:55";
+var BUILD_AT="2026-09-24 05:39";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -3251,12 +3251,12 @@ function update(){
        上へ動いている最中（vy<0）の grounded は、壁や天井にかすっただけの
        見せかけの1フレームなので数えない。ここを grounded だけで見ていると、
        空中で ▲＋A を連打したときにダッシュが何度も出てしまう（2026-09-06修正）。 */
-    if(p.grounded){ p.coyote=8;                /* 崖を離れて8フレームまでジャンプ可（感度。2026-09-14） */ if(p.vy>=0){ p.udashUsed=false; p.udashN=0; } } else if(p.coyote>0) p.coyote--;
+    if(p.grounded){ p.coyote=10;               /* 崖を離れて10フレームまでジャンプ可（感度。2026-09-14→09-24 院長「感度マックス」で8→10） */ if(p.vy>=0){ p.udashUsed=false; p.udashN=0; } } else if(p.coyote>0) p.coyote--;
     if(p.buf>0) p.buf--;
     /* 空中でもう一度Bを押すと上空ダッシュ（院長指示 2026-09-23「上キー＋Aでなく、Bの重ね押しで3段階まで」）。
        3回使い切ったあとのBは、これまでどおり着地前の先行入力として覚えておく。水の中はBで泳ぐので出さない */
     if(jumpEdge && !p.grounded && p.coyote<=0 && !p.inW && !p.udashUsed && p.udash<=0){ startUpDash(p); }
-    else if(jumpEdge) p.buf=12;                /* 着地の12フレーム前から押しておけば跳ぶ（感度。2026-09-14） */
+    else if(jumpEdge) p.buf=16;                /* 着地の16フレーム前から押しておけば跳ぶ（感度。2026-09-14 12→09-24 16） */
     /* 水の中では何度でも水をかいて浮き上がれる（泳ぐ） */
     if(p.buf>0 && (p.coyote>0 || p.inW)){
       p.vy=jumpOf(p.inW); p.buf=0; p.coyote=0; p.grounded=false; p.jumpCut=p.inW?4:9;
@@ -9966,7 +9966,7 @@ var padSync=null, padClear=null, padMeasure=null;
      （すき間に指が落ちて何も起きない＝「感度が悪い」の一因。院長報告 2026-09-14） */
   function hitNear(x,y){
     var b=hit(x,y); if(b) return b;
-    var best=null, bd=1e9, PAD=18;
+    var best=null, bd=1e9, PAD=40;   /* 2026-09-24 院長「ボタン感度マックス」で 18→40px（トドウフケンマンと同じ） */
     for(var i=0;i<rects.length;i++){
       var r=rects[i]; if(!r) continue;
       var dx=Math.max(r.l-x,0,x-r.r), dy=Math.max(r.t-y,0,y-r.b);
@@ -10018,7 +10018,7 @@ var padSync=null, padClear=null, padMeasure=null;
       var st=grip[id];
       if(!st) continue;                        /* パッドの外で始まった指は相手にしない */
       live[id]=1;
-      var b=hit(t.clientX,t.clientY);
+      var b=hitNear(t.clientX,t.clientY);      /* 指をすべらせたときも縁の近くで次のボタンへ（2026-09-24 感度マックス） */
       if(!b || b===st.cur) continue;           /* すき間では持ち替えない */
       if(isDpad(st.cur)){
         var k=st.held.indexOf(st.cur);

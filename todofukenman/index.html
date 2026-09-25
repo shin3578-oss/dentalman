@@ -1712,7 +1712,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-25 08:24";
+var BUILD_AT="2026-09-25 10:14";
 
 /* ===== 05_jpmap.js ===== */
 /* このファイルは src/gen_jpmap.py が書き出す。手で直さないこと。 */
@@ -1844,6 +1844,15 @@ function tileAt(cx,cy){
   if(cy>=ROWS) return " ";
   if(cx<0||cx>=COLSN) return "#";
   return MAP[cy][cx];
+}
+/* マップの1マスを書きかえる（2026-09-25）。⚠️ 面の途中で MAP を書きかえるときは、必ずこれを通す。
+   地形は 40_draw.js が画面外のキャンバスにまとめて描きおき（地形のキャッシュ）、毎コマは貼るだけなので、
+   ここで「このマスのまわりを描き直して」と印を付けないと、消えたはずの床が残って見える。 */
+function mapSet(cx,cy,ch){
+  if(cy<0||cy>=ROWS||cx<0||cx>=COLSN||!MAP[cy]) return;
+  if(MAP[cy].charAt(cx)===ch) return;
+  MAP[cy]=MAP[cy].substring(0,cx)+ch+MAP[cy].substring(cx+1);
+  if(typeof tileCacheDirty==="function") tileCacheDirty(cx,cy);
 }
 var gateOn=false;
 /* 梯子。ぶつからない（すり抜ける）ので solidPx には入れない。
@@ -5890,7 +5899,7 @@ function bfxNagare(dir,segs,warn,msg){
     var a=Math.max(0,Math.floor(arenaL()/TS)-1), b=Math.min(COLSN-1,Math.floor(arenaR()/TS)+1), ch=(BFX.ngDir>0)?">":"<";
     for(var c=a;c<=b;c++){
       if(MAP[r].charAt(c)!=="#") continue;
-      MAP[r]=MAP[r].substring(0,c)+ch+MAP[r].substring(c+1);
+      mapSet(c,r,ch);                                   /* 10_core.js（地形のキャッシュに 描き直しの 印を 付ける） */
       BFX.ngCells.push([r,c]); BFX.ngMap[r*4096+c]=1;
     }
   }
@@ -5902,7 +5911,7 @@ function bfxNagareSet(dir){                       /* 置きかえた 床の 向�
   var ch=(dir>0)?">":"<";
   for(var i=0;i<BFX.ngCells.length;i++){
     var q=BFX.ngCells[i], r=q[0], c=q[1], t=MAP[r].charAt(c);
-    if(t==="<"||t===">") MAP[r]=MAP[r].substring(0,c)+ch+MAP[r].substring(c+1);
+    if(t==="<"||t===">") mapSet(c,r,ch);
   }
 }
 function bfxNagareTick(){
@@ -5926,7 +5935,7 @@ function bfxNagareEnd(){
   if(BFX.ngLV===LV){
     for(var i=0;i<BFX.ngCells.length;i++){
       var q=BFX.ngCells[i], r=q[0], c=q[1], t=MAP[r]?MAP[r].charAt(c):"";
-      if(t==="<"||t===">") MAP[r]=MAP[r].substring(0,c)+"#"+MAP[r].substring(c+1);
+      if(t==="<"||t===">") mapSet(c,r,"#");
     }
   }
   BFX.nagare=0; BFX.ngDir=0; BFX.ngSegs=[]; BFX.ngI=0; BFX.ngT=0; BFX.ngBlink=0; BFX.ngCells=[]; BFX.ngMap={}; BFX.ngLV=null;
@@ -6123,7 +6132,7 @@ function bfxSlipCover(x0,x1){
   var b=Math.min(Math.floor(arenaR()/TS)+1, Math.floor(Math.max(x0,x1)/TS), COLSN-1);
   for(var c=Math.max(0,a);c<=b;c++){
     if(MAP[r].charAt(c)!=="#") continue;
-    MAP[r]=MAP[r].substring(0,c)+"I"+MAP[r].substring(c+1);
+    mapSet(c,r,"I");                                    /* 10_core.js（地形のキャッシュに 描き直しの 印を 付ける） */
     BFX.slipCells.push([r,c,"#"]); BFX.slipMap[r*4096+c]=frame;
     n++;
   }
@@ -6133,7 +6142,7 @@ function bfxSlipEnd(){
   if(BFX.slipLV===LV){
     for(var i=0;i<BFX.slipCells.length;i++){
       var q=BFX.slipCells[i], r=q[0], c=q[1];
-      if(MAP[r] && MAP[r].charAt(c)==="I") MAP[r]=MAP[r].substring(0,c)+q[2]+MAP[r].substring(c+1);
+      if(MAP[r] && MAP[r].charAt(c)==="I") mapSet(c,r,q[2]);
     }
   }
   BFX.slip=0; BFX.slipCells=[]; BFX.slipMap={}; BFX.slipLV=null;
@@ -16916,6 +16925,266 @@ function ladderTile(x,y,r){
   px(x+1,y+11,TS-2,1,rail);
 }
 
+/* --- 1マスぶんの地形を描く（drawTiles と 地形のキャッシュの 両方から 呼ぶ。2026-09-25 に drawTiles から 切り出した） --- */
+var TILE_CHARS="#=^VbE~HIBCK<>MF{}!@";
+function drawTileCell(c,r,t,P0){
+  var x=c*TS,y=r*TS;
+  /* 区間ごとの色（41_bg.js）。タイルの絵は全部 PAL を見るので、その列の色に差し替えて描く */
+  /* 区間の外のタイルは その面の元の色（palAt が LV.pal を返す）。PAL をそのまま返すと
+     ひとつ前のタイルの区間の色が残っていた（2026-09-23） */
+  PAL=(typeof palAt==="function")?palAt(c,r):P0;
+  var st=PAL.style||"enamel", hz=PAL.haz||"spike";
+  if(t==="#") solidTile(x,y,c,r,st);
+  else if(t==="=") platTile(x,y);
+  else if(t==="b") trampTile(x,y);
+  else if(t==="E") elecTile(x,y,c,r);
+  else if(t==="~") waveTile(x,y,c);
+  else if(t==="H") ladderTile(x,y,r);
+  else if(t==="I") iceTile(x,y,c,r);
+  else if(t==="B"||t==="C") blinkTile(x,y,c,t);
+  else if(t==="K") crumbTile(x,y,c,r);
+  else if(t==="<"||t===">") beltTile(x,y,c,t);
+  else if(t==="M") magnetTile(x,y,c);
+  else if(t==="F") flameTile(x,y,c,r);
+  else if(t==="{"||t==="}"||t==="!") flowTile(x,y,c,r,t);
+  else if(t==="@") dripTile(x,y,c);
+  else if(t==="V") hazTile(x,y,c,hz,true);
+  else hazTile(x,y,c,hz,false);
+}
+
+/* ---- 地形のキャッシュ（2026-09-25）-----------------------------------------------------------------
+   新しい県ほど 地形のマスを 手の込んだ描き方にしていて、1コマの描画が重くなってきた（iPad・スマホで カクつく おそれ）。
+   そこで **動かない地形のマスは 画面外のキャンバス（チャンク＝16列×16行ぶん）に 一度だけ描いておき、毎コマは 貼るだけ**にする。
+   ・チャンクは 今 画面に入る所（＋まわり1つ）だけ作る。まわりは 1コマに1つずつ 先に作っておく（走っても 描き直しで 重くならない）。
+     古いものは TC_MAX を こえたら 捨てる（iPad の メモリ）。キャンバスは のりしろ TC_PAD px つき（上に はみ出す 草・飾りも 入る）。
+   ・キャッシュに 入れるかは マスごとに 自動で 決める（tcStatic）：
+       ①時間で変わる文字（TC_ALWAYS：消える床・崩れる足場・ベルト・磁石・炎・流れ・しずく・電気・水面・すべる床）は いつも 毎コマ描く
+       ②それ以外は 見えない 下書き用の 筆（TCR）で いちど描いてみて、frame（時間）・Math.random・BFX・cam・player・boss・crumbs・TIDE を
+         1回でも 読んだら 毎コマ描く（光る・ゆれる・点滅する 飾りの ある マスは 自動で こちらへ）。
+         絵が のりしろの 外まで はみ出す マス・消しゴム（clearRect）・合成の 切りかえを 使う マスも 毎コマ描く。
+   ・マップが 途中で 変わったら（ソースの床・流れる床など。26_bossfx.js）、mapSet（10_core.js）が tileCacheDirty を 呼び、
+     そのマスの まわり2マスを ふくむ チャンクに 印を付ける → 次の 描画で 作り直す。
+     書き忘れの 保険に、毎コマ 画面の行の 文字列を 前と くらべ、ちがう行が あれば 同じように 印を付ける（tcPrepare）。
+   ・面が 変わった（MAP が 作り直された）ら 全部 捨てる。
+   ⚠️ 新しい タイルの 絵で、上の 見張り以外の「動く値」（例：gateOn・shake・score）を 見るなら、その文字を TC_ALWAYS に 足すか、
+      tcTaintOn で 見張る 値を 足すこと（足さないと その マスの 絵が 止まって 見える）。
+   TILE_CACHE=false で 前のやり方（毎コマ 全部 描く）に もどる（test/perf_draw.py が 前と後を くらべるのに 使う）。 */
+var TILE_CACHE=true;
+var TC_ALWAYS="EIBCK<>MF{}!@~";
+var TC_W=16, TC_H=16, TC_PAD=32, TC_MAX=40, TC_POOL=8;
+var TC_UNKNOWN=0, TC_STATIC=1, TC_LIVE=2;
+var TC={map:null, cols:0, rows:0, nx:0, ny:0, ch:{}, n:0, cell:null, snap:null, tick:0, pool:[], stat:{built:0,rebuilt:0,dropped:0,time:0,odd:0,far:0}};
+function tcReset(){
+  for(var k in TC.ch) tcDrop(+k);
+  TC.map=MAP; TC.cols=COLSN; TC.rows=ROWS;
+  TC.nx=Math.ceil(COLSN/TC_W); TC.ny=Math.ceil(ROWS/TC_H);
+  TC.cell=new Uint8Array(COLSN*ROWS);
+  TC.snap=MAP.slice();
+}
+/* 26_bossfx.js などが マップの マス (cx,cy) を 書きかえた（10_core.js の mapSet から 呼ばれる）。
+   そのマスの 絵だけでなく、となりの マスの 絵（上が 空いているか 等）も 変わるので、まわり2マスを ふくむ チャンクに 印を付ける */
+function tileCacheDirty(cx,cy){
+  if(TC.map!==MAP || !TC.cell) return;
+  var i0=Math.max(0,Math.floor((cx-2)/TC_W)), i1=Math.min(TC.nx-1,Math.floor((cx+2)/TC_W));
+  var j0=Math.max(0,Math.floor((cy-2)/TC_H)), j1=Math.min(TC.ny-1,Math.floor((cy+2)/TC_H));
+  for(var i=i0;i<=i1;i++) for(var j=j0;j<=j1;j++){ var q=TC.ch[j*TC.nx+i]; if(q) q.dirty=true; }
+}
+function tcDrop(key){
+  var q=TC.ch[key]; if(!q) return;
+  if(q.cv && TC.pool.length<TC_POOL) TC.pool.push(q.cv);
+  var c0=q.i*TC_W, c1=Math.min(TC.cols,c0+TC_W), r0=q.j*TC_H, r1=Math.min(TC.rows,r0+TC_H);
+  if(TC.cell) for(var r=r0;r<r1;r++) for(var c=c0;c<c1;c++) TC.cell[r*TC.cols+c]=TC_UNKNOWN;
+  delete TC.ch[key]; TC.n--; TC.stat.dropped++;
+}
+/* 行 rr の 文字列が 前に見たときと ちがう（mapSet を 通らずに 書きかえられた かもしれない）→ ちがうマスに 印 */
+function tcRowChanged(rr){
+  var a=MAP[rr]||"", b=TC.snap[rr]||"", n=Math.max(a.length,b.length);
+  for(var c=0;c<n;c++) if(a.charCodeAt(c)!==b.charCodeAt(c)) tileCacheDirty(c,rr);
+  TC.snap[rr]=a;
+}
+
+/* 見えない 下書き用の 筆。描いた所の 外わく（世界の座標）だけ 記録する。変形（translate・rotate・scale）も たどる */
+var TCR=(function(){
+  var m=[1,0,0,1,0,0], st=[], S={};
+  var R={bb:[0,0,0,0], any:false, bad:false, lw:1, blur:0};
+  function pt(x,y){
+    var X=m[0]*x+m[2]*y+m[4], Y=m[1]*x+m[3]*y+m[5];
+    if(!(X>-1e7&&X<1e7&&Y>-1e7&&Y<1e7)){ R.bad=true; return; }
+    if(!R.any){ R.bb[0]=R.bb[2]=X; R.bb[1]=R.bb[3]=Y; R.any=true; return; }
+    if(X<R.bb[0]) R.bb[0]=X; if(X>R.bb[2]) R.bb[2]=X;
+    if(Y<R.bb[1]) R.bb[1]=Y; if(Y>R.bb[3]) R.bb[3]=Y;
+  }
+  function box(x,y,w,h){ x=+x; y=+y; w=+w; h=+h; pt(x,y); pt(x+w,y); pt(x,y+h); pt(x+w,y+h); }
+  function mul(a,b,c,d,e,f){
+    var n0=m[0]*a+m[2]*b, n1=m[1]*a+m[3]*b, n2=m[0]*c+m[2]*d, n3=m[1]*c+m[3]*d, n4=m[0]*e+m[2]*f+m[4], n5=m[1]*e+m[3]*f+m[5];
+    m[0]=n0; m[1]=n1; m[2]=n2; m[3]=n3; m[4]=n4; m[5]=n5;
+  }
+  function fontPx(){ var q=/(\d+(\.\d+)?)px/.exec(S.font||""); return q?+q[1]:10; }
+  var g={ addColorStop:function(){} };
+  var o={
+    canvas:{width:VW,height:VH},
+    fillStyle:"#000", strokeStyle:"#000", globalAlpha:1, font:"10px sans-serif", textAlign:"start", textBaseline:"alphabetic",
+    lineCap:"butt", lineJoin:"miter", miterLimit:10, imageSmoothingEnabled:false, imageSmoothingQuality:"low", shadowColor:"rgba(0,0,0,0)",
+    shadowOffsetX:0, shadowOffsetY:0, lineDashOffset:0, direction:"inherit",
+    save:function(){ st.push([m.slice(),S.lineWidth,S.font]); },
+    restore:function(){ var q=st.pop(); if(q){ m=q[0]; S.lineWidth=q[1]; S.font=q[2]; } },
+    translate:function(x,y){ mul(1,0,0,1,+x,+y); },
+    scale:function(x,y){ mul(+x,0,0,+y,0,0); },
+    rotate:function(a){ var cs=Math.cos(a), sn=Math.sin(a); mul(cs,sn,-sn,cs,0,0); },
+    transform:function(a,b,c,d,e,f){ mul(+a,+b,+c,+d,+e,+f); },
+    setTransform:function(a,b,c,d,e,f){ R.bad=true; },            /* 世界の 位置が わからなくなる → 毎コマ描く */
+    resetTransform:function(){ R.bad=true; },
+    getTransform:function(){ R.bad=true; return {a:m[0],b:m[1],c:m[2],d:m[3],e:m[4],f:m[5]}; },
+    fillRect:function(x,y,w,h){ box(x,y,w,h); }, strokeRect:function(x,y,w,h){ box(x,y,w,h); }, rect:function(x,y,w,h){ box(x,y,w,h); },
+    roundRect:function(x,y,w,h){ box(x,y,w,h); },
+    clearRect:function(){ R.bad=true; },                           /* チャンクの中では 下の マスまで 消してしまう */
+    arc:function(x,y,r){ r=Math.abs(+r); box(x-r,y-r,2*r,2*r); },
+    ellipse:function(x,y,rx,ry){ var r=Math.max(Math.abs(+rx),Math.abs(+ry)); box(x-r,y-r,2*r,2*r); },
+    moveTo:function(x,y){ pt(+x,+y); }, lineTo:function(x,y){ pt(+x,+y); },
+    quadraticCurveTo:function(a,b,x,y){ pt(+a,+b); pt(+x,+y); },
+    bezierCurveTo:function(a,b,c,d,x,y){ pt(+a,+b); pt(+c,+d); pt(+x,+y); },
+    arcTo:function(a,b,x,y,r){ r=Math.abs(+r); box(a-r,b-r,2*r,2*r); box(x-r,y-r,2*r,2*r); },
+    beginPath:function(){}, closePath:function(){}, fill:function(){}, stroke:function(){}, clip:function(){},
+    setLineDash:function(){}, getLineDash:function(){ return []; },
+    isPointInPath:function(){ return false; }, isPointInStroke:function(){ return false; },
+    fillText:function(s,x,y){ var f=fontPx(), w=String(s).length*f; box(x-w,y-f*1.5,2*w,f*3); },
+    strokeText:function(s,x,y){ var f=fontPx(), w=String(s).length*f; box(x-w,y-f*1.5,2*w,f*3); },
+    measureText:function(s){ return {width:String(s).length*fontPx()*0.6}; },
+    drawImage:function(img,a,b,c,d,e,f,g2,h){
+      if(arguments.length>=9) box(f,g2,h,arguments[8]);
+      else if(arguments.length>=5) box(a,b,c,d);
+      else box(a,b,(img&&img.width)||0,(img&&img.height)||0);
+    },
+    createLinearGradient:function(){ return g; }, createRadialGradient:function(){ return g; }, createConicGradient:function(){ return g; },
+    createPattern:function(){ return null; },
+    getImageData:function(){ R.bad=true; return {data:new Uint8ClampedArray(4),width:1,height:1}; },
+    putImageData:function(){ R.bad=true; }
+  };
+  Object.defineProperty(o,"lineWidth",{get:function(){ return S.lineWidth; },set:function(v){ S.lineWidth=+v; if(+v>R.lw) R.lw=+v; }});
+  Object.defineProperty(o,"font",{get:function(){ return S.font; },set:function(v){ S.font=v; }});
+  Object.defineProperty(o,"shadowBlur",{get:function(){ return S.blur||0; },set:function(v){ S.blur=+v; if(+v>R.blur) R.blur=+v; }});
+  Object.defineProperty(o,"globalCompositeOperation",{get:function(){ return "source-over"; },set:function(v){ if(v!=="source-over") R.bad=true; }});
+  Object.defineProperty(o,"filter",{get:function(){ return "none"; },set:function(v){ if(v&&v!=="none") R.bad=true; }});
+  R.ctx=o;
+  R.reset=function(){ m=[1,0,0,1,0,0]; st=[]; S.lineWidth=1; S.font="10px sans-serif"; S.blur=0; R.any=false; R.bad=false; R.lw=1; R.blur=0; };
+  return R;
+})();
+
+/* 時間などの「動く値」を 読んだかの 見張り（tcStatic の あいだだけ 入れかえる） */
+var TCT={hit:false, on:false, sv:null};
+function tcTaintOn(){
+  var sv=TCT.sv={frame:frame, rnd:Math.random, dn:Date.now, BFX:(typeof BFX!=="undefined")?BFX:null, cam:cam, player:player, boss:boss, crumbs:crumbs, TIDE:TIDE};
+  var hit=function(){ TCT.hit=true; };
+  var H={get:function(t,k){ TCT.hit=true; return t[k]; }, has:function(t,k){ TCT.hit=true; return k in t; },
+         set:function(t,k,v){ TCT.hit=true; t[k]=v; return true; }};
+  frame={valueOf:function(){ TCT.hit=true; return sv.frame; }, toString:function(){ TCT.hit=true; return String(sv.frame); }};
+  Math.random=function(){ hit(); return sv.rnd.call(Math); };
+  Date.now=function(){ hit(); return sv.dn.call(Date); };
+  if(sv.BFX) BFX=new Proxy(sv.BFX,H);
+  if(sv.cam) cam=new Proxy(sv.cam,H);
+  if(sv.player) player=new Proxy(sv.player,H);
+  if(sv.boss) boss=new Proxy(sv.boss,H);
+  if(sv.crumbs) crumbs=new Proxy(sv.crumbs,H);
+  if(sv.TIDE) TIDE=new Proxy(sv.TIDE,H);
+  TCT.on=true;
+}
+function tcTaintOff(){
+  var sv=TCT.sv; if(!TCT.on||!sv) return;
+  frame=sv.frame; Math.random=sv.rnd; Date.now=sv.dn;
+  if(sv.BFX) BFX=sv.BFX;
+  cam=sv.cam; player=sv.player; boss=sv.boss; crumbs=sv.crumbs; TIDE=sv.TIDE;
+  TCT.on=false; TCT.sv=null;
+}
+/* そのマスを キャッシュに 入れてよいか（時間などで 絵が 変わらず、チャンクの のりしろの 中に おさまる）。tcTaintOn の 中で 呼ぶ */
+function tcStatic(c,r,t,P0,ox,oy,CW,CH){
+  TCT.hit=false; TCR.reset();
+  var MAINC=ctx; ctx=TCR.ctx;
+  try{ drawTileCell(c,r,t,P0); }
+  catch(e){ TCT.hit=true; }
+  finally{ ctx=MAINC; }
+  if(TCT.hit){ TC.stat.time++; return false; }
+  if(TCR.bad){ TC.stat.odd++; return false; }
+  if(!TCR.any) return true;
+  var e=TCR.lw/2+TCR.blur*2+2, b=TCR.bb;
+  if(b[0]-e>=ox && b[1]-e>=oy && b[2]+e<=ox+CW && b[3]+e<=oy+CH) return true;
+  TC.stat.far++; return false;
+}
+/* チャンク (i,j) を 作る（作り直す） */
+function tcBuild(i,j,P0){
+  var key=j*TC.nx+i, q=TC.ch[key];
+  if(!q){ q=TC.ch[key]={i:i,j:j,cv:null,ox:0,oy:0,dirty:false,used:0}; TC.n++; TC.stat.built++; }
+  else TC.stat.rebuilt++;
+  var c0=i*TC_W, c1=Math.min(COLSN,c0+TC_W), r0=j*TC_H, r1=Math.min(ROWS,r0+TC_H);
+  var CW=TC_W*TS+2*TC_PAD, CH=TC_H*TS+2*TC_PAD, ox=c0*TS-TC_PAD, oy=r0*TS-TC_PAD;
+  var cell=TC.cell, list=[];
+  tcTaintOn();
+  try{
+    for(var c=c0;c<c1;c++) for(var r=r0;r<r1;r++){
+      var idx=r*COLSN+c, t=MAP[r][c];
+      if(TILE_CHARS.indexOf(t)<0){ cell[idx]=TC_LIVE; continue; }       /* 空気など（drawTiles は どのみち 描かない） */
+      if(TC_ALWAYS.indexOf(t)>=0 || !tcStatic(c,r,t,P0,ox,oy,CW,CH)){ cell[idx]=TC_LIVE; continue; }
+      cell[idx]=TC_STATIC; list.push(c,r);
+    }
+  } finally { tcTaintOff(); PAL=P0; }
+  if(list.length){
+    var cv=q.cv||TC.pool.pop();
+    if(!cv){ cv=document.createElement("canvas"); cv.width=CW; cv.height=CH; }
+    var cc=cv.getContext("2d");
+    cc.setTransform(1,0,0,1,0,0); cc.globalAlpha=1; cc.globalCompositeOperation="source-over";
+    cc.clearRect(0,0,CW,CH);
+    cc.translate(-ox,-oy);
+    var MAINC=ctx; ctx=cc;
+    try{ for(var k=0;k<list.length;k+=2) drawTileCell(list[k],list[k+1],MAP[list[k+1]][list[k]],P0); }
+    finally{ ctx=MAINC; cc.setTransform(1,0,0,1,0,0); PAL=P0; }
+    q.cv=cv;
+  } else if(q.cv){ if(TC.pool.length<TC_POOL) TC.pool.push(q.cv); q.cv=null; }
+  q.ox=ox; q.oy=oy; q.dirty=false; q.used=TC.tick;
+}
+/* drawTiles から 毎コマ：画面の チャンクを そろえて 貼る。使えないとき（Proxy が 無い 古い端末）は false＝前のやり方 */
+function tcPrepare(c0,c1,r0,r1,P0){
+  if(typeof Proxy==="undefined" || !MAP.length || c1<=c0 || r1<=r0) return false;
+  if(TC.map!==MAP || TC.cols!==COLSN || TC.rows!==ROWS) tcReset();
+  TC.tick++;
+  var i0=Math.floor(c0/TC_W), i1=Math.floor((c1-1)/TC_W), j0=Math.floor(r0/TC_H), j1=Math.floor((r1-1)/TC_H);
+  /* 書きかえの 保険：貼る チャンクの 行が 前と ちがえば 印を付ける */
+  for(var rr=j0*TC_H, re=Math.min(ROWS,(j1+1)*TC_H); rr<re; rr++) if(MAP[rr]!==TC.snap[rr]) tcRowChanged(rr);
+  var built=0, i, j, q;
+  for(i=i0;i<=i1;i++) for(j=j0;j<=j1;j++){
+    q=TC.ch[j*TC.nx+i];
+    if(!q || q.dirty){ tcBuild(i,j,P0); built++; }
+    else q.used=TC.tick;
+  }
+  /* 貼る（画面に 入る 所だけ。列ごとに 上から＝前の 描く順と 同じ） */
+  var vx0=Math.round(cam.x), vy0=Math.round(cam.y), vx1=vx0+W, vy1=vy0+H;
+  for(i=i0;i<=i1;i++) for(j=j0;j<=j1;j++){
+    q=TC.ch[j*TC.nx+i];
+    if(!q || !q.cv) continue;
+    var ax=Math.max(vx0,q.ox), ay=Math.max(vy0,q.oy), bx=Math.min(vx1,q.ox+q.cv.width), by=Math.min(vy1,q.oy+q.cv.height);
+    if(bx<=ax || by<=ay) continue;
+    ctx.drawImage(q.cv, ax-q.ox, ay-q.oy, bx-ax, by-ay, ax, ay, bx-ax, by-ay);
+  }
+  /* まわりの チャンクを 1コマに 1つ 先に作る（このコマで 作っていなければ） */
+  if(built===0){
+    var best=-1, bi=0, bj=0;
+    for(i=Math.max(0,i0-1);i<=Math.min(TC.nx-1,i1+1);i++) for(j=Math.max(0,j0-1);j<=Math.min(TC.ny-1,j1+1);j++){
+      if(i>=i0&&i<=i1&&j>=j0&&j<=j1) continue;
+      q=TC.ch[j*TC.nx+i];
+      if(q && !q.dirty){ q.used=TC.tick; continue; }
+      var d=Math.abs(i-(i0+i1)/2)+Math.abs(j-(j0+j1)/2);
+      if(best<0 || d<best){ best=d; bi=i; bj=j; }
+    }
+    if(best>=0){ tcBuild(bi,bj,P0); TC.ch[bj*TC.nx+bi].used=TC.tick; }
+  }
+  /* 多すぎたら 古いものから 捨てる（今 使っている ものは 捨てない） */
+  while(TC.n>TC_MAX){
+    var old=-1, ou=Infinity;
+    for(var k in TC.ch){ var qq=TC.ch[k]; if(qq.used<ou && qq.used<TC.tick){ ou=qq.used; old=+k; } }
+    if(old<0) break;
+    tcDrop(old);
+  }
+  return true;
+}
+
 /* --- 床タイル。PAL.style で積み方を変える -------------------------------- */
 function drawTiles(){
   var c0=Math.max(0,Math.floor(cam.x/TS)-1), c1=Math.min(COLSN,c0+32);
@@ -16934,31 +17203,13 @@ function drawTiles(){
   ehimeArt();                            /* 愛媛：お店・時計塔の 屋根と からくり人形・本館の 中の かべ・ふすま・格子の 窓・湯釜・振鷺閣・湯船と じゃぐち（タイルより 先に 描く。2026-09-25） */
   kochiArt();                            /* 高知：屋台と 品物・鍛冶屋・はりまや橋・桂浜の 松・沈下橋の 橋脚・灯台・漁船の 帆柱と 大漁旗・一本釣りの 竿（タイルより 先に 描く。2026-09-25） */
   kagawaArt();                           /* 香川：お土産屋・石灯籠・大門・かごかき・本宮・工場の 看板・麺を 干す 棚・大きな 釜（タイルより 先に 描く。2026-09-25） */
+  /* 動かない地形は 画面外のキャンバス（地形のキャッシュ）から貼る。ここで描くのは 時間で変わるマスだけ（2026-09-25） */
+  var TCel=(TILE_CACHE && tcPrepare(c0,c1,r0,r1,P0)) ? TC.cell : null;
   for(var c=c0;c<c1;c++) for(var r=r0;r<r1;r++){
+    if(TCel && TCel[r*COLSN+c]===TC_STATIC) continue;          /* キャッシュに 入っているマス */
     var t=MAP[r][c];
-    if("#=^VbE~HIBCK<>MF{}!@".indexOf(t)<0) continue;
-    var x=c*TS,y=r*TS;
-    /* 区間ごとの色（41_bg.js）。タイルの絵は全部 PAL を見るので、その列の色に差し替えて描く */
-    /* 区間の外のタイルは その面の元の色（palAt が LV.pal を返す）。PAL をそのまま返すと
-       ひとつ前のタイルの区間の色が残っていた（2026-09-23） */
-    PAL=(typeof palAt==="function")?palAt(c,r):P0;
-    var st=PAL.style||"enamel", hz=PAL.haz||"spike";
-    if(t==="#") solidTile(x,y,c,r,st);
-    else if(t==="=") platTile(x,y);
-    else if(t==="b") trampTile(x,y);
-    else if(t==="E") elecTile(x,y,c,r);
-    else if(t==="~") waveTile(x,y,c);
-    else if(t==="H") ladderTile(x,y,r);
-    else if(t==="I") iceTile(x,y,c,r);
-    else if(t==="B"||t==="C") blinkTile(x,y,c,t);
-    else if(t==="K") crumbTile(x,y,c,r);
-    else if(t==="<"||t===">") beltTile(x,y,c,t);
-    else if(t==="M") magnetTile(x,y,c);
-    else if(t==="F") flameTile(x,y,c,r);
-    else if(t==="{"||t==="}"||t==="!") flowTile(x,y,c,r,t);
-    else if(t==="@") dripTile(x,y,c);
-    else if(t==="V") hazTile(x,y,c,hz,true);
-    else hazTile(x,y,c,hz,false);
+    if(TILE_CHARS.indexOf(t)<0) continue;
+    drawTileCell(c,r,t,P0);
   }
   PAL=P0;
   wakayamaVeil();                        /* 和歌山：滝の裏の 岩棚の 前を 流れる 水・梅の 花（タイルの あと。2026-09-24） */

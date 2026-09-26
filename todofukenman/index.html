@@ -1795,7 +1795,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-26 05:38";
+var BUILD_AT="2026-09-27 01:09";
 
 /* ===== 05_jpmap.js ===== */
 /* このファイルは src/gen_jpmap.py が書き出す。手で直さないこと。 */
@@ -30652,12 +30652,11 @@ function regionDone(r) {
   if (!rg.idx.length) return false;
   return rg.idx.every(function (i) { return cleared[i]; });
 }
-/* その地方が開いているか＝前の「できている地方」をぜんぶ倒した */
+/* その地方が開いているか＝ステージができていれば、どの地方からでも遊べる
+   （院長指示 2026-09-27「関東と同じく、ほかのエリアも、タップしたら拡大表示して選べるように」。
+   それまでは前の地方をぜんぶ倒さないと開かなかった） */
 function regionOpen(r) {
-  if (!regionReady(r)) return false;
-  var rs = regions();
-  for (var k = 0; k < r; k++) if (regionReady(k) && !regionDone(k)) return false;
-  return true;
+  return regionReady(r);
 }
 function stageOpen(i) { return regionOpen(regionOf(i)); }
 function allClear47() {
@@ -30885,7 +30884,7 @@ function makeMapSvg() {
     var c = JPMAP.caps[pid];
     var st = svgEl("text", { x: c.x, y: c.y + 3, class: "capstar hide" }, gCap);
     st.textContent = "★";
-    labelEls.push({ el: st, base: 12, kind: "capstar", pid: +pid });
+    labelEls.push({ el: st, base: 12, kind: "capstar", pid: +pid, x0: c.x, y0: c.y + 3, n: 1 });   /* x0/y0 が無いと★が全部 左上(0,0)へ飛んでいた（2026-09-27） */
     label(gLabel, c.x, c.y + 11, c.n, "lb capname hide", 10, "capname", +pid);
   });
 
@@ -31090,7 +31089,7 @@ function showJapan(animate) {
       ? "47都道府県 ぜんぶ 制はした！　<b>日本一周 たっせい！</b>"
       : (allMadeClear()
          ? "<b>いま あるステージは ぜんぶ 制は！</b>　つづきの県は いま じゅんび中です"
-         : "ちほうを えらんでね　（いま開いているのは <b>" + regions()[now].name + "</b>　たおした "
+         : "ちほうを タップしてね　（おすすめは <b>" + regions()[now].name + "</b>　たおした "
          + clearedCount() + " ／ " + LEVELS.length + "）");
   }
   showCode();
@@ -31098,15 +31097,7 @@ function showJapan(animate) {
 
 /* ---- ②地方のアップ ---- */
 function openRegion(r) {
-  if (!regionOpen(r)) {
-    SFX.hit();
-    var m0 = document.getElementById("sel-msg");
-    if (m0) m0.innerHTML = regionReady(r)
-      ? ("<b>" + regions()[r].name + "</b> は まだ。前の ちほうを ぜんぶ たおすと ひらく")
-      : ("<b>" + regions()[r].name + "</b> は いま じゅんび中（作っているところ）");
-    return;
-  }
-  SFX.select();
+  SFX.select();          /* じゅんび中の地方も拡大して見せる（県をタップすると「じゅんび中」と出る） */
   selMode = "region"; selRegion = r; selPref = -1;
   paintMap();
   setVB(bboxOf(regionPrefs(r)), true);
@@ -31116,7 +31107,9 @@ function openRegion(r) {
   var lg2 = document.getElementById("sel-legend");
   if (lg2) lg2.classList.add("on");
   var msg = document.getElementById("sel-msg");
-  if (msg) msg.innerHTML = "県を えらんでね（" + regions()[r].idx.length + "ステージ）";
+  if (msg) msg.innerHTML = regionReady(r)
+    ? "県を えらんでね（" + regions()[r].idx.length + "ステージ）"
+    : "<b>" + regions()[r].name + "</b> は いま じゅんび中（作っているところ）";
   var panel = document.getElementById("selpanel");
   if (panel) panel.classList.remove("on");
   /* まだ倒していない県を1つ選んでおく */
@@ -31128,6 +31121,7 @@ function openRegion(r) {
 function tapPref(pid) {
   audioInit();
   var i = stageOfPref(pid);
+  if (i < 0 && selMode === "japan") { openRegion(regionIdxAll(pid)); return; }
   if (i < 0) {
     var m = document.getElementById("sel-msg");
     if (m) m.innerHTML = "この県は まだ じゅんび中（いま 作っているところ）";

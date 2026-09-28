@@ -1812,7 +1812,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-27 11:43";
+var BUILD_AT="2026-09-29 06:38";
 
 /* ===== 05_jpmap.js ===== */
 /* このファイルは src/gen_jpmap.py が書き出す。手で直さないこと。 */
@@ -6073,6 +6073,7 @@ function bfxFreeze(frames,msg){
   if(msg!==false) bfxSay(msg||"こごえた！",40);
   if(typeof SFX!=="undefined"&&SFX.clink) SFX.clink();
 }
+var BFX_SHOW_MSG=false;
 function bfxSay(msg,frames){ BFX.msg=msg; BFX.msgT=Math.max(BFX.msgT,frames||60); }
 /* ============================ 麺に からまる（香川 ウドンダー。2026-09-25） ============================
    麺の ムチに 当たると 主人公が 麺に からまって 少しの間 動けない（見た目＝麺が 体に 巻きつく。drawBfxWorld）。
@@ -7593,7 +7594,9 @@ function drawBfxScreen(){
       ctx.globalAlpha=1; ctx.strokeStyle=mh.col; ctx.lineWidth=1; ctx.strokeRect(hmx+0.5,hmy+0.5,(mh.w|0)-1,(mh.h|0)-1);
     }
   }
-  if(BFX.msgT>0 && state==="play"){
+  /* 戦っている途中のセリフ・テロップは出さない（2026-09-29 院長指示「戦っている途中のセリフ、テロップは要らない」）。
+     合図の中身（BFX.msg）は動きの判定に使っている所があるので残し、描くのだけやめる。 */
+  if(BFX_SHOW_MSG && BFX.msgT>0 && state==="play"){
     /* 画面の幅に収まらない長い合図は、文字を小さくして収める（2026-09-24。フグフーガの合図がはみ出した） */
     var fs=13; ctx.font='bold '+fs+'px system-ui, sans-serif';
     while(fs>9 && ctx.measureText(BFX.msg).width>W-24){ fs--; ctx.font='bold '+fs+'px system-ui, sans-serif'; }

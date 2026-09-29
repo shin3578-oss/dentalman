@@ -1293,7 +1293,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-29 21:33";
+var BUILD_AT="2026-09-29 22:33";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -4845,7 +4845,8 @@ var BFX={
   slip:0, slipCells:[], slipMap:{}, slipLV:null, slipLook:null,  /* 床がすべる残り・置きかえた床のマス（大阪。下の bfxSlip*） */
   tangle:0, tangleMax:0, tgDir:0, tgN:0, tangleLook:null,   /* 麺に からまっている 残り・はじめの 長さ・さいごに おした 向き・交互に おした 回数（香川。下の bfxTangle）・見た目の差し替え（デンタルマン7面の ワイヤー） */
   kona:0, konaMax:0,                               /* 白く かすむ 残り（香川。下の bfxKona） */
-  nagare:0, ngDir:0, ngSegs:[], ngWarn:0, ngI:0, ngT:0, ngFlips:0, ngBlink:0, ngCells:[], ngMap:{}, ngLV:null   /* 床の 流れ（徳島。下の bfxNagare） */
+  nagare:0, ngDir:0, ngSegs:[], ngWarn:0, ngI:0, ngT:0, ngFlips:0, ngBlink:0, ngCells:[], ngMap:{}, ngLV:null,   /* 床の 流れ（徳島。下の bfxNagare） */
+  ngLook:null                      /* 流れる床の 見た目の差し替え（デンタルマン12面 まるのみ工場の ベルト。2026-09-29） */
 };
 
 function bfxReset(){
@@ -4857,6 +4858,7 @@ function bfxReset(){
   BFX.tangle=0; BFX.tangleMax=0; BFX.tgDir=0; BFX.tgN=0; BFX.tangleLook=null; BFX.kona=0; BFX.konaMax=0;   /* 麺の からまり・白い かすみ（香川。2026-09-25）・からまりの 見た目（デンタルマン7面） */
   bfxSlipEnd();                     /* すべる床を もとの床へ（大阪。2026-09-23） */
   bfxNagareEnd();                   /* 流れる床を もとの床へ（徳島。2026-09-25） */
+  BFX.ngLook=null;                  /* 流れる床の 見た目の差し替え（デンタルマン12面。2026-09-29） */
   BFX.moe=[]; BFX.moeLook=null;     /* 燃える床を 消す（高知。2026-09-25）・見た目の差し替え（デンタルマン6面） */
   BFX.tsubu=[]; BFX.tsubuLook=null; /* 床の つぶを 消す（福岡。2026-09-25）・見た目の差し替え（デンタルマン5面） */
   BFX.yogan=null; BFX.yoganLook=null;   /* 床の 溶岩を 引かせる（熊本。2026-09-25）・見た目の差し替え（デンタルマン9面の 胃酸） */
@@ -5028,19 +5030,21 @@ function bfxNagareEnd(){
   BFX.nagare=0; BFX.ngDir=0; BFX.ngSegs=[]; BFX.ngI=0; BFX.ngT=0; BFX.ngBlink=0; BFX.ngCells=[]; BFX.ngMap={}; BFX.ngLV=null;
 }
 /* 40_draw.js の beltTile から呼ぶ。そのマスが 流れる床なら 描いて true。
-   うず潮の 青い 水が 流れる 向きへ すべり、白い 矢印が 流れる。入れ替わる 前は 次の 向きの 矢印が 黄色く 点滅する */
+   うず潮の 青い 水が 流れる 向きへ すべり、白い 矢印が 流れる。入れ替わる 前は 次の 向きの 矢印が 黄色く 点滅する。
+   BFX.ngLook＝見た目の差し替え {band,stripe,glint,arrow,blink,roll}（無ければ 徳島の うず潮。デンタルマン12面は 工場の ゴムの ベルト。2026-09-29） */
 function bfxNagareTile(x,y,c,r,t){
   if(!BFX.ngMap[r*4096+c]) return false;
-  var d=(t===">")?1:-1, TSz=TS;
+  var d=(t===">")?1:-1, TSz=TS, lk=BFX.ngLook||{};
   px(x,y,TSz,TSz,PAL.tile||"#38324c");
-  px(x,y,TSz,6,"#1e5a9a"); px(x,y+6,TSz,TSz-6,PAL.tileLo||"#2a2a36");
+  px(x,y,TSz,6,lk.band||"#1e5a9a"); px(x,y+6,TSz,TSz-6,PAL.tileLo||"#2a2a36");
   var off=((frame*d*1.05)%16+16)%16;
-  ctx.fillStyle="#3a8ad8";
+  ctx.fillStyle=lk.stripe||"#3a8ad8";
   for(var k=0;k<2;k++){ var wx=x+((off+k*8+(c%2)*4)%16); ctx.fillRect(wx-3,y+1+k*2,6,1); }
-  ctx.fillStyle="rgba(255,255,255,.75)"; ctx.fillRect(x+((off+5)%16)-1,y,3,1);
+  ctx.fillStyle=lk.glint||"rgba(255,255,255,.75)"; ctx.fillRect(x+((off+5)%16)-1,y,3,1);
+  if(lk.roll){ ctx.fillStyle=lk.roll; ctx.beginPath(); ctx.arc(x+8,y+7.5,1.6,0,Math.PI*2); ctx.fill(); }   /* ベルトの 下の ローラー */
   var blink=BFX.ngBlink && (Math.floor(frame/5)%2===0);          /* 予告：まん中で 次の 向き（黄）と いまの 向き（白）を 交互に */
   var ad=blink?-d:d, ax=BFX.ngBlink ? x+8 : x+((off+(c%2)*8)%16);
-  ctx.fillStyle=blink?"#ffe040":"#e8f8ff";
+  ctx.fillStyle=blink?(lk.blink||"#ffe040"):(lk.arrow||"#e8f8ff");
   ctx.beginPath();
   if(ad>0){ ctx.moveTo(ax-3,y+8); ctx.lineTo(ax+3,y+10.5); ctx.lineTo(ax-3,y+13); }
   else { ctx.moveTo(ax+3,y+8); ctx.lineTo(ax-3,y+10.5); ctx.lineTo(ax+3,y+13); }
@@ -5870,6 +5874,7 @@ function logTick(b){
   if(--q.t<=0){ part(q.x+q.w/2,q.y+q.h/2,"#e8e0d8",12,1.6); b.log=null; }
 }
 function drawLog(q){                               /* 丸太（立てた 太い 木。年輪の 切り口・なわ・葉っぱ 1まい）。消える前は うすく */
+  if(q.draw){ q.draw(q); return; }                 /* 見た目の差し替え（デンタルマン13面 マガリンの ぬけがら。2026-09-29） */
   var a=Math.min(1,q.t/12), x=q.x, y=q.y, w=q.w, h=q.h;
   ctx.globalAlpha=a;
   ctx.fillStyle=(q.hit>0)?"#ffffff":"#8a5a30"; ctx.fillRect(x,y+3,w,h-3);
@@ -12045,7 +12050,7 @@ function updateBoss(){
 
    2026-09-22 院長指示で、歴代ロックマンのボスの動きを1体ずつ足した（部品は 26_bossfx.js）。
    2026-09-29 院長指示「トドウフケンマンのボスの特徴を、デンタルマンの全部のボスに」で 1体ずつ作り直し（第1章と 同じ 書き方：
-   小道具と 定数表＝ボスの 頭文字（アケール ak_／シタオチー so_）・技の 順番＝*_SEQ［ふつう, 半分を切ったら］・予告は 落ちきるまで・守りには 解ける 条件と 時間）。 */
+   小道具と 定数表＝ボスの 頭文字（アケール ak_／シタオチー so_／マルノミン mn_／マガリン mg_）・技の 順番＝*_SEQ［ふつう, 半分を切ったら］・予告は 落ちきるまで・守りには 解ける 条件と 時間）。 */
 
 /* ============================ 10 アケール の小道具（2026-09-29 作り直し） ============================
    ねらい：10面のボス＝「口に むかって まっすぐ 撃つと 返ってくる」を教える役（トドウフケンマン 鳥取サキュウガニの つかむ 構え＝26_bossfx.js b.tsukami を
@@ -13000,198 +13005,886 @@ BOSSES.shitaochi={
   }
 };
 
+/* ============================ 12 マルノミン の小道具（2026-09-29 作り直し） ============================
+   ねらい：12面のボス＝「ふくらんでいる 間は 何も 効かない・しぼんだ ときを 待つ」を教える役（トドウフケンマン 山口フグフーガの とげ＝26_bossfx.js b.toge を
+   「丸呑みして ぱんぱんに ふくらんだ おなか」に ＋ ダストマン（吸いこみ）＋ 徳島ウズシオーネの 流れる床＝bfxNagare を「まるのみ工場の ベルト」に
+   ＋ チャージマン（口を 開けた 突進））。かまずに のみこませる 悪者なので、口と おなかが 主役。
+   守り  ぱんぱんの おなか（b.toge）… 大口を 開けて 吸いこんだ あと おなかが ふくらみ、とちゅう（MN_TOGE_K）から **どの向きの弾も おなかで はじく**
+                            （まっすぐ・ななめ・背中・真上。白い 火花）。ふくらんだ まま 部屋を はね回り（体当たり。下を くぐれる 高さ）、
+                            ふくらみすぎて 赤く 点滅（予告：空気が とどく はんいの 赤い 輪）→「げぷっ」と 空気を 7方向へ 出して しぼむ
+                            （輪の 外に いれば 当たらない）→ へたりこむ（shibomu＝口が開いて 2倍）＝**しぼんだ 直後が すき**。
+                            はじく 長さは ふくらむ 後半＋はね回る＋予告で 約95コマ（test_bossmoves.js mnCheck の 実測。26_bossfx.js の 上限 126 まで）
+         効く武器（WEAK＝10 オモリ・ナックル）… 口を 大きく 開けている 間（吸いこみ m_tame・m_nomu／もぐもぐ h_tame）に 拳が 口に とどくと
+                            **重い 拳を まるのみ**して おなかが 重くて ふくらめない（omoi：あおむけに ひっくりかえる・こうげき しない・体当たり しない・
+                            その 技は とりやめ）。▲▼で 拳を 口の 高さへ あやつって 打ちこむ＝ハードナックルの 使いどころ
+   技    marunomi  … 上の 守り（m_tame 口を 大きく 開ける → m_nomu 吸いこむ（風で ボスへ 引く・歩けば にげられる。体に さわると ぱくっ→前へ 吐き出される）→
+                     fukuramu ふくらむ → hazumu はね回る → m_warn 赤く 点滅 → shibomu げっぷで しぼむ）
+         hakidashi … もぐもぐ（ほっぺが うごく・落ちる 所が 光る。落ちきるまで）→ 食べものの かたまりを 山なりに 吐く（1つは 主人公の 真上）＋
+                     床を ころがる かたまり 2つ（左右へ。低い＝跳べ）→ h_ato（口が開いて 2倍）
+         enban     … まるのみ工場の ベルト：両手を 上げて スイッチ（床の はしが 光る）→ 床が ボスの 口の ほうへ 流れる（bfxNagare。歩けば にげられる）→
+                     流れが 入れ替わる（床の 矢印が 次の 向きで 点滅。半分から 2回）。その 間 口から 食べものの 円盤を 主人公へ 転がす
+                     （転がす 所が 先に 光る・低い＝跳べ。ベルトの 流れで 速く／おそく なるが ベルトに 運ばれる 主人公から 見ると いつも 同じ 速さ）→
+                     流れが 止まると おなかいっぱい（e_ato＝2倍）。この 技の 間は 両手で 前を 守る（b.guard＝正面の まっすぐな 弾は はじく・ななめ撃ち・背中は 通る）
+         tosshin   … 口を 開けた 突進：前足で 床を かく（予告：通る 床が 光る）→ 口を 開けて 壁まで 走る（無敵＝b.ivul。跳んで こえる）→
+                     壁に ぶつかって 目を回す（r_kabe＝2倍）。半分から 壁で 折り返して もう1回
+   すき  しぼんで へたりこむ（shibomu）・h_ato・e_ato・r_kabe＝口が開いて 2倍（体の まわりが 金色に 光る＝dmOpenGlow）。ふだん（wait）と 技の 間は 1倍
+   半分  はね回りが 長く（MN_BOUNCE）・ベルトの 入れ替わりが 2回（MN_ESEG）・突進が 2回・食べもの 4つ・技の 順番が 変わる（MN_SEQ）
+   部屋  12面の ボス部屋の 床は ぜんぶ '#'（ベルトに 置きかえられる）。天井の 柱は 床から 14マス上・磁石は 8マス上（はね回る 高さの 外）
+   ⚠️ 倒れたら updateBoss（30_bosses.js）が b.toge=0・bfxReset（ベルトも すぐ もとの 床に もどる）。食べもの・円盤・げっぷの 空気は 敵の弾なので いっしょに 消える。
+      ふくらんだ 大きさ（b.w・b.h）は 倒れた あとは 使わない（体は その場で 消える） */
+var MN_WAIT=[34,26];           /* 間合い（90〜160px）を 取る 長さ（±4コマ ゆらぐ）。守りなし＝効く */
+var MN_HOPV=-4.2, MN_HOPX=1.6; /* 間合いを 取る ぴょこぴょこ跳び（カエルの 体）の 上へ・横へ の 速さ */
+var MN_MTAME=[26,22];          /* 丸呑みの 予告（大口を 開ける・口へ 白い すじが あつまる） */
+var MN_NOMU=[50,50];           /* 吸いこむ 長さ */
+var MN_SPOW=[0.8,0.9];         /* 吸いこむ 風の 強さ（px/コマ。走る 2.25 より ずっと 弱い＝歩けば にげられる） */
+var MN_SNEAR=18, MN_SFADE=30;  /* ボスの まん中から この px より 近いと 風が なくなる（MN_SFADE px かけて 弱まる）＝体当たりまでは 引かない */
+var MN_PAKU=4;                 /* 吸いこみの 間に 体に さわると ぱくっ（痛さ）→ 前へ 吐き出される */
+var MN_KMAX=1.8, MN_TOGE_K=1.3;   /* ふくらんだ 大きさ（もとの 何倍か）・ここまで ふくらんだら おなかで はじく */
+var MN_PUFF=[30,24];           /* ふくらむ コマ */
+var MN_BOUNCE=[50,62];         /* はね回る 長さ（半分から 長く。はじく 長さ＝ふくらむ 後半＋これ＋予告 ≦ 126） */
+var MN_BVX=[2.0,2.3], MN_BG=0.3, MN_BH=78;   /* はね回る 横の 速さ・重さ・高さ（床から 体の 下まで px。主人公（21px）が 下を くぐれる）。
+                                                はねる たびに 主人公の ほうへ 向きなおる（立ったままだと のしかかられる・高い ときに 下を くぐれば 当たらない） */
+var MN_WARN=[26,22];           /* げっぷの 予告（床に 下りて 赤く 点滅＋空気が とどく はんいの 輪） */
+var MN_GR=48, MN_GSP=2.2;      /* げっぷの 空気が とどく はんい（体の まん中から px）・空気の 速さ */
+var MN_SHIBO=[70,58];          /* しぼんで へたりこむ（口が開く＝2倍） */
+var MN_OMOI=[84,72];           /* 拳を のみこんで ひっくりかえる（こうげき しない・体当たり しない。口は とじている＝2倍には しない。
+                                  2倍に すると 効く武器 3倍と かさなって すぐ 倒れる＝アケールの しばる と 同じ 考え） */
+var MN_OMOIDMG=18;             /* 拳を のみこんだ ときに へる 体力（おなかに ずしん。効く武器の 1発ぶん＝6×3。6 では 1本で 倒しきれない 回が あった＝2026-09-29 実測） */
+var MN_HTAME=[34,28];          /* もぐもぐの 予告（落ちる 所が 光る。落ちきるまで） */
+var MN_HN=[3,4], MN_HGAP=12, MN_HSEP=46;   /* 吐く かたまりの 数・吐く 間・落ちる 所どうしの 間（px） */
+var MN_HG=0.24;                /* かたまりの 重さ */
+var MN_RSP=1.9;                /* 床を ころがる かたまりの 速さ（左右へ 1つずつ） */
+var MN_HATO=[40,32];           /* 吐いた あと（口が開く＝2倍） */
+var MN_ETAME=[32,26];          /* ベルトの スイッチ（床の はしが 光る） */
+var MN_ESEG=[[74,70],[54,50,46]];   /* 流れの 区切り（コマ）。ふつう＝1回 入れ替わる（144）・半分から＝2回（150）。26_bossfx.js NAGARE_MAX 170 まで */
+var MN_EWARN=[26,22];          /* 入れ替わる 前に 床の 矢印が 次の 向きで 点滅する コマ */
+var MN_DGAP=[38,32];           /* 円盤を 転がす 間（コマ）。主人公から 見て 約70px おき＝1つずつ 跳べる */
+var MN_DWARN=16;               /* 転がす 前に 口もとの 床が 光る コマ */
+var MN_DSP=2.0;                /* 円盤が 転がる 速さ（床に 対して。ベルトの 流れ BELT_V が 足し引きされる＝ベルトに 運ばれる 主人公から 見ると いつも 同じ 速さで 来る）。
+                                  ⚠️ ベルトと 同じ 速さで 流すだけに していたら、立ったまま 運ばれる 主人公に 追いつかず 1つも 当たらなかった（2026-09-29 実測） */
+var MN_EATO=[44,36];           /* おなかいっぱい（口が開く＝2倍） */
+var MN_RTAME=[30,24];          /* 突進の 予告（前足で 床を かく・通る 床が 光る） */
+var MN_RSPD=[4.0,4.6];         /* 突進の 速さ */
+var MN_RN=[1,2], MN_RTURN=18;  /* 突進の 回数（半分から 壁で 折り返す）・折り返す 前の ため */
+var MN_KABE=[46,38];           /* 壁に ぶつかって 目を回す（口が開く＝2倍） */
+var MN_DMG=3;                  /* 食べもの・円盤・げっぷの 空気の 痛さ */
+var MN_BELTLOOK={band:"#3a3a44",stripe:"#6a6a78",glint:"rgba(255,255,255,.35)",arrow:"#ffd447",blink:"#ff6a3a",roll:"#1a1a20"};   /* ベルトの 見た目（26_bossfx.js BFX.ngLook。工場の 黒い ゴムの ベルト・黄色い 矢印） */
+/* 技の順番［ふつう, 体力が半分を切ったら］ */
+var MN_SEQ=[["marunomi","tosshin","enban","hakidashi"],["enban","marunomi","hakidashi","tosshin","marunomi"]];
+/* ↑ 実測（2026-09-29・test/winrate.js 12・各20回・装備なし）：跳ぶだけ 0/20（負けたとき ボスの のこり 約29%）・その場連打 0/20（約17%）・よけて戦う 20/20（平均 約58秒）・
+     効く武器（オモリ・ナックル＋よける）20/20（約24秒。test_new.js の 1本で 約16秒・エネルギー 残り6）。素の体力 70（BOSS_TOUGH は そのまま）。
+     ⚠️ ベルトの 間を 守りなしに していたら 立ったまま 連打するだけで 20/20 勝った（150コマ 動かない 大きな すき）→ 両手で 前を 守る（guard）を 足した。
+     ⚠️ 円盤・ころがる かたまりは stay（当たっても 消えない）。無敵の 間に ふれて 消えると 立ったままの 主人公に 1つも 当たらなかった */
+function mn_keep(b){                            /* 床・壁に めりこまないよう 押しもどす（ふくらむと 大きくなるので） */
+  var fy=bossFloorY(), L=arenaL(), R=arenaR();
+  if(b.y+b.h>fy) b.y=fy-b.h;
+  if(b.x<L) b.x=L;
+  if(b.x+b.w>R) b.x=R-b.w;
+}
+function mn_size(b,k){                          /* 大きさを 変える：足もとの まん中は そのまま・当たり判定（b.w・b.h）と 絵を いっしょに（フグフーガ yfSize と 同じ） */
+  var cx=b.x+b.w/2, by=b.y+b.h;
+  b.k=k; b.w=Math.max(8,Math.round(b.w0*k)); b.h=Math.max(8,Math.round(b.h0*k));
+  b.x=cx-b.w/2; b.y=by-b.h; mn_keep(b);
+}
+function mn_mouth(b){ return {x:b.x+b.w/2+(b.face||-1)*0.8*(b.k||1), y:b.y+b.h-20*(b.k||1)}; }   /* 口の まん中（正面を 向いた カエルの 大きな 口。絵の 上から 12行め） */
+function mn_pull(b,p,pow){                      /* 吸いこむ 風：主人公を ボスの ほうへ。近いと 弱まる（アケール ak_pull と 同じ） */
+  var d=(p.x+p.w/2)-(b.x+b.w/2), ad=Math.abs(d), k=Math.max(0,Math.min(1,(ad-MN_SNEAR)/MN_SFADE));
+  BFX.windMax=((d<0)?1:-1)*pow*k;
+}
+/* 効く武器（重い 拳）が 大きく 開けた 口に とどいたか。とどいた 拳を 返す（効く武器が ほかの 番号なら 何もしない＝test_new.js の 比べ） */
+function mn_fistIn(b){
+  if(typeof WEAK==="undefined" || WEAK[b.kind]!==10) return null;
+  var m=mn_mouth(b), bx={x:b.x-6, y:m.y-10, w:b.w+12, h:b.h*0.62+10};
+  for(var i=0;i<pbullets.length;i++){
+    var bl=pbullets[i];
+    if(bl.wid!==10 || bl.fx!=="fist" || !(bl.t>7)) continue;
+    if(bl.x<bx.x+bx.w && bl.x+bl.w>bx.x && bl.y<bx.y+bx.h && bl.y+bl.h>bx.y) return bl;
+  }
+  return null;
+}
+function mn_geppu(b){                           /* げっぷ：空気の かたまりを 7方向（上半分と 真横）へ。MN_GR まで とどいて 消える */
+  var cx=b.x+b.w/2, cy=b.y+b.h/2, r0=Math.min(b.w,b.h)*0.35;
+  for(var i=0;i<7;i++){
+    var a=Math.PI+i*Math.PI/6;                  /* 180°〜360°（左・左上 … 真上 … 右上・右） */
+    eshot({x:cx+Math.cos(a)*r0-5,y:cy+Math.sin(a)*r0-5,w:10,h:10,vx:Math.cos(a)*MN_GSP,vy:Math.sin(a)*MN_GSP,dmg:MN_DMG,kind:"mngas",
+           life:Math.ceil((MN_GR-r0)/MN_GSP),nosolid:true,ph:i});
+  }
+  shake=Math.max(shake,8); dmSfx("boom");
+  part(cx,cy,"#f0ffe0",18,2.6); part(cx,cy,"#ffffff",8,2.0);
+}
+function mn_food(b,tx){                         /* 食べものの かたまりを 1つ（口から 山なりに tx へ） */
+  var m=mn_mouth(b), v=dmArc(m.x,m.y,tx,12,MN_HG,4.2);
+  eshot({x:m.x-6,y:m.y-6,w:12,h:12,vx:v.vx,vy:v.vy,grav:MN_HG,dmg:MN_DMG,kind:"mnfood",life:400,nosolid:true,rot:0});
+  dmSfx("shoot"); part(m.x,m.y,"#f0e0a0",4,1.4);
+}
+function mn_roll(b,dir){                        /* 床を ころがる かたまり（低い＝跳べ） */
+  var fy=bossFloorY(), x=(dir>0)?b.x+b.w:b.x-12;
+  eshot({x:x,y:fy-11,w:12,h:11,vx:dir*MN_RSP,vy:0,dmg:MN_DMG,kind:"mnroll",life:400,nosolid:true,stay:true,rot:0});   /* stay：当たっても 消えずに ころがりつづける（無敵の 間に ふれて 消えると 次から 当たらない） */
+}
+function mn_discV(o){ o.vx=o.dir*MN_DSP+((BFX.nagare>0)?(BFX.ngDir||0)*BELT_V:0); }   /* 転がる 速さ＋ベルトの 流れ */
+function mn_disc(b,x,dir){                      /* 食べものの 円盤を 1つ 口から 主人公の ほうへ 転がす（ベルトの 流れで 速く／おそく なる） */
+  var fy=bossFloorY();
+  var o=eshot({x:x,y:fy-12,w:14,h:12,vx:0,vy:0,dmg:MN_DMG,kind:"mndisc",life:600,nosolid:true,stay:true,rot:0});   /* stay：当たっても 消えずに 転がりつづける */
+  o.dir=dir; mn_discV(o); b.eat=10;
+  part(x+7,fy-6,"#ffe0a0",6,1.4); dmSfx("dash");
+}
+function mn_discPop(){                          /* 流れが 止まったら 円盤は こなごなに なって 消える */
+  for(var i=ebullets.length-1;i>=0;i--){ var o=ebullets[i]; if(o.kind!=="mndisc") continue; part(o.x+7,o.y+6,"#e8c890",8,1.6); ebullets.splice(i,1); }
+}
+function mn_tend(b){                            /* 食べもの・円盤・げっぷの 空気の 世話 */
+  var fy=bossFloorY(), L=arenaL(), R=arenaR();
+  for(var i=ebullets.length-1;i>=0;i--){
+    var o=ebullets[i];
+    if(o.kind==="mnfood"){
+      o.rot+=0.25;
+      if(o.vy>0 && o.y+o.h>=fy){ shake=Math.max(shake,3); dmSfx("hit"); part(o.x+6,fy-2,"#e8c870",10,2.0); part(o.x+6,fy-2,"#ffffff",4,1.2); ebullets.splice(i,1); }
+    } else if(o.kind==="mnroll"){
+      o.rot+=o.vx*0.14;
+      if(o.x<L-2 || o.x+o.w>R+2){ part(o.x+6,o.y+6,"#e8c870",6,1.4); ebullets.splice(i,1); }
+    } else if(o.kind==="mndisc"){
+      mn_discV(o); o.rot+=o.dir*0.24;
+      if(o.x<L-2 || o.x+o.w>R+2){ part(o.x+7,o.y+6,"#e8c890",6,1.4); ebullets.splice(i,1); }
+    }
+  }
+}
+function mn_rushMark(b,h,pre){                  /* 突進で 通る 床（体の 前から 壁まで）が 光る。着くまで */
+  var L=arenaL(), R=arenaR(), f=b.face||-1, x0=(f>0)?b.x:L, x1=(f>0)?R:b.x+b.w;
+  if(x1>x0) dmFloorMark("#ff5a5a",pre+Math.ceil((x1-x0-b.w)/MN_RSPD[h])+4,x0,x1);
+}
+/* 体（Canva の絵）。ふくらむ（b.k）は 足もとを 軸に 大きく（ぱんぱんの 間は 横に 少し 太く） */
+function mn_body(b,x,y,hl){
+  var k=b.k||1;
+  if(k>1.01){
+    var cx=x+b.w/2, by=y+b.h;
+    ctx.save(); ctx.translate(cx,by); ctx.scale(k*(1+0.05*Math.min(1,(k-1)/0.8)),k); ctx.translate(-cx,-by);
+    dmDrawBody("marunomin",b,x,y,hl); ctx.restore();
+  } else dmDrawBody("marunomin",b,x,y,hl);
+}
+function mn_drawFood(o){                        /* 食べものの かたまり（まるのみした おにぎり：白い ごはんに のり） */
+  var cx=o.x+o.w/2, cy=o.y+o.h/2;
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(o.rot||0);
+  ctx.fillStyle="#6a5a3a"; ctx.beginPath(); ctx.moveTo(0,-7); ctx.lineTo(7,5); ctx.lineTo(-7,5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#fff8e8"; ctx.beginPath(); ctx.moveTo(0,-5.5); ctx.lineTo(5.6,4); ctx.lineTo(-5.6,4); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#1e3020"; ctx.fillRect(-3,0,6,4);
+  ctx.restore();
+}
+function mn_drawRoll(o){                        /* 床を ころがる かたまり（こげ茶の ハンバーグ） */
+  var cx=o.x+o.w/2, cy=o.y+o.h/2+0.5;
+  ctx.fillStyle="#4a2a14"; ctx.beginPath(); ctx.ellipse(cx,cy,6.5,5.5,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#8a5a2a"; ctx.beginPath(); ctx.ellipse(cx-0.5,cy-0.8,5,4,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#c8864a"; for(var k=0;k<3;k++){ var a=(o.rot||0)+k*2.1; ctx.fillRect(cx+Math.cos(a)*2.6-1,cy+Math.sin(a)*2-0.5,2,1); }
+}
+function mn_drawDisc(o){                        /* 食べものの 円盤（まるい せんべい。回りながら 流れる） */
+  var cx=o.x+o.w/2, cy=o.y+o.h/2, sq=Math.abs(Math.cos(o.rot||0))*0.35+0.65;
+  ctx.fillStyle="#6a3a14"; ctx.beginPath(); ctx.ellipse(cx,cy,7*sq+0.8,6.4,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#d89a4a"; ctx.beginPath(); ctx.ellipse(cx,cy,6*sq,5.4,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#f4c880"; ctx.beginPath(); ctx.ellipse(cx-1.2*sq,cy-1.2,3*sq,2.4,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#8a4a1a"; ctx.fillRect(cx-2*sq,cy+1,1,1); ctx.fillRect(cx+1.5*sq,cy-2,1,1); ctx.fillRect(cx+0.5*sq,cy+2.2,1,1);
+}
+function mn_drawGas(o){                         /* げっぷの 空気（うす緑の もくもく） */
+  var cx=o.x+o.w/2, cy=o.y+o.h/2, r=4+(4-Math.min(4,o.life||0))*0.6;
+  ctx.globalAlpha=0.8; ctx.fillStyle="#b8e8a0"; ctx.beginPath(); ctx.arc(cx,cy,r+1.5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#f0ffe8"; ctx.beginPath(); ctx.arc(cx-1,cy-1,r,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
+}
+function mn_drawStars(cx,cy){ for(var i=0;i<3;i++){ var a=frame*0.12+i*2.1, sx=cx+Math.cos(a)*9, sy=cy+Math.sin(a)*3; ctx.fillStyle="#fff6a0"; ctx.fillRect(sx-1,sy-2.5,2,5); ctx.fillRect(sx-2.5,sy-1,5,2); } }
+
 /* ---------------------------------------------------------------- 12 マルノミン
    技＝かまずに のみこませる。
-   借りた動き: ダストマン（吸い込んで丸呑み）＋ メタルマン（床を転がるノコギリ＝食べものの円盤） */
+   山口フグフーガの とげ（丸呑みして ぱんぱんの おなか）＋ ダストマン（吸いこみ）＋ 徳島ウズシオーネの 流れる床（まるのみ工場の ベルト）
+   ＋ チャージマン（口を 開けた 突進）。技の中身・定数・すきは 上の「12 マルノミン の小道具」の説明が正本（2026-09-29 作り直し） */
 BOSSES.marunomin={
   name:"マルノミン", title:"まるのみ大王",
   hp:70, w:18, h:26, top:2,
-  init:function(b){ b.step=0; b.chew=0; },
+  init:function(b){ b.w0=b.w; b.h0=b.h; b.k=1; b.seq=0; b.sq=0; b.halfOn=0; b.toge=0; b.rn=0; b.eat=0; b.hopCd=0; b.ivulCol="#ffe0a0"; },
   ai:function(b,p){
-    var half=(b.hp<b.maxhp/2);
-    b.step++;
-    b.vy=Math.min(MAXFALL,b.vy+GRAV); bossMoveY(b);
+    var h=(b.hp<b.maxhp/2)?1:0, fy=bossFloorY(), L=arenaL(), R=arenaR();
+    var pc=p.x+p.w/2, cx=b.x+b.w/2, dx=pc-cx, ad=Math.abs(dx), dir=(dx<0)?-1:1, i;
+    function go(st){ b.state=st; b.t=0; }
+    if(h && !b.halfOn){ b.halfOn=1; b.seq=0; }  /* 半分を切った：技の順番が変わる */
+    mn_tend(b);
+    if(b.eat>0) b.eat--;
+    b.frame=null; b.jit=0; b.noTouch=0; b.flashR=0;
+    if(b.state!=="omoi" && b.state!=="r_kabe") b.tilt=0;
+    var sqTo=0, puffing=(b.state==="fukuramu"||b.state==="hazumu"||b.state==="m_warn");
+    if(!puffing) b.toge=0;                         /* おなかで はじくのは ふくらんでいる 間だけ */
+    if(!puffing && b.state!=="shibomu" && (b.k||1)>1.001) mn_size(b,1);   /* テストの 写真・見張りが 途中の 状態から 始めても もとの 大きさに */
+    if(b.state!=="hazumu" && b.state!=="m_warn" && b.state!=="tossin"){ b.vy=Math.min(MAXFALL,b.vy+GRAV); bossMoveY(b); }
+    /* 効く武器（重い 拳）を 大きく 開けた 口で のみこむ（当たり判定より 先に 見る） */
+    if(b.state==="m_tame"||b.state==="m_nomu"||b.state==="h_tame"){
+      var fist=mn_fistIn(b);
+      if(fist){
+        var fi=pbullets.indexOf(fist); if(fi>=0) pbullets.splice(fi,1);
+        if(b.state==="h_tame") BFX.marks=[];      /* もぐもぐは とりやめ（落ちる 所の 予告を 消す） */
+        BFX.windT=0; BFX.windMax=0; b.lockFace=true; b.hx=null;
+        b.hp=Math.max(1,b.hp-MN_OMOIDMG); b.hurt=10;
+        var m0=mn_mouth(b); part(m0.x,m0.y,"#8c96ff",12,2.2); part(m0.x,m0.y,"#ffffff",8,1.8);
+        shake=Math.max(shake,10); dmSfx("boom");
+        go("omoi");
+      }
+    }
 
-    if(b.state==="wait"){
-      b.vx=0;
-      if(b.t>20){
-        b.t=0; b.cycle=(b.cycle||0)+1;
-        var m=b.cycle%4;
-        if(m===0) b.state="jump";
-        else if(m===1) b.state="gulp";
-        else if(m===2) b.state="disc";
-        else b.state="rush";
+    if(b.state==="wait"){                          /* 間合い（90〜160px）を ぴょこぴょこ跳んで 取る。次の技を 選ぶ */
+      b.lockFace=false;
+      if(b.t===1) b.wl=MN_WAIT[h]+Math.floor(Math.random()*9)-4;
+      if(b.hopCd>0) b.hopCd--;
+      if(b.grounded){
+        b.vx=0; b.hopV=0;
+        var want=(ad<90)?-dir:((ad>160)?dir:0);
+        if(b.x<L+24 && want<0) want=0;
+        if(b.x+b.w>R-24 && want>0) want=0;
+        if(want && !(b.hopCd>0) && b.t<b.wl-6){ b.vy=MN_HOPV; b.hopV=want*MN_HOPX; b.hopCd=10; }
+      }
+      if(!b.grounded && b.hopV) b.vx=b.hopV;
+      bossMoveX(b); clampX(b);
+      sqTo=b.grounded?0.08:0;
+      if(b.t>=(b.wl||MN_WAIT[h]) && b.grounded){
+        var seq=MN_SEQ[h], nx=seq[b.seq%seq.length];
+        b.seq++; b.vx=0; b.hopV=0;
+        if(nx==="marunomi") go("m_tame");
+        else if(nx==="hakidashi") go("h_tame");
+        else if(nx==="enban") go("e_tame");
+        else { b.rn=0; go("r_tame"); }
       }
     }
-    /* 丸呑み：口を開けて吸い込む。つかまると大ダメージで吐き出される */
-    else if(b.state==="gulp"){
-      b.vx=0;
+    /* ---- 丸呑み（守り）→ ふくらむ → はね回る → げっぷ → しぼむ ---- */
+    else if(b.state==="m_tame"){                   /* 大口を 開ける（口へ 白い すじが あつまる） */
+      b.vx=0; b.frame="_p3"; b.jit=0.3;
+      if(b.t===1) dmSfx("charge_up");
+      if(b.t>=MN_MTAME[h]){ bfxWind(dir>0?-1:1,MN_SPOW[h],MN_NOMU[h],false); go("m_nomu"); }
+    }
+    else if(b.state==="m_nomu"){                   /* 吸いこむ：主人公を 引きよせる。体に さわると ぱくっ → 前へ 吐き出す */
+      b.vx=0; b.frame="_p3";
+      mn_pull(b,p,MN_SPOW[h]); BFX.windT=1;      /* いつも 同じ 強さで 引く（アケールの 吸いこみと 同じ 書き方） */
+      if(b.t%2===0){ var a0=Math.random()*Math.PI*2, m1=mn_mouth(b); part(m1.x+Math.cos(a0)*30,m1.y+Math.sin(a0)*18,"#f4fff0",1,0.4); }
+      if(p.dead===0 && !(p.inv>0) && !(p.bite>0) && overlap(p,b)){
+        hurtPlayer(MN_PAKU,false,cx);
+        p.x=(pc<cx)?Math.max(L+2,b.x-p.w-26):Math.min(R-p.w-2,b.x+b.w+26); p.vy=-5.2;
+        shake=Math.max(shake,8); dmSfx("boom"); part(pc,p.y+10,"#f4fff0",10,2.2);
+        BFX.windT=0; BFX.windMax=0; go("fukuramu");
+      }
+      else if(b.t>=MN_NOMU[h]){ BFX.windT=0; BFX.windMax=0; go("fukuramu"); }
+    }
+    else if(b.state==="fukuramu"){                 /* おなかが ふくらむ（とちゅうから おなかで はじく） */
+      b.vx=0; b.lockFace=false;
+      if(b.t===1) dmSfx("charge_up");
+      mn_size(b,1+(MN_KMAX-1)*Math.min(1,b.t/MN_PUFF[h]));
+      b.toge=(b.k>=MN_TOGE_K)?2:0;
+      if(b.t%4===0) part(b.x+Math.random()*b.w,b.y+b.h*0.6,"#f4fff0",1,0.8);
+      if(b.t>=MN_PUFF[h]){ b.lockFace=true; b.face=dir; b.vx=dir*MN_BVX[h]; b.vy=-Math.sqrt(2*MN_BG*MN_BH); dmSfx("dash"); go("hazumu"); }
+    }
+    else if(b.state==="hazumu"){                   /* ボールの ように はね回る（体当たり。高い ときは 下を くぐれる） */
+      b.toge=2; mn_size(b,MN_KMAX); b.grounded=false;
+      b.vy+=MN_BG; b.y+=b.vy;
+      if(b.y+b.h>=fy){ b.y=fy-b.h; b.vy=-Math.sqrt(2*MN_BG*MN_BH); b.land=9; shake=Math.max(shake,3); part(b.x+b.w/2,fy-2,"#e8f0d0",6,1.4); dmSfx("hit");
+                       if(Math.abs(pc-(b.x+b.w/2))>12) b.vx=((pc<b.x+b.w/2)?-1:1)*MN_BVX[h]; }   /* 着地の たびに 主人公の ほうへ 向きなおる */
+      b.x+=b.vx;
+      if(b.x<L){ b.x=L; b.vx=Math.abs(b.vx); part(b.x,b.y+b.h/2,"#ffffff",6,1.6); }
+      if(b.x+b.w>R){ b.x=R-b.w; b.vx=-Math.abs(b.vx); part(b.x+b.w,b.y+b.h/2,"#ffffff",6,1.6); }
+      b.face=(b.vx<0)?-1:1;
+      if(b.t>=MN_BOUNCE[h]){ b.vy=Math.max(0,b.vy); go("m_warn"); }
+    }
+    else if(b.state==="m_warn"){                   /* ふくらみすぎ：床に 下りて 赤く 点滅（空気が とどく はんいの 輪） */
+      b.toge=2; b.flashR=1; b.jit=0.6;
+      mn_size(b,MN_KMAX*(1+0.06*Math.min(1,b.t/MN_WARN[h])));
+      b.vx*=0.85; b.x+=b.vx; mn_keep(b);
+      b.vy=Math.min(MAXFALL,b.vy+MN_BG); b.y+=b.vy;
+      if(b.y+b.h>=fy){ if(b.vy>2){ b.land=9; dmSfx("hit"); } b.y=fy-b.h; b.vy=0; b.grounded=true; } else b.grounded=false;
+      if(b.t===1) dmSfx("charge1");
+      if((b.t>=MN_WARN[h] && b.grounded) || b.t>=MN_WARN[h]+20){ b.y=fy-b.h; b.vy=0; b.grounded=true; b.vx=0; go("shibomu"); }
+    }
+    else if(b.state==="shibomu"){                  /* げっぷで しぼんで へたりこむ（口が開いて 2倍） */
+      b.vx=0; b.lockFace=false; b.jit=0.25;
+      if(b.t===1){ mn_geppu(b); b.mouth=Math.max(b.mouth||0,MN_SHIBO[h]); }
+      if((b.k||1)>1.001) mn_size(b,(Math.abs(b.k-1)<0.02)?1:b.k+(1-b.k)*0.2);
+      sqTo=0.3+0.08*Math.sin(b.t*0.3);
+      if(b.mouth<=0 || b.t>=MN_SHIBO[h]+6){ b.mouth=0; mn_size(b,1); go("wait"); }
+    }
+    else if(b.state==="omoi"){                     /* 重い 拳を のみこんで ひっくりかえる（こうげき しない・体当たり しない） */
+      b.vx=0; b.noTouch=1; b.lockFace=true;
+      b.tilt+=((-(b.face||-1))*0.9-b.tilt)*0.2;
+      sqTo=0.2;
+      if(b.t===MN_OMOI[h]-14){ var m2=mn_mouth(b); part(m2.x,m2.y,"#8c96ff",10,2.0); dmSfx("shoot"); }   /* 拳を ぺっと 吐き出す */
+      if(b.t>=MN_OMOI[h]){ b.tilt=0; b.lockFace=false; go("wait"); }
+    }
+    /* ---- 吐き出し ---- */
+    else if(b.state==="h_tame"){                   /* もぐもぐ（落ちる 所が 光る・ころがる 帯） */
+      b.vx=0; b.frame="_p2"; b.jit=0.3; sqTo=0.12+0.1*Math.abs(Math.sin(b.t*0.45));
       if(b.t===1){
-        b.mouth=110;
-        bfxWind((p.x+6<b.x+b.w/2)?1:-1,half?1.7:1.3,92,"のみこまれる！");
-        bfxLowGrav(0.6,92,false);
+        b.lockFace=true; b.face=dir;
+        var xs=dmSpots([pc],MN_HN[h],MN_HSEP,[],30), m3=mn_mouth(b); b.hx=xs; b.hq=0;
+        for(i=0;i<xs.length;i++){ var v=dmArc(m3.x,m3.y,xs[i],12,MN_HG,4.2); bfxMark(xs[i]-9,fy-12,18,12,MN_HTAME[h]+i*MN_HGAP+v.T+4,"#ff8a3a"); }
+        for(var s=-1;s<=1;s+=2){ var x0=(s>0)?b.x+b.w:L, x1=(s>0)?R:b.x; if(x1>x0) bfxMark(x0,fy-3,x1-x0,3,MN_HTAME[h]+Math.ceil((x1-x0)/MN_RSP)+2,"#ffd0a0"); }   /* 床を ころがる 道（床の 上の 細い 帯） */
+        dmSfx("charge1");
       }
-      /* 口に入ったら ぱくり（大ダメージ）→ 反対側へ吐き出す */
-      if(b.t>10 && p.dead===0 && p.inv===0 && overlap(p,b)){
-        hurtPlayer(6,false,b.x+b.w/2);
-        p.vx=0; p.vy=-6.4;
-        p.x=(b.face>0)? Math.max(arenaL()+4,b.x-40) : Math.min(arenaR()-p.w-4,b.x+b.w+40);
-        shake=14; SFX.boom();
-        eshot({x:b.x+b.w/2-5,y:b.y+b.h*0.36,vx:b.face*3.0,vy:-4.0,dmg:3,kind:"food",w:11,h:11,grav:0.24});
-      }
-      if(b.t%8===0) part(b.x+b.w/2+b.face*10,b.y+b.h*0.4,"#e8f5a8",2,1.6);
-      if(b.t>92){ b.t=0; b.mouth=0; b.state="chewing"; b.chew=0; b.spat=0; }
+      if(b.t>=MN_HTAME[h]) go("haku");
     }
-    /* 食べものの円盤が床を転がってくる（低いのでジャンプで避ける） */
-    else if(b.state==="disc"){
-      b.vx=0;
-      if(b.t===18||(half&&b.t===48)){
-        var fy=bossFloorY()-14;
-        for(var s=0;s<2;s++)
-          eshot({x:b.x+b.w/2-7,y:fy,w:14,h:13,vx:(s?1:-1)*3.2,vy:0,dmg:3,kind:"saw",life:240});
-        SFX.dash();
-      }
-      if(b.t>70){ b.t=0; b.state="wait"; b.mouth=44; }
+    else if(b.state==="haku"){                     /* 山なりに 吐く＋床を ころがる 2つ */
+      b.vx=0; b.frame=(b.t<10)?"_p4":null;
+      if(b.t===1){ mn_roll(b,-1); mn_roll(b,1); }
+      if(b.hx && b.hq<b.hx.length && b.t===1+b.hq*MN_HGAP){ mn_food(b,b.hx[b.hq]); b.hq++; }
+      var flying=ebullets.some(function(o){ return o.kind==="mnfood"; });
+      if((!b.hx || (b.hq>=b.hx.length && !flying && b.t>10)) || b.t>240){ b.hx=null; b.lockFace=false; b.mouth=Math.max(b.mouth||0,MN_HATO[h]); go("h_ato"); }
     }
-    else if(b.state==="rush"){
-      if(b.t<30) b.mouth=6;
-      if(b.t===1){ b.rushes=0; b.vx=b.face*(half?6.0:4.8); b.lockFace=true; }
-      bossMoveX(b); clampX(b);
-      if(b.wallHit){
-        b.vx=-b.vx; b.face=(b.vx>0)?1:-1; b.rushes=(b.rushes||0)+1; shake=8; SFX.hit();
-        eshot({x:b.x+b.w/2-5,y:b.y+b.h*0.360,vx:(b.vx>0?1:-1)*2.4,vy:-4.6,dmg:3,kind:"food",w:11,h:11,grav:0.24});
-      }
-      if(b.rushes>=3||b.t>150){ b.vx=0; b.mouth=0; b.lockFace=false; b.t=0; b.chew=0; b.spat=0; b.state="chewing"; }
+    else if(b.state==="h_ato"){                    /* 吐いた あと（口が開いて 2倍） */
+      b.vx=0; sqTo=0.18;
+      if(b.mouth<=0 || b.t>=MN_HATO[h]+6){ b.mouth=0; go("wait"); }
     }
-    else if(b.state==="chewing"){
-      b.vx=0;
-      if(b.t%3===0) b.chew++;
-      if(b.chew>=8){
-        if(b.t%8===0 && b.spat<5){
-          eshot({x:b.x+b.w/2-5,y:b.y+b.h*0.360,vx:b.face*(2.2+b.spat*0.7),vy:-4.6,
-                 dmg:3,kind:"food",w:11,h:11,grav:0.24});
-          b.spat++; SFX.shoot();
-        }
-        if(b.spat>=5){ b.chew=0; b.t=0; b.state="wait"; }
-      }
-      if(b.t>150){ b.chew=0; b.t=0; b.state="wait"; }
+    /* ---- まるのみ工場の ベルト＋円盤 ---- */
+    else if(b.state==="e_tame"){                   /* 両手を 上げて スイッチ（床の はしが 光る）。この 技の 間は 両手で 前を 守る */
+      b.vx=0; b.frame="_p3"; b.jit=0.4; b.guard=2;
+      if(b.t===1){ b.lockFace=true; b.face=dir; b.edir=(cx>pc)?1:-1; bfxMark(L-4,fy-4,R-L+8,4,MN_ETAME[h]+4,"#5ad0ff"); dmSfx("charge_up"); }
+      if(b.t>=MN_ETAME[h]){ bfxNagare(b.edir,MN_ESEG[h],MN_EWARN[h],false); BFX.ngLook=MN_BELTLOOK; b.dq=null; b.lockFace=false; go("enban"); }
     }
-    else if(b.state==="jump"){
-      if(b.t===1){ b.vy=-11.0; b.vx=bounceDir(b,p)*2.8; }
-      bossMoveX(b); clampX(b);
-      if(b.wallHit) b.vx=-b.vx;
-      if(b.grounded && b.vy===0 && b.t>6){
-        SFX.hit(); part(b.x+b.w/2,b.y+b.h,"#e8f5a8",16,2.8);
-        bfxQuake(half?24:18,16);
-        for(var s2=0;s2<2;s2++)
-          eshot({x:b.x+b.w/2-7,y:b.y+b.h-14,vx:(s2?1:-1)*4.2,vy:0,dmg:3,kind:"shock",w:14,h:12,life:200});
-        for(var q=0;q<3;q++)
-          eshot({x:b.x+b.w/2-5+(q-1)*14,y:b.y+b.h*0.120,vx:(q-1)*1.6,vy:-5.0,dmg:3,kind:"food",w:11,h:11,grav:0.26});
-        b.vx=0; b.t=0; b.state="wait"; b.mouth=40;
+    else if(b.state==="enban"){                    /* 床が 流れる（ボスの ほうへ → 入れ替わる）。両手で 前を 守りながら 口から 円盤を 主人公へ 転がす */
+      b.vx=0; b.frame=(b.eat>0)?"_p2":null; b.guard=2;   /* 正面の まっすぐな 弾は はじく（▲の ななめ撃ち・背中は 通る＝26_bossfx.js b.guard） */
+      var kk=b.t%MN_DGAP[h];
+      if(kk===MN_DGAP[h]-MN_DWARN && !BFX.ngBlink && BFX.nagare>MN_DWARN+20){
+        var dd=(pc<cx)?-1:1, sx=(dd>0)?b.x+b.w+1:b.x-15;
+        sx=Math.max(L+1,Math.min(R-15,sx));
+        if(Math.abs(sx+7-pc)>30){ b.dq={x:sx,dir:dd}; bfxMark(sx-2,fy-14,18,14,MN_DWARN+2,"#ffb04a"); }   /* 転がす 所が 光る（主人公が 口の 前に いる ときは 転がさない） */
+      }
+      if(kk===0 && b.dq){ mn_disc(b,b.dq.x,b.dq.dir); b.dq=null; }
+      if(!(BFX.nagare>0) && b.t>2){ mn_discPop(); b.dq=null; b.mouth=Math.max(b.mouth||0,MN_EATO[h]); go("e_ato"); }
+    }
+    else if(b.state==="e_ato"){                    /* おなかいっぱい（口が開いて 2倍） */
+      b.vx=0; sqTo=0.22;
+      if(b.mouth<=0 || b.t>=MN_EATO[h]+6){ b.mouth=0; go("wait"); }
+    }
+    /* ---- 口を 開けた 突進 ---- */
+    else if(b.state==="r_tame"){                   /* 前足で 床を かく（通る 床が 光る） */
+      b.vx=0; b.frame="_p4"; b.jit=0.7; sqTo=0.28;
+      if(b.t===1){ b.lockFace=true; b.face=dir; b.rn=0; mn_rushMark(b,h,MN_RTAME[h]); dmSfx("charge2"); }
+      if(b.t%6===0) part(b.x+b.w/2-(b.face||-1)*6,fy-2,"#c8b890",2,1.2);
+      if(b.t>=MN_RTAME[h]){ dmSfx("dash"); go("tossin"); }
+    }
+    else if(b.state==="tossin"){                   /* 口を 開けて 壁まで 走る（無敵） */
+      b.ivul=2; b.vx=(b.face||-1)*MN_RSPD[h];
+      b.vy=Math.min(MAXFALL,b.vy+GRAV); bossMoveY(b);
+      b.x+=b.vx; var hitW=(b.x<=L || b.x+b.w>=R); mn_keep(b);
+      if(b.t%3===0) part(b.x+b.w/2-(b.face||-1)*8,fy-2,"#c8b890",2,1.4);
+      if(hitW || b.t>200){
+        b.vx=0; b.rn++; shake=Math.max(shake,8); dmSfx("hit"); part(b.x+((b.face>0)?b.w:0),b.y+b.h/2,"#ffffff",10,2.2);
+        if(b.rn<MN_RN[h]){ b.face=-(b.face||-1); mn_rushMark(b,h,MN_RTURN); go("r_turn"); }
+        else { b.lockFace=false; b.mouth=Math.max(b.mouth||0,MN_KABE[h]); go("r_kabe"); }
       }
     }
+    else if(b.state==="r_turn"){ b.vx=0; b.jit=0.8; sqTo=0.25; if(b.t>=MN_RTURN){ dmSfx("dash"); go("tossin"); } }
+    else if(b.state==="r_kabe"){                   /* 壁に ぶつかって 目を回す（口が開いて 2倍） */
+      b.vx=0; b.tilt=Math.sin(b.t*0.3)*0.1; sqTo=0.3;
+      if(b.mouth<=0 || b.t>=MN_KABE[h]+6){ b.mouth=0; b.tilt=0; go("wait"); }
+    }
+    else if(b.state!=="intro"){ go("wait"); }
+
+    b.sq+=(sqTo-b.sq)*0.3;
   },
-  draw:function(b,x,y,hl){ bossSprite("marunomin",b,x,y,hl,(b.mouth>0)?{a:"#ffffff"}:null); }
+  /* 縁どりの外で描くもの：大きく 開けた 口・吸いこむ すじ・ぱんぱんの つや・げっぷの 予告の 輪・もぐもぐの ほっぺ・ひっくりかえった 星・弾・すきの 光 */
+  fx:function(b){
+    var i, e, m=mn_mouth(b), k=b.k||1, st=b.state, cx=b.x+b.w/2, cy=b.y+b.h/2;
+    if(b.dead>0) return;
+    var open=(st==="m_tame"||st==="m_nomu"||st==="tossin"||st==="r_turn"||st==="haku"||(st==="enban"&&b.eat>0));
+    if(open){                                      /* 大きく 開けた 口（黒い 穴と 赤い 舌） */
+      var mo=(st==="m_tame")?Math.min(1,b.t/MN_MTAME[0]):1;
+      ctx.fillStyle="#1a0808"; ctx.beginPath(); ctx.ellipse(m.x,m.y+1,(3+3.5*mo)*k,(1+3*mo)*k,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#d8506a"; ctx.beginPath(); ctx.ellipse(m.x,m.y+1+2*mo*k,2.6*mo*k,1.2*mo*k,0,0,Math.PI*2); ctx.fill();
+    }
+    if(st==="m_tame"||st==="m_nomu"){               /* 口へ 向かって あつまる すじ（外から 内へ） */
+      var mo2=(st==="m_tame")?Math.min(1,b.t/MN_MTAME[0]):1;
+      ctx.strokeStyle="#f4fff0"; ctx.lineWidth=1.5;
+      for(i=0;i<10;i++){
+        var q=1-((frame*0.04+i/10)%1), ang=i*0.63+frame*0.05, r1=6+q*42, r2=r1+9;
+        ctx.globalAlpha=0.8*Math.min(1,(1-q)*3)*mo2;
+        ctx.beginPath(); ctx.moveTo(m.x+Math.cos(ang)*r1*1.2,m.y+Math.sin(ang)*r1*0.7); ctx.lineTo(m.x+Math.cos(ang-0.3)*r2*1.2,m.y+Math.sin(ang-0.3)*r2*0.7); ctx.stroke();
+      }
+      ctx.globalAlpha=1; ctx.lineWidth=1;
+    }
+    if(b.toge>0){                                  /* ぱんぱんの おなか：白く 光る ふち・つやの 光・はった すじ（弾は 白い 火花で はじかれる） */
+      var gp=0.5+0.5*Math.sin(frame*0.45);
+      ctx.globalAlpha=0.55+0.3*gp; ctx.strokeStyle="#ffffff"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(cx,cy+2,b.w*0.62+2,b.h*0.52+2,0,0,Math.PI*2); ctx.stroke();
+      ctx.globalAlpha=0.75; ctx.lineWidth=2.2;
+      ctx.beginPath(); ctx.ellipse(cx-b.w*0.12,b.y+b.h*0.6,b.w*0.3,b.h*0.22,0,Math.PI*1.05,Math.PI*1.55); ctx.stroke();   /* おなかの つや */
+      ctx.lineWidth=1.2; ctx.strokeStyle="#e8fff0";
+      for(i=0;i<4;i++){ var ta=-0.9+i*0.6, tr=b.w*0.62+4; ctx.beginPath(); ctx.moveTo(cx+Math.cos(ta)*tr,cy+2+Math.sin(ta)*(b.h*0.52+4)); ctx.lineTo(cx+Math.cos(ta)*(tr+4),cy+2+Math.sin(ta)*(b.h*0.52+8)); ctx.stroke(); }   /* ぴかっ（左右） */
+      for(i=0;i<4;i++){ var ta2=Math.PI+0.9-i*0.6, tr2=b.w*0.62+4; ctx.beginPath(); ctx.moveTo(cx+Math.cos(ta2)*tr2,cy+2+Math.sin(ta2)*(b.h*0.52+4)); ctx.lineTo(cx+Math.cos(ta2)*(tr2+4),cy+2+Math.sin(ta2)*(b.h*0.52+8)); ctx.stroke(); }
+      ctx.globalAlpha=1; ctx.lineWidth=1;
+    }
+    if(b.flashR && st==="m_warn" && Math.floor(frame/3)%2===0){   /* ふくらみすぎ：体が 赤く 点滅・空気が とどく はんいの 輪 */
+      ctx.globalAlpha=0.35; ctx.fillStyle="#ff3a3a"; ctx.beginPath(); ctx.ellipse(cx,cy,b.w*0.55,b.h*0.5,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    }
+    if(st==="m_warn"){
+      var rr=MN_GR, a1=0.45+0.35*Math.sin(b.t*0.6);
+      ctx.globalAlpha=a1; ctx.fillStyle="#ff3a3a";
+      for(i=0;i<22;i++){ var an=Math.PI+i*Math.PI/21; ctx.fillRect(cx+Math.cos(an)*rr-1.5,cy+Math.sin(an)*rr-1.5,3,3); }
+      ctx.globalAlpha=1;
+    }
+    if(st==="h_tame"){                             /* もぐもぐ：ほっぺが ふくらむ */
+      var ch=2+1.5*Math.abs(Math.sin(b.t*0.45));
+      ctx.fillStyle="#6aa878"; for(var s2=-1;s2<=1;s2+=2){ ctx.beginPath(); ctx.arc(m.x+s2*5.5,m.y+2,ch,0,Math.PI*2); ctx.fill(); }
+    }
+    if(st==="omoi"){                               /* おなかに 拳の 形・星 */
+      ctx.fillStyle="#36409a"; ctx.fillRect(cx-4,b.y+b.h*0.55,8,6); ctx.fillStyle="#8c96ff"; ctx.fillRect(cx-3,b.y+b.h*0.55+1,6,2);
+      mn_drawStars(cx,b.y-6);
+    }
+    if(st==="r_kabe" || st==="shibomu") mn_drawStars(cx,b.y-6);
+    for(i=0;i<ebullets.length;i++){
+      e=ebullets[i];
+      if(e.kind==="mnfood") mn_drawFood(e);
+      else if(e.kind==="mnroll") mn_drawRoll(e);
+      else if(e.kind==="mndisc") mn_drawDisc(e);
+      else if(e.kind==="mngas") mn_drawGas(e);
+    }
+    if(b.mouth>0) dmOpenGlow(b,true);               /* 口が開いている＝いま撃てば 2倍 */
+  },
+  draw:function(b,x,y,hl){ mn_body(b,x,y,hl); }
 };
+
+/* ============================ 13 マガリン の小道具（2026-09-29 作り直し） ============================
+   ねらい：13面の ボス＝「連打は かわされる・間を あけて 撃つ／ふりむいて 撃つ」を教える役（トドウフケンマン 和歌山ミカンジャーの 変わり身＝26_bossfx.js b.kwNeed・b.log を
+   「背中を まるめた ぬけがらと すり替わる」に ＋ ジェミニマン（分身）＋ シャドーマン（消えて 真上から）＋ 鹿児島サクラジマーの 灰の雨＝bfxHai を「ほこりの 雨」に）。
+   背中を まるめさせる かくれボスなので、体を まるめて かくれる・曲がる ヒモが 主役。
+   守り  変わり身（b.kwNeed・b.log）… 間合いを 取っている 間（wait）に **40コマの 間に MG_NEED 発 続けて 当てられると**、その弾は 当たらずに
+                            背中を まるめた ぬけがら（b.log。当たった弾は 消える）と すり替わって 消え（b.warp）、**主人公の うしろ**に 出る（出る 所は 先に 光る）。
+                            出た 直後は すき（ushiro＝はじめの 半分は 口が開いて 2倍・変わり身しない）→ 主人公を とびこえて 前へ もどる（tobikoe。当たらない）。
+                            ＝連打しつづけると 逃げられる → 間を あけて 撃つ・ふりむいて 撃つ。技の 間と すきの 間は 変わり身しない（技は 最後まで 出る）
+         分身（b.clone）…… 分身の 技の 間、鏡うつしに 歩く 分身が 出る（分身に 当たった弾は 消える・さわると いたい）。本物は ときどき 目が 光る（26_bossfx.js）
+         効く武器（WEAK＝11 カミカミ・スライド）… すべって 噛みつく 口は 分身を すりぬけて 本物に かみつく（30_bosses.js の bl.thru）。
+                            **かみついている 間は はなさないので ぬけがらと すり替われない**（b.kwOff）。
+                            ヒモムチの 床すれすれの ヒモに すべりこんで 噛むと **ヒモを 噛みちぎる**（kireta：しりもちを ついて 目を回す・こうげき しない）
+   技    split … 分身：体を まるめて ぐるぐる（予告：分身が 出る 所が 光る）→ 本物と 分身が 鏡うつしに 歩きながら 交互に ヒモの わっかを 山なりに 投げる
+                 （曲がって 飛ぶ。落ちる 所が 光る・落ちきるまで。1つは 主人公の いる 所）→ 分身が 消えて s_ato（口が開いて 2倍）
+         drop  … ほこりの 雨＋消えて 真上から：体を まるめて ほこりを 巻きあげる（部屋が 灰色に かすむ＝bfxHai。予告じるしは かすみの 上に 出る）→ 消える（b.warp）→
+                 ほこりの かたまりが 光った 所へ ふわっと 落ちる（1つは 主人公の 真上・落ちきるまで 光る）→ 主人公の 足もとに 影が ついてくる →
+                 影が 止まって 床が 光る（落ちきるまで）→ 落ちてくる → 着地で 床を 走る 衝撃波（跳べ）→ d_ato（2倍）。半分から 2回 続けて（2回めは かたまり なし）
+         himo  … 曲がる ヒモムチ：のけぞって ヒモが 光る（予告：床すれすれの 帯）→ ヒモの 先が 床すれすれを 壁まで のびる（跳べ）→ 壁で 曲がって のぼり
+                 （もどる 高さに 帯・主人公の いた 所の 床が 光る）→ 高い 所を もどる（立っていれば 当たらない・跳ぶと 当たる）→
+                 光った 所で 曲がって 真上から たたきつける（落ちきるまで 光る＝よけろ）→ 引きもどす → h_suki（2倍）。半分から 2本 続けて
+   すき  ushiro（はじめの 半分）・s_ato・d_ato・h_suki＝口が開いて 2倍（体の まわりが 金色に 光る＝dmOpenGlow）。ふだん（wait）は 1倍（続けて 当てると 変わり身）
+   半分  変わり身に 要る 数が 5→4（MG_NEED）・消えている 長さが 短く・技の 順番が 変わる（MG_SEQ）・真上から 2回・ヒモムチ 2本・わっかを 投げる 間が 短く・かたまり 4つ
+   部屋  13面の ボス部屋は 左の 壁ぎわに 電気の 柱（E。床から 3マス）。天井は 無い（落ちてくる 高さは dmSky＝画面の 上から）
+   ⚠️ 倒れたら updateBoss（30_bosses.js）が b.log・b.kwNeed・b.clone・b.warp・bfxReset（ほこりの 雨も）を 解く。わっか・ほこりの かたまり・ヒモの 先・衝撃波は 敵の弾なので いっしょに 消える */
+var MG_NEED=[5,4];             /* 変わり身に 要る 続けての 当たり［ふつう, 半分を切ったら］（26_bossfx.js KAWARI_WIN＝40コマの あいだに） */
+var MG_HIDE=[32,26];           /* 消えている 長さ（126 まで） */
+var MG_MARK=16;                /* 出る 所が 光る 長さ（消えている 最後の コマ） */
+var MG_GAP=[30,26], MG_GAPM=8;    /* うしろに 出た あとの すき・そのうち はじめの MG_GAPM コマは 口が開く＝2倍。
+                                  ⚠️ 36（2倍 18コマ）では 振り向きが 一瞬の 自動戦闘が ここだけで 3割 けずり、跳ぶだけでも 20/20 勝った（2026-09-29 実測） */
+var MG_BACK=56;                /* 主人公の うしろ 何px に 出るか（体の まん中どうし） */
+var MG_WAIT=[40,30];           /* 間合い（80〜160px）を 取る 長さ（±6コマ ゆらぐ） */
+var MG_HOPN=80;                /* 主人公が この px より 近いと うしろへ 跳んで はなれる（ミカンジャー と 同じ）。
+                                  ⚠️ 70 では 壁ぎわで 72px を 保とうとする 自動戦闘（run_tests.js）と 70〜72px で にらみあいに なり、倒しきれない 回が あった（2026-09-29 実測） */
+var MG_STAME=[30,26];          /* 分身の 予告（体を まるめて ぐるぐる・分身が 出る 所が 光る） */
+var MG_SPLIT=[170,190];        /* 分身が いる 長さ */
+var MG_SGAP=[46,40];           /* わっかを 投げる 間（本物と 分身で 半分ずつ ずらす＝同じ ときには 来ない。落ちる 所どうしは 光るので 1つずつ よけられる） */
+var MG_SG=0.26, MG_SVMAX=4.0;  /* わっかの 重さ・横の 速さの 上限（遠い 所は 高く ほうる） */
+var MG_SWALK=0.9;              /* 分身と 鏡うつしに 歩く 速さ */
+var MG_SATO=[44,36];           /* 分身が 消えた あと（口が開く＝2倍） */
+var MG_DTAME=[28,24];          /* ほこりを 巻きあげる（この 間に ほこりの 雨が はじまる） */
+var MG_HAI=[92,96];            /* ほこりの 雨の 長さ（26_bossfx.js HAI_MAX 96 まで。2回めの 真上からでは 足さない） */
+var MG_DFOL=[66,58], MG_DFOL2=24;   /* 消えて 影が 主人公を 追う 長さ（ほこりの かたまりが 落ちきってから 影が 止まる。2回めは 短い）。
+                                     消えている 長さ＝これ＋MG_DLOCK ≦ 126 */
+var MG_KN=[3,4], MG_KSEP=44;   /* ほこりの かたまりの 数（1つは 主人公の 真上）・かたまりどうしの 間（px） */
+var MG_KV=0.5, MG_KG=0.12;     /* かたまりが ふわっと 落ちる はじめの 速さ・重さ（画面の 上から 約55コマ） */
+var MG_DLOCK=[26,22];          /* 影が 止まって 床が 光ってから 落ちはじめるまで */
+var MG_DG=0.7;                 /* 落ちてくる 重さ（画面の 上から 約25コマで 床） */
+var MG_DN=[1,2];               /* 真上からの 回数 */
+var MG_DSHOCK=[2.4,2.7];       /* 着地の 衝撃波の 速さ */
+var MG_DATO=[42,34];           /* 着地の あと（口が開く＝2倍） */
+var MG_HTAME=[28,24];          /* ヒモムチの 予告（のけぞる・床すれすれの 帯） */
+var MG_HSP=[5.0,5.6];          /* ヒモの 先の 速さ */
+var MG_HLOW=[14,10], MG_HHIGH=[46,10];   /* ヒモの 先の 帯［床から 上の はしまで, 太さ］。低い＝跳ぶ／高い（もどり）＝立っていれば 当たらない */
+var MG_HN=[1,2], MG_HGAP=16;   /* ヒモムチの 本数・2本めの 前の 間 */
+var MG_HSLAM=1.3, MG_HBACK=1.6;   /* たたきつける 速さ・引きもどす 速さ（ヒモの 先の 速さの 何倍か） */
+var MG_HSUKI=[40,32];          /* ヒモを もどした あと（口が開く＝2倍） */
+var MG_KIRE=[72,60];           /* ヒモを 噛みちぎられて しりもち（こうげき しない・体当たり しない。口は とじている＝2倍には しない） */
+var MG_DMG=3;                  /* ヒモの 先・衝撃波の 痛さ */
+var MG_DMG_STAY=4;             /* 光った 所に 立ったままだと 必ず 当たる もの（わっか・ほこりの かたまり）の 痛さ（シタオチー SO_DMG_STAY と 同じ 考え） */
+var MG_BITENT=16;              /* 噛まれた あと 体当たり しない コマ（効く武器の とき） */
+var MG_WKGAP=10;                /* 効く武器（すべって 噛む 口）が 当たった あと 次が 効くまで（コマ。30_bosses.js updateBoss の wkGap）。1回 すべって 噛むと 2発ほど 入る。
+                                  14・20 では 1回の すべりで 1発しか 入らず 1本で 倒しきれなかった（2026-09-29 実測）。
+                                  ⚠️ 無いと 噛みついた まま 7コマごとに 3倍が 入り、分身の 技の 間だけで 約5秒で 倒れた（2026-09-29 実測） */
+/* 技の順番［ふつう, 体力が半分を切ったら］ */
+var MG_SEQ=[["split","himo","drop"],["drop","himo","split","himo"]];
+/* ↑ 実測（2026-09-29・test/winrate.js 13・装備なし）：跳ぶだけ 0/40（負けたとき ボスの のこり 約46%）・その場連打 0/20（約46%）・よけて戦う 40/40（平均 約46秒）・
+     効く武器（カミカミ・スライド＋よける）40/40（約20秒。test_new.js の 1本で 約9秒・エネルギー 残り6）。素の体力 76（BOSS_TOUGH は そのまま）。
+     run_tests.js と 同じ 戦い方（死なない・連打）で 60/60 倒しきる（作り直す 前は ボス部屋の 入口から 30回中 14回しか 倒しきれず、run_tests の「既知のこけ」だった）。
+     ⚠️ ヒモムチが 低く 行って 高く もどる だけ の ときは 跳ぶだけでも 20回中 7回 勝った（光った 所を 見ない 戦い方に 当たらない）→ たたきつけを 足した */
+function mg_hand(b){ var f=b.face||-1; return {x:b.x+b.w/2+f*b.w*0.55, y:b.y+b.h*0.5}; }   /* ヒモを 持つ 手 */
+function mg_tbX(b,pc,L,R){ return Math.max(L+4,Math.min(R-b.w-4,pc+b.tbSide*90-b.w/2)); }   /* とびこえの 着地点：主人公から 前へ 90px */
+function mg_throw(b,x,tx){                      /* ヒモの わっかを 1つ（手から 山なりに tx へ。落ちる 所が 光る＝落ちきるまで） */
+  var fy=bossFloorY(), hx=x+b.w/2, hy=b.y+4, v=dmArc(hx,hy,tx,12,MG_SG,MG_SVMAX);
+  bfxMark(tx-9,fy-12,18,12,v.T+4,"#ff8a3a");
+  eshot({x:hx-6,y:hy-6,w:12,h:12,vx:v.vx,vy:v.vy,grav:MG_SG,dmg:MG_DMG_STAY,kind:"mgwa",life:400,nosolid:true,rot:0});
+  dmSfx("shoot"); part(hx,hy,"#ffd0a0",4,1.2);
+}
+function mg_tipShot(o,x,y,vx){                  /* ヒモの 先の 当たり（毎コマ 置きなおす。life 3＝置きなおさないと すぐ 消える） */
+  if(!o || !dmAlive(o)) o=eshot({x:x-6,y:y-6,w:12,h:12,vx:vx,vy:0,dmg:MG_DMG,kind:"mghimo",life:3,nosolid:true,stay:true});
+  o.x=x-6-vx; o.y=y-6; o.vx=vx; o.life=3;
+  return o;
+}
+/* 効く武器（すべって 噛みつく 口）が ボスに かみついているか・床すれすれの ヒモに とどいたか（効く武器が ほかの 番号なら 何もしない） */
+function mg_bite(box){
+  if(typeof WEAK==="undefined" || WEAK.magarin!==11) return false;
+  for(var i=0;i<pbullets.length;i++){
+    var bl=pbullets[i];
+    if(bl.wid!==11 || (bl.fx!=="bite" && bl.fx!=="chomp")) continue;
+    if(bl.x<box.x+box.w && bl.x+bl.w>box.x && bl.y<box.y+box.h && bl.y+bl.h>box.y) return true;
+  }
+  return false;
+}
+function mg_dust(b,p,h){                       /* ほこりの かたまりを 落とす 所を 決めて 予告（1つは 主人公の 真上。落ちきるまで 光る）→ すぐ 落とす */
+  var fy=bossFloorY(), xs=dmSpots([p.x+p.w/2],MG_KN[h],MG_KSEP,[],30);
+  for(var i=0;i<xs.length;i++){
+    var x=dmClampX(xs[i]-7,14), y0=dmSky(x,14);
+    bfxMark(x-3,fy-12,20,12,dmFallT(y0,12,MG_KV,MG_KG)+4,"#c8a878");
+    eshot({x:x,y:y0,w:14,h:12,vx:0,vy:MG_KV,grav:MG_KG,dmg:MG_DMG_STAY,kind:"mgdust",life:400,nosolid:true,ph:Math.random()*6});
+  }
+}
+function mg_fallT(y0,hh){                      /* 本体が 高さ y0 から 落ちて 床に 着くまでの コマ（d_fall と 同じ 1コマずつの 計算。速さの 上限 MAXFALL×1.3 も 入れる） */
+  var fy=bossFloorY(), y=y0, v=0, n=0;
+  while(y+hh<fy && n<200){ v=Math.min(MAXFALL*1.3,v+MG_DG); y+=v; n++; }
+  return n;
+}
+function mg_tend(b){                            /* わっか・ほこりの かたまり：床で くずれる */
+  var fy=bossFloorY();
+  for(var i=ebullets.length-1;i>=0;i--){
+    var o=ebullets[i];
+    if(o.kind==="mgwa"){ o.rot+=0.3; if(o.vy>0 && o.y+o.h>=fy){ part(o.x+6,fy-3,"#ff8a2b",8,1.6); dmSfx("hit"); ebullets.splice(i,1); } }
+    else if(o.kind==="mgdust" && o.y+o.h>=fy){ part(o.x+7,fy-3,"#b8b0a4",10,1.8); part(o.x+7,fy-3,"#e8e0d4",5,1.2); dmSfx("hit"); ebullets.splice(i,1); }
+  }
+}
+/* ぬけがら（変わり身の 丸太の かわり。26_bossfx.js drawLog が q.draw を 呼ぶ）：背中を まるめた 白っぽい 体の 形・ひび。消える 前は うすく */
+function mg_drawNuke(q){
+  var a=Math.min(1,q.t/12), fb={w:q.bw||15,h:q.bh||22,face:q.face||-1,sc:BOSS_SCALE,t:0,frame:"_p4",grounded:true,vx:0};
+  var x=q.x+q.w/2-fb.w/2, y=q.y+q.h-fb.h;
+  ctx.save(); ctx.globalAlpha=a*((q.hit>0)?0.95:0.55);
+  ctx.translate(x+fb.w/2,y+fb.h); ctx.rotate((q.face||-1)*0.28); ctx.scale(1.05,0.86); ctx.translate(-(x+fb.w/2),-(y+fb.h));   /* 背中を まるめて しゃがんだ 形 */
+  bossSprite("magarin",fb,x,y,true,null);
+  ctx.restore();
+  ctx.globalAlpha=a*0.8; ctx.strokeStyle="#b8a080"; ctx.lineWidth=1;       /* 背中の ひび（ぬけた あと） */
+  ctx.beginPath(); ctx.moveTo(q.x+q.w/2-1,q.y+q.h*0.3); ctx.lineTo(q.x+q.w/2+2,q.y+q.h*0.45); ctx.lineTo(q.x+q.w/2-1,q.y+q.h*0.6); ctx.stroke();
+  if(q.t>q.max-14){                              /* すり替わった しゅんかんの ほこり */
+    var k=(q.max-q.t)/14;
+    ctx.globalAlpha=0.7*(1-k); ctx.fillStyle="#d8d0c4";
+    for(var j=0;j<6;j++){ var aa=j*1.05; ctx.beginPath(); ctx.arc(q.x+q.w/2+Math.cos(aa)*(8+k*14),q.y+q.h/2+Math.sin(aa)*(6+k*10),5+k*4,0,Math.PI*2); ctx.fill(); }
+  }
+  ctx.globalAlpha=1;
+}
+function mg_drawString(x0,y0,x1,y1,cx,cy,hl){   /* ヒモ（オレンジの 太い ひも・白い すじ）。(cx,cy) を 通る 曲がり */
+  ctx.lineCap="round";
+  ctx.strokeStyle=hl?"#ffffff":"#8a3a0a"; ctx.lineWidth=4.2;
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.quadraticCurveTo(cx,cy,x1,y1); ctx.stroke();
+  ctx.strokeStyle=hl?"#ffffff":"#ff8a2b"; ctx.lineWidth=2.6;
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.quadraticCurveTo(cx,cy,x1,y1); ctx.stroke();
+  ctx.strokeStyle="#ffd0a0"; ctx.lineWidth=0.8;
+  ctx.beginPath(); ctx.moveTo(x0,y0-0.8); ctx.quadraticCurveTo(cx,cy-0.8,x1,y1-0.8); ctx.stroke();
+  ctx.lineCap="butt"; ctx.lineWidth=1;
+}
+function mg_drawKnot(x,y){                      /* ヒモの 先の 結び目（こぶ） */
+  ctx.fillStyle="#8a3a0a"; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#ff8a2b"; ctx.beginPath(); ctx.arc(x-0.5,y-0.5,3.8,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#ffd0a0"; ctx.fillRect(x-2,y-2.5,2,1.5);
+}
+function mg_drawStars(cx,cy){ for(var i=0;i<3;i++){ var a=frame*0.12+i*2.1, sx=cx+Math.cos(a)*9, sy=cy+Math.sin(a)*3; ctx.fillStyle="#fff6a0"; ctx.fillRect(sx-1,sy-2.5,2,5); ctx.fillRect(sx-2.5,sy-1,5,2); } }
 
 /* ---------------------------------------------------------------- 13 マガリン
    技＝せなかを まるめさせる かくれボス。
-   借りた動き: ジェミニマン（分身。撃ってもダメージにならない）＋ シャドーマン（消えて真上から） */
+   和歌山ミカンジャーの 変わり身（背中を まるめた ぬけがら）＋ ジェミニマン（分身）＋ シャドーマン（消えて 真上から）＋ 鹿児島サクラジマーの 灰の雨（ほこりの 雨）
+   ＋ 曲がる ヒモムチ。技の中身・定数・すきは 上の「13 マガリン の小道具」の説明が正本（2026-09-29 作り直し） */
 BOSSES.magarin={
   name:"マガリン", title:"かくれボス",
   hp:76, w:18, h:26, top:2,
-  init:function(b){ b.step=0; b.fade=1; b.whip=0; },
+  wkGap:MG_WKGAP,                                 /* 効く武器（カミカミ・スライド）が 当たった あとの 無敵（updateBoss） */
+  init:function(b){ b.seq=0; b.sq=0; b.halfOn=0; b.fade=1; b.log=null; b.kwHits=[]; b.kwGo=0; b.kwOff=0; b.kwNeed=MG_NEED[0]; b.kwN=0; b.ntT=0; b.hopT=0; b.ivulCol="#ffd0a0"; },
   ai:function(b,p){
-    var half=(b.hp<b.maxhp/2);
-    b.step++;
-    if(b.state!=="drop"){ b.vy=Math.min(MAXFALL,b.vy+GRAV); bossMoveY(b); }
+    var h=(b.hp<b.maxhp/2)?1:0, fy=bossFloorY(), L=arenaL(), R=arenaR();
+    var pc=p.x+p.w/2, cx=b.x+b.w/2, dx=pc-cx, ad=Math.abs(dx), dir=(dx<0)?-1:1, i;
+    function go(st){ b.state=st; b.t=0; }
+    if(h && !b.halfOn){ b.halfOn=1; b.seq=0; }  /* 半分を切った：技の順番が変わる・変わり身が 早く なる */
+    mg_tend(b);
+    b.frame=null; b.jit=0; b.noTouch=0;
+    if(b.ntT>0){ b.ntT--; b.noTouch=1; }
+    if(b.state!=="kireta" && b.state!=="h_tame") b.tilt=0;
+    var sqTo=0;
+    b.kwNeed=MG_NEED[h];
+    if(b.kwOff>0) b.kwOff--;
+    if(b.state!=="wait") b.kwOff=Math.max(b.kwOff,2);   /* 変わり身は 間合いを 取っている 間だけ（技と すきの 間は 起きない） */
+    /* 効く武器（すべって 噛みつく 口）が かみついている 間は はなさない＝すり替われない。噛まれて ひるむ 間（と 直後 MG_BITENT コマ）は 体当たり しない
+       （すべり終わりに 体に 重なった まま いたい 思いを しない。⚠️ 無いと 効く武器の 自動戦闘が すべり終わりの 体当たりで 40回中 3回 負けた＝2026-09-29 実測） */
+    if(mg_bite({x:b.x-2,y:b.y,w:b.w+4,h:b.h})){ b.kwOff=Math.max(b.kwOff,12); b.biteT=MG_BITENT; }
+    if(b.biteT>0){ b.biteT--; b.noTouch=1; }
+    if(b.clone && b.state!=="split") cloneClear(b);   /* 分身は 分身の 技の 間だけ（テストの 写真・見張りが 途中の 状態に しても 残さない） */
+    var hidden=(b.state==="kawari"||b.state==="d_hide"||b.state==="d_lock");
+    if(!hidden && b.warp>0) warpCome(b);
+    if(!hidden && b.state!=="d_fall"){ b.vy=Math.min(MAXFALL,b.vy+GRAV); bossMoveY(b); }
+    /* 続けて 当たりすぎた：変わり身（26_bossfx.js の kawariGo が ぬけがらを 置いた）→ 主人公の うしろへ */
+    if(b.kwGo>0 && b.state!=="kawari"){
+      b.kwGo=0; cloneClear(b); b.lockFace=true; b.vx=0; b.vy=0;
+      if(b.log){ b.log.draw=mg_drawNuke; b.log.face=b.face; b.log.bw=b.w; b.log.bh=b.h; }
+      var pf=p.face||1, back=pc-pf*MG_BACK-b.w/2, spot, behind=true;
+      if(back<L+4 || back+b.w>R-4){ spot=dmClampX(pc+pf*96-b.w/2,b.w); behind=false; } else spot=back;
+      b.x=spot; b.y=fy-b.h; b.kwBehind=behind; b.warp=1;
+      go("kawari");
+      return;
+    }
 
-    if(b.state==="wait"){
-      b.fade=1; b.vx=b.face*1.2; bossMoveX(b); clampX(b);
-      if(b.wallHit) b.vx=-b.vx;
-      bossDodge(b,p,150,0.45);
-      if(b.t>26){
-        b.t=0; b.vx=0; b.cycle=(b.cycle||0)+1;
-        var m=b.cycle%3;
-        if(m===0) b.state="whipup";
-        else if(m===1) b.state="hide";
-        else { b.state="split"; }
+    if(b.state==="wait"){                          /* 間合い（80〜160px）を 取る（近すぎると うしろへ 跳ぶ）。次の技を 選ぶ */
+      b.lockFace=false;
+      if(b.t===1) b.wl=MG_WAIT[h]+Math.floor(Math.random()*13)-6;
+      if(b.grounded){
+        if(ad<MG_HOPN && b.hopT<=0){ b.vy=-6.0; b.vx=-dir*2.4; if(b.x<L+30) b.vx=Math.abs(b.vx); if(b.x+b.w>R-30) b.vx=-Math.abs(b.vx); b.hopT=34; part(cx,fy-2,"#e8e0d0",5,1.2); }
+        else if(ad>160) b.vx=dir*1.2;
+        else b.vx*=0.7;
+      }
+      if(b.hopT>0) b.hopT--;
+      bossMoveX(b); clampX(b);
+      sqTo=0.1;                                    /* いつも 背中を 少し まるめている */
+      if(b.t>=(b.wl||MG_WAIT[h]) && b.grounded){
+        var seq=MG_SEQ[h], nx=seq[b.seq%seq.length];
+        b.seq++; b.vx=0;
+        if(nx==="split") go("s_tame");
+        else if(nx==="drop"){ b.dn=0; go("d_tame"); }
+        else { b.hn=0; go("h_tame"); }
       }
     }
-    /* 分身。どちらが本物か分からなくなる（偽物は撃ってもダメージにならない） */
-    else if(b.state==="split"){
+    /* ---- 変わり身（守り）→ うしろに 出る → とびこえて もどる ---- */
+    else if(b.state==="kawari"){                   /* 消えている（ぬけがらが 残る）。最後の MG_MARK コマは 出る所が 光る */
+      b.warp=1; b.vx=0; b.vy=0; b.noTouch=1;
+      if(b.t===MG_HIDE[h]-MG_MARK){ bfxMark(b.x-4,fy-b.h-6,b.w+8,b.h+6,MG_MARK+2,"#ffb04a"); part(b.x+b.w/2,b.y+b.h/2,"#e8e0d0",6,1.2); }
+      if(b.t>=MG_HIDE[h]){
+        warpCome(b); b.lockFace=false; b.face=(pc<b.x+b.w/2)?-1:1;
+        b.mouth=MG_GAPM; b.kwOff=MG_GAP[h]; b.kwHits=[];
+        part(b.x+b.w/2,b.y+b.h/2,"#ffffff",12,2.2); part(b.x+b.w/2,b.y+b.h/2,"#ffd0a0",8,1.8); dmSfx("dash");
+        go("ushiro");
+      }
+    }
+    else if(b.state==="ushiro"){                   /* うしろに 出た すき（はじめの 半分は 口が開いて 2倍・変わり身しない） */
+      b.vx=0; sqTo=0.2;
+      if(b.t>=MG_GAP[h]){
+        b.mouth=0; b.kwOff=0;
+        b.tbSide=p.face||1;                        /* 着地は 主人公が 向いている がわ（前）。壁が 近くて 60px はなれられない ときは 反対がわ */
+        if(Math.abs(mg_tbX(b,pc,L,R)+b.w/2-pc)<60) b.tbSide=-b.tbSide;
+        b.vy=-7.6; b.lockFace=true; b.noTouch=1; dmSfx("dash");
+        go("tobikoe");
+      }
+    }
+    else if(b.state==="tobikoe"){                  /* 主人公を とんぼ返りで 跳びこえて 前へ（跳んでいる 間は 体当たり しない・当たらない） */
+      b.noTouch=1; b.ivul=Math.max(b.ivul||0,2);
+      if(!b.grounded || b.t<3){
+        var tx2=mg_tbX(b,pc,L,R), left=Math.max(4,29-b.t);
+        b.vx=Math.max(-4.6,Math.min(4.6,(tx2-b.x)/left)); b.face=(b.vx<0)?-1:1;
+      }
+      bossMoveX(b); clampX(b);
+      if((b.t>4 && b.grounded) || b.t>90){ b.vx=0; b.ntT=16; b.lockFace=false; go("wait"); }
+    }
+    /* ---- 分身 ---- */
+    else if(b.state==="s_tame"){                   /* 体を まるめて ぐるぐる（分身が 出る 所が 光る） */
+      b.vx=0; b.jit=0.7; sqTo=0.4;
       if(b.t===1){
-        var cx=(b.x<(arenaL()+arenaR())/2) ? arenaR()-b.w-30 : arenaL()+30;
-        cloneMake(b,cx,b.y);
-        bfxSay("ぶんしんだ！ ほんものは どっち？",80);
-        SFX.charge_up();
+        var mid=(L+R)/2, mx=L+R-b.x-b.w;             /* 鏡うつしの 所。本物が まん中に 近いときは 110px はなす */
+        if(Math.abs(mx-b.x)<80) mx=b.x+((cx<mid)?110:-110);
+        /* 主人公に 重なる 所には 出さない（出た しゅんかんに 体当たりに なる）：主人公から 40px・本物から 60px はなれた 所を 順に さがす */
+        var cands=[mx,pc-70-b.w/2,pc+70-b.w/2,L+30,R-30-b.w];
+        b.cx0=dmClampX(mx,b.w);
+        for(i=0;i<cands.length;i++){ var cc=dmClampX(cands[i],b.w); if(Math.abs(cc+b.w/2-pc)>=40 && Math.abs(cc-b.x)>=60){ b.cx0=cc; break; } }
+        bfxMark(b.cx0-2,fy-b.h-4,b.w+4,b.h+4,MG_STAME[h]+4,"#ffd0a0"); dmSfx("charge_up");
       }
-      b.vx=b.face*1.4; bossMoveX(b); clampX(b);
-      if(b.wallHit) b.vx=-b.vx;
-      if(b.clone){
-        /* 分身は鏡うつしに歩く */
-        b.clone.x-=b.vx;
-        if(b.clone.x<arenaL()) b.clone.x=arenaL();
-        if(b.clone.x>arenaR()-b.w) b.clone.x=arenaR()-b.w;
-        b.clone.y=b.y;
-      }
-      if(b.t%46===30){
-        eshot({x:b.x+(b.face>0?b.w:-12),y:b.y+b.h*0.3,vx:b.face*6.0,vy:0,dmg:4,kind:"himo",w:16,h:6,life:170});
-        if(b.clone)
-          eshot({x:b.clone.x+(b.clone.face>0?b.w:-12),y:b.clone.y+b.h*0.3,vx:b.clone.face*6.0,vy:0,
-                 dmg:4,kind:"himo",w:16,h:6,life:170});
-        SFX.shoot();
-      }
-      if(b.t>(half?230:180)){ cloneClear(b); b.t=0; b.state="wait"; b.mouth=54; }
+      if(b.t>=MG_STAME[h]) go("split");
     }
-    else if(b.state==="whipup"){
-      b.whip=Math.min(1,b.t/12);
-      if(b.t===14 || (b.t===32 && half)){
-        var n=half?3:2;
-        for(var i=0;i<n;i++)
-          eshot({x:b.x+(b.face>0?b.w:-12),y:b.y+b.h*0.167+i*13,vx:b.face*6.2,vy:0,
-                 dmg:4,kind:"himo",w:16,h:6,life:170});
-        SFX.shoot();
-      }
-      if(b.t>38){ b.t=0; b.whip=0; b.state="wait"; }
+    else if(b.state==="split"){                    /* 本物と 分身が 鏡うつしに 歩きながら 交互に ヒモの わっかを 山なりに 投げる（主人公の いる 所へ） */
+      if(!b.clone){ cloneMake(b,(b.cx0!==undefined)?b.cx0:dmClampX(L+R-b.x-b.w,b.w),b.y); part(b.clone.x+b.w/2,b.clone.y+b.h/2,"#ffd0a0",12,2.0); }
+      var c=b.clone;
+      b.lockFace=false;
+      b.vx=(ad>120)?dir*MG_SWALK:((ad<70)?-dir*MG_SWALK:0);
+      var x0=b.x; bossMoveX(b); clampX(b);
+      c.x=Math.max(L,Math.min(R-c.w,c.x-(b.x-x0))); c.y=b.y; c.face=(pc<c.x+c.w/2)?-1:1;
+      var g2=MG_SGAP[h];
+      if(b.t%g2===Math.floor(g2/2)) mg_throw(b,b.x,pc);
+      if(b.t%g2===0 && b.t>0) mg_throw(b,c.x,pc);
+      if(b.t>=MG_SPLIT[h]){ part(c.x+c.w/2,c.y+c.h/2,"#e8e0d0",14,2.0); cloneClear(b); b.cx0=undefined; b.mouth=Math.max(b.mouth||0,MG_SATO[h]); dmSfx("dash"); go("s_ato"); }
     }
-    else if(b.state==="hide"){
-      b.vx=0;
-      b.fade=Math.max(0,1-b.t/14);
-      if(b.t>16){
-        b.t=0; b.state="drop";
-        b.x=Math.max(arenaL(),Math.min(arenaR()-b.w,p.x+6-b.w/2));
-        b.y=Math.max(0,p.y-150);
-        b.vy=0;
-        bfxMark(b.x-2,bossFloorY()-12,b.w+4,12,44,"#ffd0a0");   /* 落ちてくる場所の予告 */
+    else if(b.state==="s_ato"){                    /* 分身が 消えた あと（口が開いて 2倍） */
+      b.vx=0; sqTo=0.15;
+      if(b.mouth<=0 || b.t>=MG_SATO[h]+6){ b.mouth=0; go("wait"); }
+    }
+    /* ---- ほこりの 雨＋消えて 真上から ---- */
+    else if(b.state==="d_tame"){                   /* 体を まるめて ほこりを 巻きあげる */
+      b.vx=0; b.jit=0.5; sqTo=0.45;
+      if(b.t===1){ b.lockFace=true; b.dn=0; dmSfx("charge1"); }
+      if(b.t===MG_DTAME[h]-10){ bfxHai(MG_HAI[h],false); dmSfx("wind"); }
+      if(b.t%3===0) part(cx+(Math.random()-0.5)*20,fy-2,"#c8c0b4",2,1.4);
+      if(b.t>=MG_DTAME[h]){ b.warp=1; b.dx=pc; part(cx,b.y+b.h/2,"#e8e0d0",12,2.0); dmSfx("dash"); mg_dust(b,p,h); go("d_hide"); }
+    }
+    else if(b.state==="d_hide"){                   /* 消えて 影が 主人公を 追う */
+      b.warp=1; b.noTouch=1; b.vx=0; b.vy=0;
+      b.dx+=(pc-b.dx)*0.12;
+      if(b.t>=((b.dn>0)?MG_DFOL2:MG_DFOL[h])){
+        var lx=dmClampX(b.dx-b.w/2,b.w), y0=dmSky(lx,b.w);
+        b.x=lx; b.y=y0; b.vy=0;
+        bfxMark(lx-4,fy-12,b.w+8,12,MG_DLOCK[h]+mg_fallT(y0,b.h)+4,"#ff5a5a");   /* 落ちきるまで 光る */
+        dmSfx("charge2"); go("d_lock");
       }
     }
-    else if(b.state==="drop"){
-      b.fade=Math.min(1,b.t/6);
-      if(b.t>7){
-        b.vy=Math.min(MAXFALL,b.vy+GRAV*2.0); bossMoveY(b);
-        if(b.grounded && b.vy===0){
-          SFX.hit(); part(b.x+b.w/2,b.y+b.h,"#ffd0a0",18,3.0);
-          bfxQuake(half?26:20,18);
-          for(var s=0;s<2;s++)
-            eshot({x:b.x+b.w/2-7,y:b.y+b.h-14,vx:(s?1:-1)*4.6,vy:0,dmg:4,kind:"shock",w:14,h:12,life:220});
-          for(var q=0;q<2;q++)
-            eshot({x:b.x+b.w/2-8,y:b.y+b.h*0.292,vx:(q?1:-1)*4.0,vy:-3.4,dmg:3,kind:"himo",w:16,h:6,grav:0.22,life:120});
-          b.drops=(b.drops||0)+1;
-          b.mouth=38;
-          if(half && b.drops%2===1){ b.t=0; b.state="hide"; }
-          else { b.t=0; b.state="wait"; }
+    else if(b.state==="d_lock"){                   /* 影が 止まって 床が 光る（まだ 消えている） */
+      b.warp=1; b.noTouch=1; b.vx=0; b.vy=0;
+      if(b.t>=MG_DLOCK[h]){ warpCome(b); b.lockFace=false; dmSfx("dash"); go("d_fall"); }
+    }
+    else if(b.state==="d_fall"){                   /* 落ちてくる → 着地で 床を 走る 衝撃波 */
+      b.vx=0; b.vy=Math.min(MAXFALL*1.3,b.vy+MG_DG); b.y+=b.vy; b.grounded=false;
+      if(b.y+b.h>=fy){
+        b.y=fy-b.h; b.vy=0; b.grounded=true; b.land=9;
+        shake=Math.max(shake,10); dmSfx("boom"); part(b.x+b.w/2,fy-2,"#d8d0c4",16,2.6);
+        for(var s=0;s<2;s++) eshot({x:b.x+b.w/2-7,y:fy-12,w:14,h:12,vx:(s?1:-1)*MG_DSHOCK[h],vy:0,dmg:MG_DMG,kind:"shock",life:200});
+        b.dn++;
+        if(b.dn<MG_DN[h]){ b.warp=1; b.dx=pc; go("d_hide"); }
+        else { b.mouth=Math.max(b.mouth||0,MG_DATO[h]); go("d_ato"); }
+      }
+      if(b.t>120){ b.y=fy-b.h; b.vy=0; go("d_ato"); }   /* 念のための 逃げ道（固まらせない） */
+    }
+    else if(b.state==="d_ato"){                    /* 着地の あと（背中を まるめて いたた。口が開いて 2倍） */
+      b.vx=0; sqTo=0.4;
+      if(b.mouth<=0 || b.t>=MG_DATO[h]+6){ b.mouth=0; go("wait"); }
+    }
+    /* ---- 曲がる ヒモムチ ---- */
+    else if(b.state==="h_tame"){                   /* のけぞって ヒモが 光る（床すれすれの 帯） */
+      b.vx=0; b.jit=0.5; b.frame="_p3"; b.tilt=-(b.face||-1)*0.12;
+      if(b.t===1){
+        b.lockFace=true; b.face=dir;
+        var hd=mg_hand(b), wx=(b.face>0)?R-6:L+6, bx0=Math.min(hd.x,wx), bx1=Math.max(hd.x,wx);
+        bfxMark(bx0,fy-MG_HLOW[0],bx1-bx0,MG_HLOW[1],MG_HTAME[h]+Math.ceil((bx1-bx0)/MG_HSP[h])+2,"#ff6a3a");
+        dmSfx("charge1");
+      }
+      if(b.t>=MG_HTAME[h]){ var hd2=mg_hand(b); b.hph=0; b.tip={x:hd2.x,y:fy-MG_HLOW[0]+MG_HLOW[1]/2}; dmSfx("dash"); go("himo"); }
+    }
+    else if(b.state==="himo"){                     /* 床すれすれを 壁まで → 壁で 曲がって のぼる → 高い 所を もどる → 光った 所へ たたきつける → 引きもどす */
+      b.vx=0; b.frame="_p4";
+      if(!b.tip){ var hd0=mg_hand(b); b.hph=0; b.tip={x:hd0.x,y:fy-MG_HLOW[0]+MG_HLOW[1]/2}; }   /* テストの 写真・見張りが 途中から 始めても */
+      var f=b.face||-1, hd3=mg_hand(b), wall=(f>0)?R-6:L+6, sp=MG_HSP[h], tp=b.tip, vx=0, hiY=fy-MG_HHIGH[0]+MG_HHIGH[1]/2, loY=fy-MG_HLOW[0]+MG_HLOW[1]/2;
+      if(b.hph===0){                               /* 床すれすれを 壁まで（跳べ） */
+        tp.x+=f*sp; vx=f*sp;
+        if((f>0 && tp.x>=wall) || (f<0 && tp.x<=wall)){
+          tp.x=wall; b.hph=1; shake=Math.max(shake,3); dmSfx("hit");
+          /* たたきつける 所＝いま 主人公が いる 所（手と 壁の 間に いる ときだけ。うしろに 回った ときは 高い まま 手まで もどる） */
+          var inX=(f>0)?(pc>hd3.x+12 && pc<wall-10):(pc<hd3.x-12 && pc>wall+10);
+          b.hsx=inX?pc:null;
+          var endX=inX?pc:hd3.x, hx0=Math.min(endX,wall), hx1=Math.max(endX,wall);
+          var tClimb=Math.ceil((loY-hiY)/(sp*0.7)), tBack=Math.ceil((hx1-hx0)/sp);
+          bfxMark(hx0,fy-MG_HHIGH[0],hx1-hx0,MG_HHIGH[1],tClimb+tBack+4,"#c89aff");
+          if(inX) bfxMark(pc-10,fy-12,20,12,tClimb+tBack+Math.ceil((fy-6-hiY)/(sp*MG_HSLAM))+4,"#ff5a5a");   /* たたきつける 所（落ちきるまで） */
         }
+      } else if(b.hph===1){                        /* 壁で 曲がって のぼる */
+        tp.y-=sp*0.7; if(tp.y<=hiY){ tp.y=hiY; b.hph=2; }
+      } else if(b.hph===2){                        /* 高い 所を もどる（立っていれば 当たらない） */
+        var gx=(b.hsx!==null && b.hsx!==undefined)?b.hsx:hd3.x;
+        tp.x-=f*sp; vx=-f*sp;
+        if((f>0 && tp.x<=gx) || (f<0 && tp.x>=gx)){ tp.x=gx; vx=0; b.hph=(b.hsx!==null && b.hsx!==undefined)?3:5; }
+      } else if(b.hph===3){                        /* 光った 所へ 真上から たたきつける */
+        tp.y+=sp*MG_HSLAM;
+        if(tp.y>=fy-6){ tp.y=fy-6; b.hph=4; shake=Math.max(shake,6); dmSfx("hit"); part(tp.x,fy-2,"#ff8a2b",8,1.8); part(tp.x,fy-2,"#d8d0c4",8,1.6); }
+      } else if(b.hph===4){                        /* 引きもどす（当たらない） */
+        var ddx=hd3.x-tp.x, ddy=hd3.y-tp.y, dd=Math.hypot(ddx,ddy), bs=sp*MG_HBACK;
+        if(dd<=bs){ b.hph=5; } else { tp.x+=ddx/dd*bs; tp.y+=ddy/dd*bs; }
       }
-      if(b.t>180){ b.t=0; b.state="wait"; }        /* 念のための逃げ道（固まらせない） */
+      if(b.hph<=3) b.tipShot=mg_tipShot(b.tipShot,tp.x,tp.y,vx);
+      else if(b.tipShot){ dmKill(b.tipShot); b.tipShot=null; }
+      if(b.tipShot) b.tipShot.dmg=(b.hph===3)?MG_DMG_STAY:MG_DMG;
+      /* 効く武器：床すれすれの ヒモ（手から 壁ぎわの 曲がり角まで）に すべりこんで 噛むと 噛みちぎる（引きもどす 前まで） */
+      var cxm=(b.hph===0)?tp.x:wall, sx0=Math.min(hd3.x,cxm), sx1=Math.max(hd3.x,cxm);
+      if(b.hph<=3 && sx1-sx0>4 && mg_bite({x:sx0,y:fy-20,w:sx1-sx0,h:18})){
+        if(b.tipShot){ dmKill(b.tipShot); b.tipShot=null; }
+        b.cut={x:tp.x,y:tp.y,vy:-1.5}; b.tip=null;
+        part((sx0+sx1)/2,fy-10,"#ff8a2b",12,2.0); part((sx0+sx1)/2,fy-10,"#ffffff",6,1.6); shake=Math.max(shake,6); dmSfx("boom");
+        b.lockFace=true; go("kireta");
+      }
+      else if(b.hph===5){
+        if(b.tipShot){ dmKill(b.tipShot); b.tipShot=null; }
+        b.tip=null; b.hsx=null; b.hn=(b.hn||0)+1;
+        if(b.hn<MG_HN[h]) go("h_gap");
+        else { b.lockFace=false; b.mouth=Math.max(b.mouth||0,MG_HSUKI[h]); go("h_suki"); }
+      }
     }
+    else if(b.state==="h_gap"){ b.vx=0; if(b.t>=MG_HGAP) go("h_tame"); }
+    else if(b.state==="h_suki"){                   /* ヒモを もどした あと（口が開いて 2倍） */
+      b.vx=0; sqTo=0.15;
+      if(b.mouth<=0 || b.t>=MG_HSUKI[h]+6){ b.mouth=0; go("wait"); }
+    }
+    else if(b.state==="kireta"){                   /* ヒモを 噛みちぎられて しりもち（こうげき しない・体当たり しない） */
+      b.vx=0; b.noTouch=1; sqTo=0.35; b.tilt=(b.face||-1)*0.35*Math.min(1,b.t/8);
+      if(b.cut){ b.cut.vy+=0.3; b.cut.y+=b.cut.vy; if(b.cut.y>fy-4){ b.cut=null; part(b.x+b.w/2+(b.face||-1)*40,fy-2,"#ff8a2b",4,1.0); } }
+      if(b.t>=MG_KIRE[h]){ b.tilt=0; b.lockFace=false; b.hn=0; go("wait"); }
+    }
+    else if(b.state!=="intro"){ go("wait"); }
+
+    if(b.state!=="himo" && b.tipShot){ dmKill(b.tipShot); b.tipShot=null; }
+    if(b.state!=="himo" && b.state!=="h_gap") b.tip=null;
+    b.sq+=(sqTo-b.sq)*0.3;
   },
+  /* 縁どりの外で描くもの：分身の 予告の ぐるぐる・ほこりの 影・ヒモムチ・投げヒモ・噛みちぎった ヒモ・星・すきの 光 */
+  fx:function(b){
+    var i, e, st=b.state, cx=b.x+b.w/2, fy=bossFloorY();
+    if(b.dead>0) return;
+    if(st==="s_tame" || st==="d_tame"){            /* 体を まるめて ぐるぐる：まわりに すじ */
+      ctx.strokeStyle=(st==="d_tame")?"#c8c0b4":"#ffd0a0"; ctx.lineWidth=1.4;
+      for(i=0;i<5;i++){ var a=frame*0.25+i*1.26, r=10+(i%2)*4; ctx.globalAlpha=0.7; ctx.beginPath(); ctx.arc(cx,b.y+b.h*0.55,r,a,a+1.0); ctx.stroke(); }
+      ctx.globalAlpha=1; ctx.lineWidth=1;
+    }
+    if(st==="d_hide" && b.dx!==undefined){         /* 消えている 間：主人公の 足もとに ついてくる 影 */
+      var k=Math.min(1,b.t/12);
+      ctx.globalAlpha=0.45*k; ctx.fillStyle="#1a1410"; ctx.beginPath(); ctx.ellipse(b.dx,fy-1,9+3*Math.sin(frame*0.3),3,0,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=0.5*k; ctx.strokeStyle="#ffd0a0"; ctx.beginPath(); ctx.ellipse(b.dx,fy-1,12,4,0,0,Math.PI*2); ctx.stroke();
+      ctx.globalAlpha=1;
+    }
+    if(st==="d_lock"){                             /* 止まった 影（まっ黒） */
+      ctx.globalAlpha=0.6; ctx.fillStyle="#0a0806"; ctx.beginPath(); ctx.ellipse(b.x+b.w/2,fy-1,10,3.4,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    }
+    if(st==="h_tame"){                             /* 手に 巻いた ヒモが 光る */
+      var hd=mg_hand(b);
+      ctx.strokeStyle=(Math.floor(frame/3)%2)?"#ffe0a0":"#ff8a2b"; ctx.lineWidth=2.2;
+      ctx.beginPath(); ctx.arc(hd.x,hd.y,4,0,Math.PI*2); ctx.stroke(); ctx.lineWidth=1;
+    }
+    if(st==="himo" && b.tip){                      /* ヒモ：手 → 床すれすれ → （壁で 曲がって）→ 先 */
+      var hd4=mg_hand(b), tp=b.tip, f=b.face||-1, wall=(f>0)?arenaR()-6:arenaL()+6, hy2=fy-MG_HHIGH[0]+MG_HHIGH[1]/2;
+      if(b.hph===0) mg_drawString(hd4.x,hd4.y,tp.x,tp.y,(hd4.x+tp.x)/2,Math.max(hd4.y,tp.y)+2,false);
+      else if(b.hph===4) mg_drawString(hd4.x,hd4.y,tp.x,tp.y,(hd4.x+tp.x)/2,Math.min(hd4.y,tp.y)-10,false);   /* 引きもどす */
+      else {
+        var ly=fy-MG_HLOW[0]+MG_HLOW[1]/2;
+        mg_drawString(hd4.x,hd4.y,wall,ly,(hd4.x+wall)/2,ly+2,false);
+        if(b.hph===3) mg_drawString(wall,ly,tp.x,tp.y,wall-f*4,hy2-10,false);   /* 曲がって 真上から */
+        else mg_drawString(wall,ly,tp.x,tp.y,wall,tp.y,false);
+      }
+      mg_drawKnot(tp.x,tp.y);
+    }
+    if(st==="kireta"){                             /* 噛みちぎられた ヒモの 切れはし・しりもちの 星 */
+      var hd5=mg_hand(b); mg_drawString(hd5.x,hd5.y,hd5.x+(b.face||-1)*10,fy-4,hd5.x+(b.face||-1)*6,hd5.y+8,false);
+      if(b.cut) mg_drawKnot(b.cut.x,b.cut.y);
+      mg_drawStars(cx,b.y-6);
+    }
+    if(st==="d_ato") mg_drawStars(cx,b.y-6);
+    for(i=0;i<ebullets.length;i++){
+      e=ebullets[i];
+      if(e.kind==="mgdust"){                       /* ほこりの かたまり（灰色の わたぼこり。ひらひら ゆれる） */
+        var dx0=e.x+e.w/2+Math.sin(frame*0.15+(e.ph||0))*2, dy0=e.y+e.h/2;
+        ctx.fillStyle="#6a625a"; ctx.beginPath(); ctx.ellipse(dx0,dy0,8,6.5,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#a8a096"; ctx.beginPath(); ctx.ellipse(dx0-1,dy0-1,6.5,5,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#d8d0c4"; for(var q=0;q<5;q++){ var qa=q*1.3+(e.ph||0); ctx.fillRect(dx0+Math.cos(qa)*4-1,dy0+Math.sin(qa)*3-1,2,2); }
+        ctx.strokeStyle="#8a8278"; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(dx0-8,dy0+2); ctx.lineTo(dx0-11,dy0+4); ctx.moveTo(dx0+8,dy0+1); ctx.lineTo(dx0+11,dy0+3); ctx.stroke();
+      }
+      else if(e.kind==="mgwa"){                    /* ヒモの わっか（くるくる 回る オレンジの 輪と 結び目） */
+        var ex=e.x+e.w/2, ey=e.y+e.h/2, ra=e.rot||0;
+        ctx.strokeStyle="#8a3a0a"; ctx.lineWidth=3.4; ctx.beginPath(); ctx.ellipse(ex,ey,6.5,4.5,ra,0,Math.PI*2); ctx.stroke();
+        ctx.strokeStyle="#ff8a2b"; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(ex,ey,6.5,4.5,ra,0,Math.PI*2); ctx.stroke(); ctx.lineWidth=1;
+        mg_drawKnot(ex+Math.cos(ra)*6.5,ey+Math.sin(ra)*4.5);
+      }
+    }
+    if(b.mouth>0 && !(b.warp>0)) dmOpenGlow(b,true);   /* 口が開いている＝いま撃てば 2倍 */
+  },
+  /* 体（Canva の絵）。消えている 間は 描かない。分身（26_bossfx.js drawBfxWorld）は b.fade を 下げて 呼ぶ */
   draw:function(b,x,y,hl){
+    if(b.warp>0) return;
     var a=(b.fade===undefined)?1:b.fade;
     if(a<=0.02) return;
-    ctx.globalAlpha=a;
-    bossSprite("magarin",b,x,y,hl,(b.mouth>0)?{a:"#ffd447"}:null);
-    ctx.globalAlpha=1;
+    var ga=ctx.globalAlpha; ctx.globalAlpha=a;   /* 分身は 26_bossfx.js が b.fade を 0.5倍に して 呼ぶ（かけ算に すると 2重に うすくなる） */
+    dmDrawBody("magarin",b,x,y,hl);
+    ctx.globalAlpha=ga;
   }
 };
 

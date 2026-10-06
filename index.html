@@ -535,7 +535,7 @@ function DMtrack(name,params){
   /* 覚えた力の一覧（2026-09-29 習得イベント）：13枠を横1列。アイコンは 12×12 のドット絵を拡大 */
   #s-pause .pz-gearrow{display:flex;gap:calc(var(--u)*6);width:100%;align-items:stretch;}
   #s-pause .pz-gear{
-    flex:1 1 auto;display:flex;align-items:center;gap:calc(var(--u)*3);
+    flex:1 1 auto;display:flex;flex-wrap:wrap;align-items:center;gap:calc(var(--u)*3);
     padding:calc(var(--u)*4) calc(var(--u)*6);min-height:calc(var(--u)*26);
   }
   #s-pause .pz-gear .gslot{
@@ -545,11 +545,14 @@ function DMtrack(name,params){
   }
   #s-pause .pz-gear .gslot.have{background:#12245e;border-color:#9fc3ff;cursor:pointer;}
   #s-pause .pz-gear .gslot canvas{width:calc(var(--u)*12);height:calc(var(--u)*12);image-rendering:pixelated;display:block;}
+  /* 押した装備の名前と1行の説明（2026-10-06 院長「マウスピースってなに？」）。13枠の下の行に出す（説明が長いので横に並べない） */
   #s-pause .pz-gear .gname{
-    margin-left:calc(var(--u)*4);font-family:var(--font-ui);font-weight:700;white-space:nowrap;
-    font-size:max(8px,calc(var(--u)*8));color:#c9d6ff;overflow:hidden;
+    flex:1 1 100%;margin:0;font-family:var(--font-ui);font-weight:700;white-space:normal;
+    font-size:max(8px,calc(var(--u)*8));line-height:1.3;color:#c9d6ff;
   }
-  /* うがい薬タンク：紫のびんの絵＋ゲージ（タンクⅡがあれば2本）。エナメル缶（白い缶・右上）と見分けがつくように色も形も変える */
+  #s-pause .pz-gear .gname:empty{display:none;}
+  #s-pause .pz-gear .gname b{margin-right:calc(var(--u)*5);}
+  /* うがい薬タンク：紫のびんの絵＋ゲージ（1本。2026-10-06 にタンクⅡは無くなった）。エナメル缶（白い缶・右上）と見分けがつくように色も形も変える */
   #s-pause .tank{
     flex:0 0 calc(var(--u)*84);margin:0;padding:calc(var(--u)*3) calc(var(--u)*6);
     display:flex;flex-direction:row;align-items:center;justify-content:center;gap:calc(var(--u)*5);
@@ -560,7 +563,6 @@ function DMtrack(name,params){
   #s-pause .tank .tgs{display:flex;flex-direction:column;gap:calc(var(--u)*2);flex:1 1 auto;}
   #s-pause .tank .tg{display:block;width:100%;height:calc(var(--u)*5);background:#16204a;position:relative;}
   #s-pause .tank .tg i{display:block;height:100%;width:0;background:#c9a2ff;}
-  #s-pause .tank .tg.t2 i{background:#e59cff;}
   #s-pause .tank.empty{opacity:.55;}
   /* デンタルミラー：ボス選択の枠の右上に弱点の武器の色の小さな しんちゃまくん（2026-09-29） */
   .cell canvas.weak{
@@ -875,7 +877,7 @@ function DMtrack(name,params){
         <summary>あそびかた</summary>
         <p class="keys">
           <kbd>←</kbd><kbd>→</kbd> 移動 ／ <kbd>X</kbd> ジャンプ ／ <kbd>Space</kbd> ショット ／ <kbd>↑</kbd><kbd>↓</kbd> <b>はしごの上り下り</b> ／ <kbd>↓</kbd>+<kbd>←</kbd><kbd>→</kbd> で<b>伏せて進む</b>（低いすき間を通れる）<br>
-          溜め撃ちは<b>4段階</b>（長く押すほど強い）。<b>手を離しても溜めたまま</b>なので、もう一度押したときに出る。溜め撃ちも ふつうの弾も <kbd>↑</kbd>+ショットで<b>真上</b>、<kbd>↑</kbd>+<kbd>←→</kbd>+ショットで<b>ななめ上</b><br>
+          溜め撃ちは<b>4段階</b>（長く押すほど強い）。<b>手を離しても溜めたまま</b>なので、もう一度押したときに出る。<b>8面のカプセルで コントラ・アングルを覚えると</b>、溜め撃ちも ふつうの弾も <kbd>↑</kbd>+ショットで<b>真上</b>、<kbd>↑</kbd>+<kbd>←→</kbd>+ショットで<b>ななめ上</b>（覚えるまでは横だけ）<br>
           <b>どのステージにも1つ、歯の妖精のカプセル</b>がかくれている。中に入ると<b>新しい力を1つ覚える</b>（<b>3段ジャンプ</b>＝空中でジャンプをもう一度・<b>スライディング</b>＝<kbd>C</kbd>・<b>うがい薬タンク</b>（Ⅱもある）・体力アップ など全13こ）。覚えたら、その場で<b>使い方をやってみせてくれる</b>。とどかない所のカプセルは、ほかのステージで力を覚えてから取りにもどろう（たおした面も また遊べる）<br>
           <b>どのステージにも1つ、エナメル缶</b>（白い歯のマークの青い缶）が置いてある。<b>4つまで</b>持てて、ポーズ画面の<b>「つかう」</b>（PCはポーズ中に <kbd>E</kbd>）で<b>体力が満タン</b>にもどる。ステージをやりなおすと また置かれる<br>
           特殊武器は<b>1つずつ使い方がちがう</b>（回る盾・乗れる柱・床のネバネバ・曲がる竜巻・置いて起爆する角砂糖・炎・<b>押している間 時間が止まる</b>・8方向の丸ノコ・空中で浮く風・あやつれる拳・噛みつきスライド・天井へのフック）。<b>溜められる特殊武器はアシッド・フレイムだけ</b>（溜め技はエネルギー3倍）。特殊武器も <kbd>↑</kbd>+ショットで<b>真上</b>、<kbd>↑</kbd>+<kbd>←→</kbd>+ショットで<b>斜め上</b>（柱は足もとから・竜巻は上へ曲がる など、武器ごとにちがう）<br>
@@ -971,10 +973,10 @@ function DMtrack(name,params){
           <button class="go ghost selbtn" id="btn-psel" type="button" aria-label="ステージえらびに もどる（2回おす）"><svg class="selic" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="1.5" width="6" height="6" rx="1"/><rect x="9" y="1.5" width="6" height="6" rx="1"/><rect x="16.5" y="1.5" width="6" height="6" rx="1"/><rect x="1.5" y="9" width="6" height="6" rx="1"/><rect class="c" x="9" y="9" width="6" height="6" rx="1"/><rect x="16.5" y="9" width="6" height="6" rx="1"/><rect x="1.5" y="16.5" width="6" height="6" rx="1"/><rect x="9" y="16.5" width="6" height="6" rx="1"/><rect x="16.5" y="16.5" width="6" height="6" rx="1"/></svg><span class="seltx" id="psel-tx">ステージえらびに もどる</span></button>
         </div>
       </div>
-      <!-- 覚えた力（習得イベントの装備13個。2026-09-29）。取っていない所は空の枠。右は うがい薬タンク（ためた体力を使う。タンクⅡがあればゲージが2本） -->
+      <!-- 覚えた力（習得イベントの装備13個。2026-09-29）。取っていない所は空の枠。装備を押すと名前と1行の説明（2026-10-06）。右は うがい薬タンク（ためた体力を使う） -->
       <div class="pz-gearrow">
         <div class="pz-box pz-gear" id="pz-gear"></div>
-        <button class="go tank" id="btn-tank" type="button" style="display:none" aria-label="うがい薬タンクを使う"><canvas id="pz-tankic" width="12" height="12"></canvas><span class="tgs"><span class="tg"><i id="pz-tank"></i></span><span class="tg t2" id="pz-tank2w" style="display:none"><i id="pz-tank2"></i></span></span></button>
+        <button class="go tank" id="btn-tank" type="button" style="display:none" aria-label="うがい薬タンクを使う"><canvas id="pz-tankic" width="12" height="12"></canvas><span class="tgs"><span class="tg"><i id="pz-tank"></i></span></span></button>
       </div>
     </div>
   </div>
@@ -1000,7 +1002,7 @@ function DMtrack(name,params){
     </div>
   </div>
 
-  <p id="tip">ボタンはスーパーファミコンと同じ並びです。Y＝ショット（長押しで溜め。離しても溜まったままで、次に押したときに発射。溜められる特殊武器はアシッド・フレイムだけ）／B＝ジャンプ（<b>3段ジャンプ</b>を覚えると、空中でもう一度Bで上へ。3回まで）／A＝スライディング（<b>覚えてから</b>）／X＝武器チェンジ。<b>▼を押しながら◀▶で伏せて進む</b>。<b>▲を押しながらYで真上、▲＋◀▶で斜め上</b>に撃てる（溜め撃ちも）。十字の▲▼で<b>はしご</b>を上り下り。<b>どのステージにも1つ、歯の妖精のカプセル</b>がかくれていて、入ると新しい力を覚えます（使い方をやってみせてくれます）。<b>エナメル缶</b>（白い歯のマークの青い缶）は4つまで持てて、ポーズ画面の「つかう」で体力が満タンに。右下の<b>「ステージえらびに もどる」</b>は2回おすとボスをえらぶ画面へ。<br>
+  <p id="tip">ボタンはスーパーファミコンと同じ並びです。Y＝ショット（長押しで溜め。離しても溜まったままで、次に押したときに発射。溜められる特殊武器はアシッド・フレイムだけ）／B＝ジャンプ（<b>3段ジャンプ</b>を覚えると、空中でもう一度Bで上へ。3回まで）／A＝スライディング（<b>覚えてから</b>）／X＝武器チェンジ。<b>▼を押しながら◀▶で伏せて進む</b>。<b>コントラ・アングルを覚えると</b>、▲を押しながらYで真上、▲＋◀▶で斜め上に撃てる（溜め撃ちも。特殊武器は最初から）。十字の▲▼で<b>はしご</b>を上り下り。<b>どのステージにも1つ、歯の妖精のカプセル</b>がかくれていて、入ると新しい力を覚えます（使い方をやってみせてくれます）。<b>エナメル缶</b>（白い歯のマークの青い缶）は4つまで持てて、ポーズ画面の「つかう」で体力が満タンに。右下の<b>「ステージえらびに もどる」</b>は2回おすとボスをえらぶ画面へ。<br>
   スマホは横向きにすると画面が大きくなります。音が出るので外では音量にご注意ください。<br>
   <b>開くたびに最初から</b>始まります（医院のiPadをみんなで使うため）。続きから遊びたいときは、ボス選択画面の<b>あいことば</b>6文字をひかえておいて、入れ直してください（前の4文字のあいことばも使えます）。</p>
 </div>
@@ -1293,7 +1295,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-09-29 22:33";
+var BUILD_AT="2026-10-06 18:29";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -3245,28 +3247,47 @@ function dRide(t,v){ noise(0.24,v||0.09,6200,t,drumIn,1.6); }
       （test/err_check.py・pause_replay_shots.py・gear_shots.py）は 53_gear.js の上の var より先に動くので、
       53 に置くと まだ undefined のまま使われる（err_check の 8面で「reading 'NaN'」になった）。25_game.js より前の番号にしておく。 */
 /* 添字＝その装備があるステージの添字（LEVELS[i]）。9面（大魔王・添字8）にも1つある */
-/* 8面（添字7）は 2026-09-29 に「コントラ・アングル（溜め弾の上撃ち）」から「うがい薬タンクⅡ」へ差し替え
-   （院長「ため打ちで、上や斜めも打てる様にして」＝溜め弾の上撃ちは最初からできる）。あいことばのビット（13+7）の意味も タンクⅡ */
+/* 8面（添字7）は「コントラ・アングル」（フッ素ブラスターの上撃ち・ななめ上撃ち）。
+   2026-09-29 に いったん「うがい薬タンクⅡ」へ差し替えたが（溜め弾の上撃ちを最初から）、2026-10-06 院長指示
+   「最初から上撃ち斜めうちは無しにして。途中で、特殊武器としてゲットできる様にして」で コントラ・アングルに戻した。
+   取るまでは フッ素ブラスターは通常弾も溜め弾も横だけ。あいことばのビット（13+7）の意味も コントラ・アングル（タンクⅡは無くなった）。
+   desc＝装備の1行の説明（ひらがな多め・子ども向け。実演の下の帯・ポーズ画面の装備名を押したとき に出す。2026-10-06 院長「マウスピースってなに？」「説明がわからん」）。
+   passive＝押すボタンは無く「もっているだけで きく」装備（実演の帯にボタンの絵を出さず、その印を出す） */
 var G_COAT=0, G_BOOTS=1, G_TANK=2, G_SHOES=3, G_BRUSH=4, G_GUARD=5, G_HELM=6,
-    G_TANK2=7, G_GUM=8, G_KICK=9, G_TIMER=10, G_MIRROR=11, G_BELL=12, GEAR_N=13;
+    G_ANGLE=7, G_GUM=8, G_KICK=9, G_TIMER=10, G_MIRROR=11, G_BELL=12, GEAR_N=13;
 var GEAR=[
-  {k:"coat",   name:"フッ素コート",             col:"#2fd6c2"},   /* 体力が増える（28→32） */
-  {k:"boots",  name:"エアフロス・ブーツ",       col:"#7fe3ff"},   /* 3段ジャンプ（空中でBを重ね押し。3回まで） */
-  {k:"tank",   name:"うがい薬タンク",           col:"#c9a2ff"},   /* サブタンク：体力をためておき、ポーズ画面から使う */
-  {k:"shoes",  name:"スライディング・シューズ", col:"#ff9a5c"},   /* Aでスライディング */
-  {k:"brush",  name:"電動ハブラシ",             col:"#6fb8ff"},   /* 溜め時間が半分 */
-  {k:"guard",  name:"マウスピース",             col:"#9fc3ff"},   /* 炎・電気・プレスのダメージが半分 */
-  {k:"helm",   name:"ヘッドギア",               col:"#ffd447"},   /* 天井のトゲ（V）で即死しない（ダメージだけ） */
-  {k:"tank2",  name:"うがい薬タンクⅡ",         col:"#e59cff"},   /* 2本目のサブタンク（1本目と同じしくみ。ためられる量が2本ぶんになる） */
-  {k:"gum",    name:"キシリトールガム",         col:"#6fdc6f"},   /* 敵を倒すと回復アイテムが出やすい */
-  {k:"kick",   name:"キックスライディング",     col:"#ff6f9c"},   /* スライディング中は無敵＋敵を倒す（シューズが要る） */
-  {k:"timer",  name:"歯みがきタイマー",         col:"#ffcf5c"},   /* 特殊武器のエネルギー消費が半分 */
-  {k:"mirror", name:"デンタルミラー",           col:"#bfe9ff"},   /* ボス選択画面に弱点の印 */
-  {k:"bell",   name:"歯の妖精のベル",           col:"#ffe98a"}    /* やられてやり直すとき特殊武器のエネルギーも満タン */
+  {k:"coat",   name:"フッ素コート",             col:"#2fd6c2", passive:true,   /* 体力が増える（28→32） */
+   desc:"たいりょくの めもりが ふえる（28→32）"},
+  {k:"boots",  name:"エアフロス・ブーツ",       col:"#7fe3ff",                 /* 3段ジャンプ（空中でBを重ね押し。3回まで） */
+   desc:"くうちゅうで B を おすと、もういちど とべる（3かいまで）"},
+  {k:"tank",   name:"うがい薬タンク",           col:"#c9a2ff",                 /* サブタンク：体力をためておき、ポーズ画面から使う */
+   desc:"あふれた かいふくを ためておく。ポーズで タンクを おして つかう"},
+  {k:"shoes",  name:"スライディング・シューズ", col:"#ff9a5c",                 /* Aでスライディング */
+   desc:"A で スライディング。ひくい すきまを くぐれる"},
+  {k:"brush",  name:"電動ハブラシ",             col:"#6fb8ff", passive:true,   /* 溜め時間が半分 */
+   desc:"ためうちが はやく たまる（じかんが はんぶん）"},
+  {k:"guard",  name:"マウスピース",             col:"#9fc3ff", passive:true,   /* 炎・電気・プレスのダメージが半分 */
+   desc:"ほのお・でんき・プレスの ダメージが はんぶん"},
+  {k:"helm",   name:"ヘッドギア",               col:"#ffd447", passive:true,   /* 天井のトゲ（V）で即死しない（ダメージだけ） */
+   desc:"てんじょうの トゲに あたまを ぶつけても やられない"},
+  {k:"angle",  name:"コントラ・アングル",       col:"#e3e8f0",                 /* フッ素ブラスターの上撃ち・ななめ上撃ち（通常弾も溜め弾も。2026-10-06 に戻した） */
+   desc:"▲＋Y で まうえ、▲＋←→＋Y で ななめうえ（ためうちも）"},
+  {k:"gum",    name:"キシリトールガム",         col:"#6fdc6f", passive:true,   /* 敵を倒すと回復アイテムが出やすい */
+   desc:"てきを たおすと かいふくが でやすい"},
+  {k:"kick",   name:"キックスライディング",     col:"#ff6f9c",                 /* スライディング中は無敵＋敵を倒す（シューズが要る） */
+   desc:"スライディングちゅうは むてき。ぶつかった てきを たおす"},
+  {k:"timer",  name:"歯みがきタイマー",         col:"#ffcf5c", passive:true,   /* 特殊武器のエネルギー消費が半分 */
+   desc:"とくしゅぶきの エネルギーの へりが はんぶん"},
+  {k:"mirror", name:"デンタルミラー",           col:"#bfe9ff", passive:true,   /* ボス選択画面に弱点の印 */
+   desc:"ステージえらびで ボスの じゃくてんの ぶきが わかる"},
+  {k:"bell",   name:"歯の妖精のベル",           col:"#ffe98a", passive:true,   /* やられてやり直すとき特殊武器のエネルギーも満タン */
+   desc:"やられて やりなおすとき、とくしゅぶきの エネルギーが まんたん"}
 ];
+/* 「もっているだけで きく」の文字（実演の帯の印・ポーズ画面の説明のうしろ） */
+var GEAR_PASSIVE_TXT="もっているだけで きく";
 var gearOwn=[];              /* gearOwn[i]＝持っているか（i＝GEAR の添字） */
 for(var gi0=0;gi0<GEAR_N;gi0++) gearOwn[gi0]=false;
-var TANK_MAX=28, tankHP=0;   /* サブタンク（うがい薬タンク）の中身。TANK_MAX は1本ぶん。タンクⅡもあれば2本ぶん（tankCap()・53_gear.js） */
+var TANK_MAX=28, tankHP=0;   /* サブタンク（うがい薬タンク）の中身（1本・TANK_MAX まで。2026-10-06 にタンクⅡが無くなった） */
 var gearDeathE=null;         /* やられたときの特殊武器のエネルギー（ベルが無いと、やり直してもこのまま） */
 var GEAR_TEST_OFF=false;     /* テスト（test_reach.js）がカプセルに入っても演出に入らないようにする口 */
 
@@ -3292,9 +3313,9 @@ var GEAR_ICON=[
    "kcaaakkaaack",".kaaaaaaaak.","..kaaaaaak..","...kbbbbk...","....kkkk....","............"],
   ["...kkkkkk...","..kaaaaaak..",".kaacaaaaak.",".kacaaaaaak.","kaaaaaaaaaak","kaaaaaaaaaak",
    "kbbbbbbbbbbk","kbkkkkkkkkbk","kbk......kbk",".k........k.","............","............"],
-  /* うがい薬タンクⅡ：同じびんが2本ならぶ（1本目のアイコンと同じ形・少し赤みの紫） */
-  ["..kk....kk..",".kggk..kggk.","kkkkkkkkkkkk","kawwakkawwak","kacaakkacaak","kacaakkacaak",
-   "kaaaakkaaaak","kaaaakkaaaak","kbbbbkkbbbbk",".kkkk..kkkk.","............","............"],
+  /* コントラ・アングル（ななめの持ち手。2026-10-06 に戻した） */
+  ["..........k.",".........kwk","........kak.",".......kak..","......kak...",".....kaak...",
+   "....kaak....","...kaak.....","..kaak......",".kbbk.......","kbbk........",".kk........."],
   ["............","..kkkkkkkk..",".kaaaaaaaak.",".kacccccaak.",".kaaaaaaaak.",".kawwwwwwak.",
    ".kaaaaaaaak.",".kacccccaak.",".kaaaaaaaak.","..kkkkkkkk..","............","............"],
   ["y.....y.....",".y...y......","..yyy.......","yyywyyy.....","..yyy..kkk..",".y...ykaaak.",
@@ -3315,7 +3336,7 @@ var GEAR_ICON_PAL=[
   {a:"#6fb8ff",b:"#2b5f9e",c:"#d8efff",w:"#ffffff",y:"#ffd447"},
   {a:"#8fc0ff",b:"#3a6fd0",c:"#ffffff"},
   {a:"#ffd447",b:"#c99a1f",c:"#ffffff"},
-  {a:"#d17cff",b:"#7a2fa8",c:"#f3d9ff",g:"#9aa6ae",w:"#e8f4f8"},
+  {a:"#d8dde6",b:"#8a93a3",w:"#ffffff"},
   {a:"#6fdc6f",c:"#c8ffc8",w:"#ffffff"},
   {a:"#ff4d80",b:"#8c1f42",y:"#ffd447",w:"#ffffff"},
   {a:"#ffd447",b:"#8a5230",w:"#ffffff"},
@@ -4200,7 +4221,7 @@ function shoot(level){
   var y=p.y+(p.h===PH_SLIDE?4:9), x=p.x+(p.face>0?p.w:-4);
   /* ▲＋Y＝真上、▲＋←→＋Y＝ななめ上（通常弾も溜め弾も。院長指示 2026-09-29「チャージ中に上撃ち」）。
      口もとは特殊武器（28_weapons.js fireWeapon）と同じ。横撃ちの高さ（p.y+9）はそのまま */
-  var aim=aimDir(), n0=pbullets.length;   /* 溜め弾も通常弾も最初から上へ撃てる（2026-09-29 院長指示。前は溜め弾だけ8面の装備が要った） */
+  var aim=gearAim(aimDir()), n0=pbullets.length;   /* 8面のコントラ・アングルを取るまでは ▲ を押しても横（通常弾も溜め弾も。2026-10-06 院長指示「最初から上撃ち斜めうちは無しに」。53_gear.js） */
   if(aim===2){ x=p.x+p.w/2; y=p.y-2; }
   else if(aim===1){ x=p.x+p.w/2+p.face*p.w/2; y=p.y+2; }
   if(level===0){ pshot({x:x,y:y,w:6,h:4,vx:p.face*5.6,dmg:1,big:0,wid:0}); SFX.shoot(); }
@@ -14131,7 +14152,7 @@ function drawPlayerSprite(){
       /* ▲を押している間は、溜めの光を撃つ向きへ寄せる＝「上に出るよ」の合図（文字は出さない。2026-09-29）。
          真上＝頭の上、ななめ上＝前の上。はしご中・伏せ中は aimDir が0なので動かない */
       var ad=(typeof aimDir==="function")?aimDir():0;
-      /* 溜め弾の上撃ちは最初からできる（2026-09-29 院長「ため打ちで、上や斜めも打てる様にして」。8面の品は うがい薬タンクⅡ に差し替え） */
+      if(ad && curWeapon===0 && typeof gearAim==="function") ad=gearAim(ad);   /* フッ素ブラスターの上撃ちは8面のコントラ・アングルから＝無いときは光を寄せない（2026-10-06 院長指示。53_gear.js） */
       if(ad===2){ mx2=6; my2=-13; } else if(ad===1){ mx2=15; my2=-7; }
       ctx.globalAlpha=0.85; ctx.fillStyle=cs2[lv2];
       ctx.beginPath(); ctx.arc(mx2,my2,rr2,0,Math.PI*2); ctx.fill();
@@ -19629,8 +19650,10 @@ function drawRushRoom(){
    「各ステージに1個ずつ、そういったイベントを作ってほしい」「フッ素ブラスターのため打ちを上や斜めに飛ばせるのも獲得イベントで」。
    ロックマンXのライト博士のカプセル役＝歯の妖精。各面（1〜13）に1つずつカプセルがあり、入ると装備が1つ増える。
 
-   ・最初にできること：ジャンプ／ショット（溜め4段。通常弾も溜め弾も ▲ で上・ななめ上へ撃てる＝2026-09-29 院長指示）／▼＋←→ で伏せて進む。
-     上空ダッシュ（空中のB重ね押し）は0回、Aのスライディングは無し。取らなくても全13面クリアできる。
+   ・最初にできること：ジャンプ／ショット（溜め4段。フッ素ブラスターは横撃ちだけ）／▼＋←→ で伏せて進む。
+     上空ダッシュ（空中のB重ね押し）は0回、Aのスライディングは無し、フッ素ブラスターの ▲ での上撃ち・ななめ上撃ちも無し
+     （8面のコントラ・アングルから。通常弾も溜め弾も。2026-10-06 院長「最初から上撃ち斜めうちは無しにして。途中で、特殊武器としてゲットできる様にして」）。
+     特殊武器（ボスの武器12種）の ▲ は今までどおり 各武器が自分で決める。取らなくても全13面クリアできる。
    ・カプセルの位置は levels.js の gear:[左の列, 床の行]（src/gen_levels.py の GEAR_SPOTS）。幅2マス・高さ3マス。
    ・中に立つと state="gearev"：①その場で妖精が現れて装備（世界は止まる・曲なし）→ ②装備画面（47_intro.js の getw と同じ型。
      星空に水色の帯・曲 T_CLEAR に合わせて光る・品名を1行だけ）→ ③実演（2026-09-29 院長「装着後、実際にやってみて」。
@@ -19662,10 +19685,9 @@ function gearApply(){
 function gearHazDmg(d){ return hasGear(G_GUARD)?Math.max(1,Math.round(d/2)):d; }
 /* 敵を倒したときに回復が出る割合（キシリトールガム） */
 function gearDropP(){ return hasGear(G_GUM)?0.55:0.34; }
-/* サブタンク（うがい薬タンク・うがい薬タンクⅡ）の本数と、ためられる量（1本 TANK_MAX）。
-   Ⅱ だけ先に取っても1本のタンクとして使える */
-function tankCount(){ return (hasGear(G_TANK)?1:0)+(hasGear(G_TANK2)?1:0); }
-function tankCap(){ return tankCount()*TANK_MAX; }
+/* フッ素ブラスターの撃つ向き（25_game.js shoot・39_shin.js の溜めの光）：コントラ・アングルが無いと ▲ を押しても横（0）。
+   通常弾も溜め弾も同じ（2026-10-06 院長指示。前は通常弾だけ最初から上へ撃てた） */
+function gearAim(aim){ return hasGear(G_ANGLE)?aim:0; }
 /* キックスライディング中か（スライディング・シューズで すべっている間。伏せているときは違う） */
 function gearKicking(p){ return !!(p && p.slide>0 && !p.crawl && !(p.bite>0) && hasGear(G_KICK) && hasGear(G_SHOES)); }
 /* キックスライディングで敵を倒す（update の最後。25_game.js）。1体に10コマに1回、4ダメージ */
@@ -19697,14 +19719,14 @@ function gearSpikeSoft(p){
 function gearHeal(n){
   var p=player, room=p.maxhp-p.hp;
   p.hp=Math.min(p.maxhp,p.hp+n);
-  if(n>room && tankCap()>0 && tankHP<tankCap()){
-    tankHP=Math.min(tankCap(),tankHP+(n-Math.max(0,room)));
+  if(n>room && hasGear(G_TANK) && tankHP<TANK_MAX){
+    tankHP=Math.min(TANK_MAX,tankHP+(n-Math.max(0,room)));
   }
 }
 /* サブタンクを使う（ポーズ画面のボタン） */
 function useTank(){
   var p=player;
-  if(!p || tankCap()===0 || tankHP<=0 || p.hp>=p.maxhp || p.dead>0) return false;
+  if(!p || !hasGear(G_TANK) || tankHP<=0 || p.hp>=p.maxhp || p.dead>0) return false;
   var u=Math.min(tankHP,p.maxhp-p.hp);
   p.hp+=u; tankHP-=u;
   if(SFX.pick) SFX.pick();
@@ -19731,15 +19753,15 @@ function gearOnBegin(){
 /* テスト用：全部持つ／全部はずす／決まった組み合わせ */
 function setGear(v){
   for(var i=0;i<GEAR_N;i++) gearOwn[i]=(v===true)?true:(v===false||v==null)?false:!!v[i];
-  if(tankCap()>0 && tankHP===0) tankHP=tankCap();
-  if(tankHP>tankCap()) tankHP=tankCap();
+  if(hasGear(G_TANK) && tankHP===0) tankHP=TANK_MAX;
+  if(!hasGear(G_TANK)) tankHP=0;
   gearApply();
 }
 /* 装備を1つ手に入れる */
 function gearGrant(i){
   if(i<0 || i>=GEAR_N || gearOwn[i]) return;
   gearOwn[i]=true;
-  if(i===G_TANK||i===G_TANK2) tankHP=Math.min(tankCap(),tankHP+TANK_MAX);   /* 新しいタンクは最初から満タン（妖精のおくりもの） */
+  if(i===G_TANK) tankHP=TANK_MAX;              /* 最初から満タン（妖精のおくりもの） */
   gearApply();
   if(i===G_COAT && player) player.hp=player.maxhp;
   if(typeof saveProgress==="function") saveProgress();
@@ -20129,7 +20151,7 @@ function drawGearIcon(ctx2,i,x,y,s){
 }
 
 /* ============================ ポーズ画面：持っている装備の一覧とサブタンク ============================
-   #pz-gear に13枠（取っていない所は空）。押すと品名を小さく出す。うがい薬タンクを持っていれば #btn-tank で使える */
+   #pz-gear に13枠（取っていない所は空）。押すと品名と1行の説明を小さく出す（2026-10-06 説明を足した）。うがい薬タンクを持っていれば #btn-tank で使える */
 function updateGearPanel(){
   var box=document.getElementById("pz-gear");
   if(!box) return;
@@ -20156,30 +20178,33 @@ function updateGearPanel(){
   }
   var tb=document.getElementById("btn-tank");
   if(tb){
-    var own=tankCount()>0;
+    var own=hasGear(G_TANK);
     if(tb.style) tb.style.display=own?"":"none";
-    /* 1本目のゲージ（先にたまる）と2本目のゲージ（タンクⅡ。2本持っているときだけ出す） */
     var fill=document.getElementById("pz-tank");
     if(fill && fill.style) fill.style.width=Math.round(Math.min(tankHP,TANK_MAX)/TANK_MAX*100)+"%";
-    var w2=document.getElementById("pz-tank2w"), f2=document.getElementById("pz-tank2");
-    if(w2 && w2.style) w2.style.display=(tankCount()>=2)?"":"none";
-    if(f2 && f2.style) f2.style.width=Math.round(Math.max(0,tankHP-TANK_MAX)/TANK_MAX*100)+"%";
     var ic=document.getElementById("pz-tankic");
-    var icKey=(tankCount()>=2)?G_TANK2:G_TANK;
-    if(ic && ic.getContext && ic.__k!==icKey){
-      ic.__k=icKey;
+    if(ic && ic.getContext && !ic.__drawn){
+      ic.__drawn=true;
       var g2=ic.getContext("2d");
-      if(g2 && g2.clearRect){ g2.clearRect(0,0,12,12); drawGearIcon(g2,icKey,0,0,1); }
+      if(g2 && g2.clearRect){ g2.clearRect(0,0,12,12); drawGearIcon(g2,G_TANK,0,0,1); }
     }
     if(tb.classList) tb.classList.toggle("empty", !(tankHP>0 && player && player.hp<player.maxhp));
   }
   if(typeof updateEtankPanel==="function") updateEtankPanel();   /* エナメル缶（55_etank.js） */
 }
+/* 装備名を押したとき：品名と1行の説明（GEAR の desc。「もっているだけで きく」装備はそれも）を出す。
+   2026-10-06 院長「マウスピースってなに？」「どうやって使うのか、説明がわからん」 */
+function gearDescText(i){ var g=GEAR[i]; return g.desc+(g.passive?"（"+GEAR_PASSIVE_TXT+"）":""); }
 function gearShowName(i){
   var lab=document.getElementById("pz-gname");
   if(!lab) return;
-  lab.textContent=GEAR[i].name;
-  if(lab.style) lab.style.color=GEAR[i].col;
+  lab.textContent="";
+  if(lab.appendChild && document.createElement){
+    var nm=document.createElement("b"); nm.textContent=GEAR[i].name;
+    if(nm.style) nm.style.color=GEAR[i].col;
+    var ds=document.createElement("span"); ds.className="gdesc"; ds.textContent=gearDescText(i);
+    lab.appendChild(nm); lab.appendChild(ds);
+  } else lab.textContent=GEAR[i].name+"　"+gearDescText(i);
   if(SFX.menu) SFX.menu();
 }
 (function(){
@@ -20219,7 +20244,7 @@ function gearWeakMark(cell,i){
      ・1個あたり5〜7秒（GEAR_DEMO の len）。曲は装備画面の T_CLEAR のまま（鳴り終わったあとは効果音だけ）
    台本は GEAR_DEMO[装備の番号]。部屋の作り（room）・はじめ（setup）・毎コマの入力（step）・毎コマのあと（after）・
    画面の上に重ねる絵（overlay）・出すボタン（btns）を持つ。
-   ⚠️ 実演の中で装備を一時的に外す／付ける（電動ハブラシ・マウスピース・歯みがきタイマーの「前と比べて見せる」）ので、
+   ⚠️ 実演の中で装備を一時的に外す／付ける（電動ハブラシ・マウスピース・歯みがきタイマー・コントラ・アングルの「前と比べて見せる」）ので、
       gearOwn は gdSave で控えて gdRestore で戻す。溜め時間（CHG）は endGearEvent の gearApply が戻す。 */
 
 var GD_COLS=22, GD_ROWS=12, GD_FLOOR=9, GD_FADE_IN=14, GD_FADE_OUT=18;
@@ -20370,47 +20395,73 @@ function gdDrawFx(f){
   }
 }
 
-/* 画面の下の帯：装備のアイコン＋品名＋押しているボタンの絵 */
+/* 画面の下の帯：1行目＝装備のアイコン＋品名＋押しているボタンの絵（持っているだけで効く装備は「もっているだけで きく」の札）、
+   2行目＝1行の説明（GEAR の desc。2026-10-06 院長「マウスピースってなに？」「どうやって使うのか、説明がわからん」：
+   マウスピースの実演に ◀▶ の絵が出ていて「ボタンで使う物」に見えた）。帯は画面の幅（W）からはみ出さない（はみ出すなら字を小さく） */
+var GD_PH=60, GD_FONT='system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif';
 function gdDrawPanel(G){
-  var s=G.spec, Gd=GEAR[G.i], btns=s.btns||[];
-  var ph=40, y0=H-ph-4;
+  var s=G.spec, Gd=GEAR[G.i], btns=s.btns||[], passive=!!Gd.passive;
+  var ph=GD_PH, y0=H-ph-4, maxW=W-12, i;
   ctx.save();
-  ctx.font='bold 15px system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif';
-  var nw=ctx.measureText(Gd.name).width||120;
-  var bw=0, i;
-  for(i=0;i<btns.length;i++) bw+=gdGlyphW(btns[i])+8;
-  var pipW=G.pips?(G.pips[0]*11+6):0;
-  var w=12+26+8+nw+(btns.length?18+bw-8:0)+pipW+14;
+  var nf=15, bf=11, df=12, nw=0, pw=0, bw=0, w1=0, w=0;
+  for(var tries=0;tries<5;tries++){
+    ctx.font='bold '+nf+'px '+GD_FONT; nw=ctx.measureText(Gd.name).width||120;
+    ctx.font='bold '+bf+'px '+GD_FONT; pw=passive?((ctx.measureText(GEAR_PASSIVE_TXT).width||100)+16):0;
+    bw=0; for(i=0;i<btns.length;i++) bw+=gdGlyphW(btns[i])+8;
+    var pipW=G.pips?(G.pips[0]*11+6):0;
+    w1=12+26+8+nw+(btns.length?18+bw-8:0)+(passive?14+pw:0)+pipW+14;
+    ctx.font='bold '+df+'px '+GD_FONT;
+    var dw=12+(ctx.measureText(Gd.desc||"").width||0)+12;
+    w=Math.max(w1,dw);
+    if(w<=maxW) break;
+    nf--; bf--; df--;                              /* 入らなければ字を小さく（5回まで） */
+  }
+  w=Math.min(w,maxW);
   var x0=Math.round(W/2-w/2);
   /* 帯（角丸・装備の色のふち） */
   ctx.globalAlpha=0.88; ctx.fillStyle="#04102a";
   gdRound(x0,y0,w,ph,9); ctx.fill();
   ctx.globalAlpha=1; ctx.strokeStyle=Gd.col; ctx.lineWidth=2;
   gdRound(x0+1,y0+1,w-2,ph-2,8); ctx.stroke();
-  /* アイコンと品名 */
-  var x=x0+12;
-  drawGearIcon(ctx,G.i,x,Math.round(y0+ph/2-12),2);
+  /* 1行目：アイコンと品名（1行目だけなら まん中に寄せる） */
+  var r1=y0+19, x=x0+Math.max(12,Math.round((w-w1)/2)+12);
+  drawGearIcon(ctx,G.i,x,Math.round(r1-12),2);
   x+=26+8;
   ctx.textAlign="left"; ctx.textBaseline="middle";
-  ctx.fillStyle="#000000"; ctx.fillText(Gd.name,x+1,y0+ph/2+2);
-  ctx.fillStyle="#ffffff"; ctx.fillText(Gd.name,x,y0+ph/2+1);
+  ctx.font='bold '+nf+'px '+GD_FONT;
+  ctx.fillStyle="#000000"; ctx.fillText(Gd.name,x+1,r1+2);
+  ctx.fillStyle="#ffffff"; ctx.fillText(Gd.name,x,r1+1);
   x+=nw+18;
   for(i=0;i<btns.length;i++){
     var gw=gdGlyphW(btns[i]);
-    gdGlyph(btns[i],x+gw/2,y0+ph/2,(G.lit[btns[i]]||0)>0,G.t);
+    gdGlyph(btns[i],x+gw/2,r1,(G.lit[btns[i]]||0)>0,G.t);
     x+=gw+8;
+  }
+  /* 持っているだけで効く装備：ボタンの絵の代わりに札（装備の色） */
+  if(passive){
+    if(!btns.length) x-=4;
+    ctx.font='bold '+bf+'px '+GD_FONT;
+    ctx.fillStyle=Gd.col; gdRound(x,r1-9,pw,18,9); ctx.fill();
+    ctx.fillStyle="#04102a"; ctx.fillText(GEAR_PASSIVE_TXT,x+8,r1+1);
+    x+=pw+8;
   }
   /* 空中で B を押した回数（エアフロス・ブーツ） */
   if(G.pips){
-    x+=0;
     for(i=0;i<G.pips[0];i++){
       var on=i<G.pips[1];
       ctx.fillStyle=on?"#ffe58f":"#2a3550";
-      ctx.beginPath(); ctx.arc(x+i*11+4,y0+ph/2,4,0,Math.PI*2); ctx.fill();
-      if(on){ ctx.fillStyle="#ffffff"; ctx.beginPath(); ctx.arc(x+i*11+3,y0+ph/2-1,1.5,0,Math.PI*2); ctx.fill(); }
+      ctx.beginPath(); ctx.arc(x+i*11+4,r1,4,0,Math.PI*2); ctx.fill();
+      if(on){ ctx.fillStyle="#ffffff"; ctx.beginPath(); ctx.arc(x+i*11+3,r1-1,1.5,0,Math.PI*2); ctx.fill(); }
     }
   }
+  /* 2行目：1行の説明（まん中寄せ） */
+  if(Gd.desc){
+    ctx.font='bold '+df+'px '+GD_FONT; ctx.textAlign="center";
+    ctx.fillStyle="#000000"; ctx.fillText(Gd.desc,W/2+1,y0+ph-13+1);
+    ctx.fillStyle="#dbe8ff"; ctx.fillText(Gd.desc,W/2,y0+ph-13);
+  }
   ctx.restore();
+  G.panelW=w; G.panelX=x0; G.panelEnd=x;           /* テスト用（帯の幅・左の端・1行目の中身の右の端。画面からはみ出していないか） */
 }
 function gdRound(x,y,w,h,r){
   ctx.beginPath();
@@ -20460,7 +20511,7 @@ function gdGlyph(k,cx,cy,lit,t){
   } else if(k==="tank"){
     ctx.fillStyle="#2e1350"; gdRound(cx-17,cy-13+3,34,26,5); ctx.fill();
     ctx.fillStyle=lit?"#8a4fd0":"#5b2d91"; gdRound(cx-17,cy-13+dy,34,26,5); ctx.fill();
-    drawGearIcon(ctx,(tankCount()>=2)?G_TANK2:G_TANK,Math.round(cx-12),Math.round(cy-12+dy),2);
+    drawGearIcon(ctx,G_TANK,Math.round(cx-12),Math.round(cy-12+dy),2);
   }
   ctx.restore();
 }
@@ -20469,7 +20520,8 @@ function gdGlyph(k,cx,cy,lit,t){
 function gdDrawCompare(G){
   var rows=G.cmp, unit=G.cmpUnit||"bar", col=GEAR[G.i].col;
   var bw=(unit==="bar")?120:(G.cmpMax||4)*12;
-  var w=12+24+10+bw+14, h=12+rows.length*28, x0=Math.round(W/2-w/2), y0=8;
+  var fw=G.cmpFire?24:0, nw2=G.cmpFire?30:0;      /* cmpFire（マウスピース）：行の頭に炎の絵、うしろに「−4」＝炎に当たって へった体力（2026-10-06） */
+  var w=12+24+10+fw+bw+nw2+14, h=12+rows.length*28, x0=Math.round(W/2-w/2), y0=8;
   ctx.save();
   ctx.globalAlpha=0.86; ctx.fillStyle="#04102a"; gdRound(x0,y0,w,h,8); ctx.fill();
   ctx.globalAlpha=1; ctx.strokeStyle="#3a5a8a"; ctx.lineWidth=1.5; gdRound(x0+1,y0+1,w-2,h-2,7); ctx.stroke();
@@ -20484,6 +20536,7 @@ function gdDrawCompare(G){
       ctx.beginPath(); ctx.moveTo(ix-1,yy+25); ctx.lineTo(ix+25,yy-1); ctx.stroke();
     }
     var bx=ix+24+10, by=yy+6, c2=G.cmpCol||((i===0)?"#8a93a3":col);
+    if(G.cmpFire){ gdFlame(bx+7,yy+12,G.t); bx+=fw; }
     if(unit==="bar"){
       var len=Math.min(bw,r.v*(bw/(G.cmpMax||108)));
       ctx.fillStyle="#16204a"; ctx.fillRect(bx,by,bw,12);
@@ -20495,26 +20548,39 @@ function gdDrawCompare(G){
         ctx.fillStyle=c2; ctx.fillRect(bx+k*12,by,10,12);
         ctx.fillStyle="rgba(255,255,255,.5)"; ctx.fillRect(bx+k*12,by,10,3);
       }
+      if(G.cmpFire && r.v>0){                      /* へった数（体力ゲージの目盛りの数） */
+        ctx.font='bold 14px "Arial Black", Impact, system-ui, sans-serif'; ctx.textAlign="left"; ctx.textBaseline="middle";
+        ctx.fillStyle="#000000"; ctx.fillText("−"+Math.round(r.v),bx+bw+5,by+7);
+        ctx.fillStyle="#ff8a80"; ctx.fillText("−"+Math.round(r.v),bx+bw+4,by+6);
+      }
     }
   }
   ctx.restore();
 }
+/* 小さな炎（比べる表の行の頭。マウスピースの実演）。cx,cy＝まん中 */
+function gdFlame(cx,cy,t){
+  var f=Math.sin(t*0.5)*1.2;
+  ctx.fillStyle="#ff5a1f";
+  ctx.beginPath(); ctx.moveTo(cx,cy-11-f); ctx.quadraticCurveTo(cx+9,cy-1,cx+6,cy+6); ctx.quadraticCurveTo(cx,cy+11,cx-6,cy+6);
+  ctx.quadraticCurveTo(cx-9,cy-1,cx,cy-11-f); ctx.fill();
+  ctx.fillStyle="#ffd447";
+  ctx.beginPath(); ctx.moveTo(cx,cy-4-f*0.6); ctx.quadraticCurveTo(cx+5,cy+2,cx+3,cy+6); ctx.quadraticCurveTo(cx,cy+8,cx-3,cy+6);
+  ctx.quadraticCurveTo(cx-5,cy+2,cx,cy-4-f*0.6); ctx.fill();
+}
 /* HUD と同じ縦の目盛り（うがい薬タンクの中身を 体力ゲージの右に出す） */
 function gdTankHud(){
-  var n=tankCount();
-  if(n<=0) return;
+  if(!hasGear(G_TANK)) return;
   bar(24,12,Math.min(tankHP,TANK_MAX),TANK_MAX,"#c9a2ff","#2a1840");
-  if(n>=2) bar(36,12,Math.max(0,tankHP-TANK_MAX),TANK_MAX,"#e59cff","#2a1840");
-  drawGearIcon(ctx,(n>=2)?G_TANK2:G_TANK,24,100,1);
+  drawGearIcon(ctx,G_TANK,24,100,1);
 }
 
 /* ---------------------------------------------------------------- 台本（13個。添字＝装備の番号） */
 function gdTap(K,k,t,at,len){ if(t>=at && t<at+(len||4)) K[k]=true; }
-function gdTank(i){
-  /* うがい薬タンク（i=2）とタンクⅡ（i=7）：回復があふれてタンクにたまる → ポーズでタンクを使う */
+function gdTank(){
+  /* うがい薬タンク：回復があふれてタンクにたまる → ポーズでタンクを使う（2026-10-06 にタンクⅡが無くなったので1本だけ） */
   return {len:420, btns:["right","pause","tank"],
     setup:function(G,p){
-      tankHP=(i===G_TANK2 && tankCount()>=2)?TANK_MAX:0;   /* Ⅱの実演：1本目は満タンにして、2本目にたまるのを見せる */
+      tankHP=0;
       p.hp=p.maxhp;
       for(var k=0;k<3;k++) pickups.push({x:(7+k*2)*TS+3,y:(GD_FLOOR-1)*TS+2,got:false,t:0});
       G.noShots=false;
@@ -20544,12 +20610,55 @@ function gdTank(i){
         var im=shinImage("stand",0);
         if(im){ ctx.imageSmoothingEnabled=false; ctx.drawImage(im,x0+14,y0+42,im.width,im.height); }
         for(var k=0;k<p.maxhp;k++){ ctx.fillStyle=(k<p.hp)?C.mint:"#16204a"; ctx.fillRect(x0+54+k*5,y0+52,4,12); }
-        drawGearIcon(ctx,(tankCount()>=2)?G_TANK2:G_TANK,x0+18,y0+76,2);
-        var cap=tankCap();
-        for(var q=0;q<cap;q++){ ctx.fillStyle=(q<tankHP)?((q<TANK_MAX)?"#c9a2ff":"#e59cff"):"#16204a"; ctx.fillRect(x0+54+(q%28)*5,y0+78+Math.floor(q/28)*9,4,7); }
+        drawGearIcon(ctx,G_TANK,x0+18,y0+76,2);
+        for(var q=0;q<TANK_MAX;q++){ ctx.fillStyle=(q<tankHP)?"#c9a2ff":"#16204a"; ctx.fillRect(x0+54+q*5,y0+78,4,7); }
         ctx.restore();
       }
     }};
+}
+/* コントラ・アングルの実演の部品 */
+var GD_ANG_ON=150, GD_ANG_DX=72;
+function gdAngHold(G,p,t){                     /* 的（浮遊菌）を決めた場所に置き直す（倒れたものは そのまま）。
+                                                  場所は 装備するまでは主人公について回り（▲＋→で少し歩くぶん）、装備したら そこで止める */
+  if(t<=GD_ANG_ON || !G.tgPos){
+    var px0=p.x+p.w/2;
+    G.tgPos=[[px0-7, p.y-58], [px0+GD_ANG_DX-7, p.y-GD_ANG_DX+2]];   /* 真上（頭の上 約4マス）・ななめ上（右へ GD_ANG_DX・上へ同じだけ） */
+  }
+  for(var i=0;i<G.tg.length;i++){
+    var e=G.tg[i]; if(enemies.indexOf(e)<0) continue;
+    e.x=G.tgPos[i][0]; e.y=G.tgPos[i][1]; e.y0=e.y; e.vx=0;
+  }
+}
+function gdAngArrow(cx,cy,ang,col){             /* 矢印。ang＝0 右・-90 上・-45 右ななめ上（度） */
+  var a=ang*Math.PI/180, L=8, ex=cx+Math.cos(a)*L, ey=cy+Math.sin(a)*L, sx=cx-Math.cos(a)*L, sy=cy-Math.sin(a)*L;
+  ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ex+Math.cos(a)*3,ey+Math.sin(a)*3);
+  ctx.lineTo(ex+Math.cos(a+2.4)*7,ey+Math.sin(a+2.4)*7); ctx.lineTo(ex+Math.cos(a-2.4)*7,ey+Math.sin(a-2.4)*7);
+  ctx.closePath(); ctx.fill();
+}
+/* 右上の表（gdDrawCompare と同じ見た目）：1行目＝取る前（アイコンに斜線・→ だけ。↑↗ に ✕）、2行目＝取ったあと（→・↑・↗）。
+   まん中に置くと ななめ上の的に重なるので 右上（的は左より） */
+function gdAngOverlay(t,G){
+  var rows=G.cmpRow2?2:1, w=12+24+10+3*28+6, h=12+rows*28, x0=W-w-28, y0=8, col=GEAR[G_ANGLE].col;
+  ctx.save();
+  ctx.globalAlpha=0.86; ctx.fillStyle="#04102a"; gdRound(x0,y0,w,h,8); ctx.fill();
+  ctx.globalAlpha=1; ctx.strokeStyle="#3a5a8a"; ctx.lineWidth=1.5; gdRound(x0+1,y0+1,w-2,h-2,7); ctx.stroke();
+  for(var r=0;r<rows;r++){
+    var yy=y0+8+r*28, ix=x0+12, bx=ix+24+10+12, cy=yy+12;
+    ctx.globalAlpha=(r===0)?0.45:1; drawGearIcon(ctx,G_ANGLE,ix,yy,2); ctx.globalAlpha=1;
+    if(r===0){
+      ctx.strokeStyle="#ff4d6a"; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(ix-1,yy+25); ctx.lineTo(ix+25,yy-1); ctx.stroke();
+      gdAngArrow(bx,cy,0,"#8a93a3");
+      ctx.globalAlpha=0.35; gdAngArrow(bx+28,cy,-90,"#8a93a3"); gdAngArrow(bx+56,cy,-45,"#8a93a3"); ctx.globalAlpha=1;
+      ctx.strokeStyle="#ff4d6a"; ctx.lineWidth=2.5;
+      for(var k=1;k<=2;k++){ var qx=bx+28*k; ctx.beginPath(); ctx.moveTo(qx-7,cy-7); ctx.lineTo(qx+7,cy+7); ctx.moveTo(qx+7,cy-7); ctx.lineTo(qx-7,cy+7); ctx.stroke(); }
+    } else {
+      gdAngArrow(bx,cy,0,col); gdAngArrow(bx+28,cy,-90,col); gdAngArrow(bx+56,cy,-45,col);
+    }
+  }
+  ctx.restore();
 }
 function gdCompareCharge(G,idx,p){
   var r=G.cmp[idx]||(G.cmp[idx]={v:0,done:false});
@@ -20601,7 +20710,7 @@ var GEAR_DEMO=[
     },
     after:function(t,p,G){ G.pips[1]=Math.max(G.pips[1],p.udashN||0); }},
   /* 2 うがい薬タンク */
-  gdTank(G_TANK),
+  gdTank(),
   /* 3 スライディング・シューズ：A ですべって 低いすき間をくぐる */
   {len:300, btns:["left","right","slide"],
     room:function(){ var m=gdBasic(); gdFill(m,11,14,1,7,"#"); return m; },
@@ -20611,8 +20720,8 @@ var GEAR_DEMO=[
       if(t>=150 && t<250) K.left=true;
       gdTap(K,"slide",t,172,5);
     }},
-  /* 4 電動ハブラシ：溜めが速い（前＝上の段 と 比べる） */
-  {len:380, btns:["fire"],
+  /* 4 電動ハブラシ：溜めが速い（前＝上の段 と 比べる）。持っているだけで効く＝ボタンの絵は出さない（2026-10-06） */
+  {len:380, btns:[],
     setup:function(G,p){ gearOwn[G_BRUSH]=false; gearApply(); G.cmpUnit="bar"; G.cmpMax=108; },
     step:function(t,p,K,G){
       if(t>=30 && t<146) K.fire=true;           /* 装備なし：溜めきるまで押しっぱなし */
@@ -20627,10 +20736,12 @@ var GEAR_DEMO=[
       if(t>=211 && t<276) gdCompareCharge(G,1,p);
       if(t===197) gdFx({kind:"icon",i:G_BRUSH,x:gdSX(p.x+6),y:gdSY(p.y)-10,life:40});
     }},
-  /* 5 マウスピース：炎に当たってもダメージが半分（前＝上の段 と 比べる） */
-  {len:420, btns:["left","right"], start:[7,GD_FLOOR],
+  /* 5 マウスピース：炎に当たってもダメージが半分（前＝上の段 と 比べる）。持っているだけで効く＝ボタンの絵は出さない
+     （2026-10-06 院長「マウスピースってなに？」「どうやって使うのか、説明がわからん」：◀▶ の絵で「ボタンで使う物」に見えていた）。
+     比べる表は「炎の絵 → 炎でへった体力（赤い目盛り）」（cmpFire） */
+  {len:420, btns:[], start:[7,GD_FLOOR],
     room:function(){ var m=gdBasic(); gdFill(m,12,12,6,8,"F"); return m; },
-    setup:function(G,p){ gearOwn[G_GUARD]=false; G.cmpUnit="tick"; G.cmpMax=4; G.cmpCol=C.caries; G.hp0=p.hp; G.noShots=true; },   /* 減った体力＝赤 */
+    setup:function(G,p){ gearOwn[G_GUARD]=false; G.cmpUnit="tick"; G.cmpMax=4; G.cmpCol=C.caries; G.cmpFire=true; G.hp0=p.hp; G.noShots=true; },   /* 減った体力＝赤 */
     step:function(t,p,K,G){
       if(t>=118 && t<154) K.right=true;
       if(t>=170 && t<206) K.left=true;
@@ -20643,8 +20754,8 @@ var GEAR_DEMO=[
       if(t<236){ if(d>0) G.cmp[0]={v:d}; }
       else if(d>0){ G.cmp[1]={v:d}; if(!G.flashed){ G.flashed=true; gdFx({kind:"icon",i:G_GUARD,x:gdSX(p.x+6),y:gdSY(p.y)-26,life:40}); } }
     }},
-  /* 6 ヘッドギア：天井のトゲに頭をぶつけても やられない（ダメージだけ） */
-  {len:320, btns:["right","jump"], start:[5,GD_FLOOR],
+  /* 6 ヘッドギア：天井のトゲに頭をぶつけても やられない（ダメージだけ）。持っているだけで効く＝ボタンの絵は出さない（2026-10-06） */
+  {len:320, btns:[], start:[5,GD_FLOOR],
     room:function(){ var m=gdBasic(); gdFill(m,10,13,1,4,"#"); gdFill(m,10,13,5,5,"V"); return m; },
     setup:function(G,p){ G.noShots=true; G.hp0=p.hp; },
     step:function(t,p,K,G){
@@ -20655,10 +20766,36 @@ var GEAR_DEMO=[
     after:function(t,p,G){
       if(!G.hit && p.hp<G.hp0){ G.hit=true; gdFx({kind:"icon",i:G_HELM,x:gdSX(p.x+6)+34,y:gdSY(p.y)+4,life:48}); part(p.x+6,p.y,"#ffd447",10,2.2); }
     }},
-  /* 7 うがい薬タンクⅡ */
-  gdTank(G_TANK2),
-  /* 8 キシリトールガム：敵を倒すと回復が出る → 拾って体力が戻る */
-  {len:420, btns:["right","fire"],
+  /* 7 コントラ・アングル（2026-10-06 院長「最初から上撃ち斜めうちは無しにして。途中で、特殊武器としてゲットできる様にして」）：
+       頭の上に浮遊菌が2匹（真上と ななめ上）。①取る前：▲＋Y・▲＋→＋Y を押しても 弾は横へ（上の表の1行目＝アイコンに斜線・→ だけ）
+       ②装備（t=GD_ANG_ON）③▲＋Y で真上の1匹、溜めてから ▲＋→＋Y で ななめ上の1匹を倒す（表の2行目＝→・↑・↗）。
+       敵は毎コマ 同じ場所に置き直す（ゆれ・寄ってくる動きで 当たる／当たらないが変わらないように） */
+  {len:420, btns:["up","right","fire"], start:[5,GD_FLOOR],
+    setup:function(G,p){
+      gearOwn[G_ANGLE]=false; G.noShots=true; p.face=1;
+      G.tg=[gdEnemy("f",0,0), gdEnemy("f",0,0)];
+      gdAngHold(G,p,0);
+      G.angShots=[[],[]];                          /* 取る前・取ったあとに出た弾の向き（0＝横・1＝ななめ・2＝真上） */
+    },
+    step:function(t,p,K,G){
+      if(t>=30 && t<92){ K.up=true; gdTap(K,"fire",t,40,3); gdTap(K,"fire",t,62,3); }   /* 取る前：▲＋Y → 横 */
+      if(t>=100 && t<126){ K.up=true; if(t<108) K.right=true; gdTap(K,"fire",t,104,3); }  /* 取る前：▲＋→＋Y → 横（→ は撃つときだけ。歩いて的の下から外れないように） */
+      if(t===GD_ANG_ON){ gearOwn[G_ANGLE]=true; G.cmpRow2=true; gdFx({kind:"icon",i:G_ANGLE,x:gdSX(p.x+6),y:gdSY(p.y)-10,life:40}); if(SFX.charge2) SFX.charge2(); }
+      if(t>=176 && t<224){ K.up=true; gdTap(K,"fire",t,184,3); gdTap(K,"fire",t,204,3); }  /* 取ったあと：▲＋Y → 真上 */
+      if(t>=236 && t<312) K.fire=true;                                                       /* 溜める（押しっぱなし） */
+      if(t>=318 && t<344){ K.up=true; if(t<324) K.right=true; gdTap(K,"fire",t,320,3); }   /* ▲＋→＋Y → ななめ上へ溜め弾 */
+    },
+    after:function(t,p,G){
+      gdAngHold(G,p,t);
+      for(var i=0;i<pbullets.length;i++){
+        var b=pbullets[i];
+        if(b.gdSeen) continue; b.gdSeen=true;
+        G.angShots[(t<GD_ANG_ON)?0:1].push(b.aimed||0);
+      }
+    },
+    overlay:function(t,G){ gdAngOverlay(t,G); }},
+  /* 8 キシリトールガム：敵を倒すと回復が出る → 拾って体力が戻る。持っているだけで効く＝ボタンの絵は出さない（2026-10-06） */
+  {len:420, btns:[],
     setup:function(G,p){
       p.hp=12; G.forceDrop=true; G.noShots=true; G.n0=3;
       gdEnemy("w",13,GD_FLOOR-1); gdEnemy("w",16,GD_FLOOR-1); gdEnemy("w",19,GD_FLOOR-1);
@@ -20685,8 +20822,8 @@ var GEAR_DEMO=[
       gdTap(K,"slide",t,40,5);
       gdTap(K,"slide",t,96,5);
     }},
-  /* 10 歯みがきタイマー：特殊武器のエネルギーの減りが半分（前＝上の段 と 比べる） */
-  {len:400, btns:["fire"],
+  /* 10 歯みがきタイマー：特殊武器のエネルギーの減りが半分（前＝上の段 と 比べる）。持っているだけで効く＝ボタンの絵は出さない（2026-10-06） */
+  {len:400, btns:[],
     setup:function(G,p){
       gearOwn[G_TIMER]=false; curWeapon=gdWeapon(); wEnergy[curWeapon]=28; G.e0=28; G.cmpUnit="tick"; G.cmpMax=4;
     },

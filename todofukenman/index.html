@@ -660,7 +660,7 @@
      地方を拡大しているあいだは あいことば欄をしまって、そのぶん地図を大きくする（子どもが見やすいように すっきり） */
   #selwrap{display:flex;gap:10px;align-items:stretch;width:100%;max-width:820px;margin:0 auto;
     flex:1 1 0;min-height:170px;}
-  #jpmap{flex:1 1 auto;min-width:0;display:flex;}
+  #jpmap{flex:1 1 auto;min-width:0;min-height:0;display:flex;}   /* min-height:0＝地図（svg）が 枠より 大きく ならず、下の 文字に 重ならない（2026-10-11） */
   #jpmap svg{width:100%;height:100%;display:block;border-radius:4px;}
   #s-select.zoom .codebox{display:none;}
   #s-select .codenote{display:none;}
@@ -793,7 +793,7 @@
     border-radius:6px;padding:4px 7px;margin:2px 0;line-height:1.35;}
   @media (max-width:520px){
     #selwrap{flex-direction:column;}
-    #selpanel{flex:0 0 auto;max-width:none;width:100%;flex-direction:row;flex-wrap:wrap;justify-content:center;}
+    #selpanel{flex:0 0 auto;max-width:none;width:100%;box-sizing:border-box;flex-direction:row;flex-wrap:wrap;justify-content:center;}   /* border-box＝枠の 右はしが はみ出さない（2026-10-11） */
     #jpmap{flex:1 1 auto;min-height:36vh;}
   }
   /* おぼえた わざ（習得イベント＝ちずはかせの カプセル。2026-10-11）：ポーズ画面に 3枠。取っていない 所は ？。押すと 名前と 1行の 説明 */
@@ -891,9 +891,9 @@
 
     <div class="screen" id="s-end">
       <p class="kicker">All Clear</p>
-      <p class="big win">MOUTH SAVED!</p>
+      <p class="big win">にっぽん せいは！</p>
       <p class="sub" id="end-msg"></p>
-      <button class="go" id="btn-end">ボス選択にもどる</button>
+      <button class="go" id="btn-end">ちずに もどる</button>
     </div>
 
     <div class="screen" id="s-over">
@@ -1919,7 +1919,39 @@ var LEVELS=[
   "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
   "                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################"
  ]},
-{n:40,pref:0,name:"日本一の山 ふじさん",sub:"ラストステージ",boss:"p0",bossName:"ニッポンオー",bossTitle:"にっぽんの ぬし",weapon:"",weak:null,cap:"",capk:"",kana:"ふじさん",region:"にっぽん",fact:"日本でいちばん高い山は富士山（3776m）。静岡県と山梨県にまたがる。",water:false,
+{n:40,pref:45,name:"鬼の せんたく板と 高千穂の 夜神楽",sub:"宮崎県",boss:"p45",bossName:"マンゴリラ",bossTitle:"宮崎県 の ぬし",weapon:"マンゴーボール",weak:44,cap:"宮崎市",capk:"みやざきし",kana:"みやざきけん",region:"九州・沖縄",fact:"マンゴーと地鶏。日ざしが強くてあたたかい。",water:false,
+ pal:{bg:"park",style:"grass",haz:"spike",press:"block",sky1:"#5ad8f0",sky2:"#d0f8ff",far:"#2aa86a",mid:"#1a8050",tile:"#a08050",tileHi:"#d0a870",tileLo:"#6a5230",tileEdge:"#2e2418",plat:"#ffd447",platLo:"#8a6a12",spike:"#ff4d80",spikeLo:"#8c1f42",accent:"#ffd447",foe:"#b04cff",foeLo:"#5a1f8a",foe2:"#ff9a3c",foe2Lo:"#a4521a",waterTint:"#2aa6d8"},
+ zones:[{x0:32,x1:47,y0:30,y1:30,pal:{bg:"myzaoshima",style:"myz_hashi",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#c8c4bc",tileHi:"#eeeae2",tileLo:"#8a867e",tileEdge:"#3a3832",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:32,x1:47,y0:31,y1:43,pal:{bg:"myzaoshima",style:"myz_umi",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#2a8ab8",tileHi:"#7ad0ec",tileLo:"#1a5a82",tileEdge:"#0e3450",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:48,x1:50,y0:29,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#6e6a5e",tileHi:"#a49e8a",tileLo:"#48443a",tileEdge:"#1e1c16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:55,x1:57,y0:29,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#6e6a5e",tileHi:"#a49e8a",tileLo:"#48443a",tileEdge:"#1e1c16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:62,x1:64,y0:29,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#6e6a5e",tileHi:"#a49e8a",tileLo:"#48443a",tileEdge:"#1e1c16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:69,x1:71,y0:29,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#6e6a5e",tileHi:"#a49e8a",tileLo:"#48443a",tileEdge:"#1e1c16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:76,x1:78,y0:29,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#6e6a5e",tileHi:"#a49e8a",tileLo:"#48443a",tileEdge:"#1e1c16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:83,x1:85,y0:29,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#6e6a5e",tileHi:"#a49e8a",tileLo:"#48443a",tileEdge:"#1e1c16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:90,x1:92,y0:29,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#6e6a5e",tileHi:"#a49e8a",tileLo:"#48443a",tileEdge:"#1e1c16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:97,x1:99,y0:29,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#6e6a5e",tileHi:"#a49e8a",tileLo:"#48443a",tileEdge:"#1e1c16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:51,x1:54,y0:31,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#5a5a52",tileHi:"#8e8c80",tileLo:"#3a3a34",tileEdge:"#1a1a16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a",myzNami:"1"}},{x0:58,x1:61,y0:31,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#5a5a52",tileHi:"#8e8c80",tileLo:"#3a3a34",tileEdge:"#1a1a16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a",myzNami:"1"}},{x0:65,x1:68,y0:31,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#5a5a52",tileHi:"#8e8c80",tileLo:"#3a3a34",tileEdge:"#1a1a16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a",myzNami:"1"}},{x0:72,x1:75,y0:31,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#5a5a52",tileHi:"#8e8c80",tileLo:"#3a3a34",tileEdge:"#1a1a16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a",myzNami:"1"}},{x0:79,x1:82,y0:31,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#5a5a52",tileHi:"#8e8c80",tileLo:"#3a3a34",tileEdge:"#1a1a16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a",myzNami:"1"}},{x0:86,x1:89,y0:31,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#5a5a52",tileHi:"#8e8c80",tileLo:"#3a3a34",tileEdge:"#1a1a16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a",myzNami:"1"}},{x0:93,x1:96,y0:31,y1:43,pal:{bg:"myzaoshima",style:"myz_sentaku",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#5a5a52",tileHi:"#8e8c80",tileLo:"#3a3a34",tileEdge:"#1a1a16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a",myzNami:"1"}},{x0:100,x1:107,y0:30,y1:43,pal:{bg:"myzaoshima",style:"myz_iso",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#7a7466",tileHi:"#ada694",tileLo:"#524c40",tileEdge:"#201e18",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:108,x1:123,y0:24,y1:43,pal:{bg:"myzaoshima",style:"myz_jinja",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#b8b0a0",tileHi:"#e0d8c6",tileLo:"#847c6a",tileEdge:"#2e2a22",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:128,x1:132,y0:23,y1:23,pal:{bg:"myznichinan",style:"myz_yashi",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#3a8a3a",tileHi:"#7ac85a",tileLo:"#1e5a26",tileEdge:"#0c2a10",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:137,x1:141,y0:24,y1:24,pal:{bg:"myznichinan",style:"myz_yashi",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#3a8a3a",tileHi:"#7ac85a",tileLo:"#1e5a26",tileEdge:"#0c2a10",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:146,x1:150,y0:25,y1:25,pal:{bg:"myznichinan",style:"myz_yashi",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#3a8a3a",tileHi:"#7ac85a",tileLo:"#1e5a26",tileEdge:"#0c2a10",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:155,x1:159,y0:26,y1:26,pal:{bg:"myznichinan",style:"myz_yashi",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#3a8a3a",tileHi:"#7ac85a",tileLo:"#1e5a26",tileEdge:"#0c2a10",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:182,x1:189,y0:24,y1:43,pal:{bg:"myznichinan",style:"myz_shiba",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#8a6a44",tileHi:"#b8946a",tileLo:"#5a4428",tileEdge:"#22180c",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:194,x1:196,y0:18,y1:20,pal:{bg:"myznichinan",style:"myz_moai",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#7e786e",tileHi:"#a8a296",tileLo:"#55504a",tileEdge:"#1e1c18",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:201,x1:203,y0:18,y1:20,pal:{bg:"myznichinan",style:"myz_moai",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#7e786e",tileHi:"#a8a296",tileLo:"#55504a",tileEdge:"#1e1c18",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:208,x1:210,y0:18,y1:20,pal:{bg:"myznichinan",style:"myz_moai",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#7e786e",tileHi:"#a8a296",tileLo:"#55504a",tileEdge:"#1e1c18",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:215,x1:217,y0:18,y1:20,pal:{bg:"myznichinan",style:"myz_moai",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#7e786e",tileHi:"#a8a296",tileLo:"#55504a",tileEdge:"#1e1c18",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:222,x1:224,y0:18,y1:20,pal:{bg:"myznichinan",style:"myz_moai",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#7e786e",tileHi:"#a8a296",tileLo:"#55504a",tileEdge:"#1e1c18",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:229,x1:231,y0:18,y1:20,pal:{bg:"myznichinan",style:"myz_moai",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#7e786e",tileHi:"#a8a296",tileLo:"#55504a",tileEdge:"#1e1c18",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:236,x1:238,y0:18,y1:20,pal:{bg:"myznichinan",style:"myz_moai",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#7e786e",tileHi:"#a8a296",tileLo:"#55504a",tileEdge:"#1e1c18",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:190,x1:243,y0:21,y1:43,pal:{bg:"myznichinan",style:"myz_daiza",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#8e8a82",tileHi:"#bcb8ae",tileLo:"#5e5a54",tileEdge:"#24221e",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:244,x1:255,y0:24,y1:43,pal:{bg:"myznichinan",style:"myz_shiba",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#8a6a44",tileHi:"#b8946a",tileLo:"#5a4428",tileEdge:"#22180c",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:260,x1:289,y0:20,y1:20,pal:{bg:"myzhouse",style:"myz_vinyl",sky1:"#78c0ec",sky2:"#fff0d0",far:"#7aa86a",mid:"#4a8a4a",tile:"#c8d0d4",tileHi:"#f4f8fa",tileLo:"#8a969c",tileEdge:"#3a4448",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe070",foeLo:"#a8701a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"myzmango",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:304,x1:331,y0:20,y1:20,pal:{bg:"myzhouse",style:"myz_vinyl",sky1:"#78c0ec",sky2:"#fff0d0",far:"#7aa86a",mid:"#4a8a4a",tile:"#c8d0d4",tileHi:"#f4f8fa",tileLo:"#8a969c",tileEdge:"#3a4448",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe070",foeLo:"#a8701a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"myzmango",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:265,x1:268,y0:25,y1:26,pal:{bg:"myzhouse",style:"myz_hachi",sky1:"#78c0ec",sky2:"#fff0d0",far:"#7aa86a",mid:"#4a8a4a",tile:"#a8603a",tileHi:"#d88a5a",tileLo:"#6e3a20",tileEdge:"#2a140a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe070",foeLo:"#a8701a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"myzmango",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:279,x1:282,y0:25,y1:26,pal:{bg:"myzhouse",style:"myz_hachi",sky1:"#78c0ec",sky2:"#fff0d0",far:"#7aa86a",mid:"#4a8a4a",tile:"#a8603a",tileHi:"#d88a5a",tileLo:"#6e3a20",tileEdge:"#2a140a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe070",foeLo:"#a8701a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"myzmango",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:309,x1:312,y0:25,y1:26,pal:{bg:"myzhouse",style:"myz_hachi",sky1:"#78c0ec",sky2:"#fff0d0",far:"#7aa86a",mid:"#4a8a4a",tile:"#a8603a",tileHi:"#d88a5a",tileLo:"#6e3a20",tileEdge:"#2a140a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe070",foeLo:"#a8701a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"myzmango",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:323,x1:326,y0:25,y1:26,pal:{bg:"myzhouse",style:"myz_hachi",sky1:"#78c0ec",sky2:"#fff0d0",far:"#7aa86a",mid:"#4a8a4a",tile:"#a8603a",tileHi:"#d88a5a",tileLo:"#6e3a20",tileEdge:"#2a140a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe070",foeLo:"#a8701a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"myzmango",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:344,x1:355,y0:30,y1:43,pal:{bg:"myzkyo",style:"myz_chuu",sky1:"#f0a070",sky2:"#ffe0b0",far:"#5a6a5a",mid:"#3a4a3a",tile:"#5a5a5e",tileHi:"#8a8a90",tileLo:"#38383c",tileEdge:"#121214",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe0a0",foeLo:"#a8702a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"block",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:356,x1:386,y0:37,y1:43,pal:{bg:"myzkyo",style:"myz_kawa",sky1:"#f0a070",sky2:"#ffe0b0",far:"#5a6a5a",mid:"#3a4a3a",tile:"#5a6a5e",tileHi:"#7a8e80",tileLo:"#3a463e",tileEdge:"#141a16",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe0a0",foeLo:"#a8702a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"block",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:360,x1:364,y0:36,y1:36,pal:{bg:"myzkyo",style:"myz_fune",sky1:"#f0a070",sky2:"#ffe0b0",far:"#5a6a5a",mid:"#3a4a3a",tile:"#e8e4d8",tileHi:"#ffffff",tileLo:"#a8a498",tileEdge:"#3a3830",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe0a0",foeLo:"#a8702a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"block",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:369,x1:373,y0:36,y1:36,pal:{bg:"myzkyo",style:"myz_fune",sky1:"#f0a070",sky2:"#ffe0b0",far:"#5a6a5a",mid:"#3a4a3a",tile:"#e8e4d8",tileHi:"#ffffff",tileLo:"#a8a498",tileEdge:"#3a3830",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe0a0",foeLo:"#a8702a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"block",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:378,x1:382,y0:36,y1:36,pal:{bg:"myzkyo",style:"myz_fune",sky1:"#f0a070",sky2:"#ffe0b0",far:"#5a6a5a",mid:"#3a4a3a",tile:"#e8e4d8",tileHi:"#ffffff",tileLo:"#a8a498",tileEdge:"#3a3830",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe0a0",foeLo:"#a8702a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"block",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:387,x1:406,y0:24,y1:43,pal:{bg:"myzkyo",style:"myz_chuu",sky1:"#f0a070",sky2:"#ffe0b0",far:"#5a6a5a",mid:"#3a4a3a",tile:"#5a5a5e",tileHi:"#8a8a90",tileLo:"#38383c",tileEdge:"#121214",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe0a0",foeLo:"#a8702a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"block",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:478,x1:519,y0:24,y1:43,pal:{bg:"myzkagura",style:"myz_kaguraden",sky1:"#0e1430",sky2:"#2a2450",far:"#1a2440",mid:"#101830",tile:"#a8743a",tileHi:"#e0a868",tileLo:"#5a3a1a",tileEdge:"#1e120a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffc040",foe:"#ffd0a0",foeLo:"#8a4a2a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"block",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:0,x1:123,y0:0,y1:43,pal:{bg:"myzaoshima",style:"myz_suna",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#e6cf9a",tileHi:"#fff0c8",tileLo:"#b89a62",tileEdge:"#5a4a2a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:124,x1:255,y0:0,y1:43,pal:{bg:"myznichinan",style:"myz_road",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#5a5a60",tileHi:"#8a8a92",tileLo:"#3a3a40",tileEdge:"#16161a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:256,x1:335,y0:0,y1:43,pal:{bg:"myzhouse",style:"myz_hatake",sky1:"#78c0ec",sky2:"#fff0d0",far:"#7aa86a",mid:"#4a8a4a",tile:"#6a4a30",tileHi:"#9a7450",tileLo:"#44301e",tileEdge:"#1a120a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe070",foeLo:"#a8701a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"myzmango",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:336,x1:431,y0:0,y1:43,pal:{bg:"myzkyo",style:"myz_gake",sky1:"#f0a070",sky2:"#ffe0b0",far:"#5a6a5a",mid:"#3a4a3a",tile:"#5e5e58",tileHi:"#8a8a80",tileLo:"#3c3c38",tileEdge:"#141412",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe0a0",foeLo:"#a8702a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"block",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:432,x1:519,y0:0,y1:43,pal:{bg:"myzkagura",style:"myz_sando",sky1:"#0e1430",sky2:"#2a2450",far:"#1a2440",mid:"#101830",tile:"#6e6a72",tileHi:"#9a96a0",tileLo:"#48444e",tileEdge:"#16141a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffc040",foe:"#ffd0a0",foeLo:"#8a4a2a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"block",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:0,x1:123,pal:{bg:"myzaoshima",style:"myz_suna",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#e6cf9a",tileHi:"#fff0c8",tileLo:"#b89a62",tileEdge:"#5a4a2a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:124,x1:255,pal:{bg:"myznichinan",style:"myz_road",sky1:"#4ab8f0",sky2:"#d8f4ff",far:"#3a98c0",mid:"#3a8a4a",tile:"#5a5a60",tileHi:"#8a8a92",tileLo:"#3a3a40",tileEdge:"#16161a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#5a7a9a",foe2:"#ff9a6a",foe2Lo:"#a04a2a"}},{x0:256,x1:335,pal:{bg:"myzhouse",style:"myz_hatake",sky1:"#78c0ec",sky2:"#fff0d0",far:"#7aa86a",mid:"#4a8a4a",tile:"#6a4a30",tileHi:"#9a7450",tileLo:"#44301e",tileEdge:"#1a120a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe070",foeLo:"#a8701a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"myzmango",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:336,x1:431,pal:{bg:"myzkyo",style:"myz_gake",sky1:"#f0a070",sky2:"#ffe0b0",far:"#5a6a5a",mid:"#3a4a3a",tile:"#5e5e58",tileHi:"#8a8a80",tileLo:"#3c3c38",tileEdge:"#141412",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffe0a0",foeLo:"#a8702a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"block",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:432,x1:519,pal:{bg:"myzkagura",style:"myz_sando",sky1:"#0e1430",sky2:"#2a2450",far:"#1a2440",mid:"#101830",tile:"#6e6a72",tileHi:"#9a96a0",tileLo:"#48444e",tileEdge:"#16141a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffc040",foe:"#ffd0a0",foeLo:"#8a4a2a",foe2:"#ff9a6a",foe2Lo:"#a04a2a",press:"block",spike:"#ff7a2a",spikeLo:"#a83a0a"}},{x0:0,x1:519,y0:-9,y1:-9,pal:{bg:"myzaoshima",style:"myz_suna",sky1:"#8ccdf2",sky2:"#ffe8cc",far:"#5aa8c8",mid:"#2e7a5a",tile:"#e6cf9a",tileHi:"#fff0c8",tileLo:"#b89a62",tileEdge:"#5a4a2a",plat:"#8a6a4a",platLo:"#4a3420",accent:"#ffd070",foe:"#ffffff",foeLo:"#6a8aa8",foe2:"#ff9a6a",foe2Lo:"#a04a2a",myzArt:"{\"G0\":30,\"R1\":27,\"PZ\":24,\"H\":21,\"G2\":27,\"CE\":20,\"RV\":36,\"B\":24,\"beach\":[12,31],\"beachTop\":[30,30,30,30,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30],\"bridge\":[32,47],\"ridges\":[[48,50],[55,57],[62,64],[69,71],[76,78],[83,85],[90,92],[97,99]],\"mizo\":[[51,54],[58,61],[65,68],[72,75],[79,82],[86,89],[93,96]],\"iso\":[100,107],\"jinja\":[[108,111,27],[112,115,24]],\"plaza\":[112,124],\"road\":[125,181],\"roadTop\":[27,27,27,27,27,27,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,29,29,29,29,30,30,30,30,29,29,29,29,30,30,30,30,30],\"yashi\":[[128,132,23],[137,141,24],[146,150,25],[155,159,26]],\"bump\":[[165,168],[173,176]],\"hill\":[[182,185,27],[186,189,24]],\"daiza\":[190,243],\"moai\":[[194,196],[201,203],[208,210],[215,217],[222,224],[229,231],[236,238]],\"oriru\":[[244,247,24],[248,255,27]],\"house\":[[260,289],[304,331]],\"hachi\":[[265,268],[279,282],[309,312],[323,326]],\"mango\":[272,275,286,316,319,329],\"hatake\":[290,303],\"rim\":[336,343],\"kudari\":[[344,347,30],[348,351,33],[352,355,36]],\"kawa\":[356,386],\"kawaBot\":40,\"kawaDan\":[[356,358,37],[384,386,37]],\"fune\":[[360,364],[369,373],[378,382]],\"nobori\":[[391,394,33],[395,398,30],[399,402,27],[403,406,24]],\"path\":[407,431],\"pathTop\":[24,24,24,24,24,24,24,24,24,23,23,23,23,23,23,23,23,23,23,23,23,24,24,24,24],\"sando\":[432,467],\"sandoTop\":[24,24,24,24,23,23,23,23,23,23,23,23,24,24,24,24,23,23,23,23,24,24,24,24,23,23,23,23,24,24,24,24,24,24,24,24],\"boss\":480}"}}],
+ route:[[2,30],[6,30],[10,30],[11,30],[12,30],[15,30],[18,29],[21,29],[24,30],[27,30],[30,30],[31,30],[32,30],[36,30],[40,30],[44,30],[47,30],[48,29],[50,29],[55,29],[57,29],[62,29],[64,29],[69,29],[71,29],[76,29],[78,29],[83,29],[85,29],[90,29],[92,29],[97,29],[99,29],[100,30],[104,30],[107,30],[108,27],[111,27],[112,24],[115,24],[116,24],[120,24],[124,24],[125,27],[128,27],[131,27],[134,27],[137,28],[140,28],[143,28],[146,29],[149,29],[152,29],[155,30],[158,30],[161,30],[164,30],[167,29],[170,30],[173,29],[176,29],[179,30],[181,30],[182,27],[185,27],[186,24],[189,24],[190,21],[193,21],[194,18],[196,18],[201,18],[203,18],[208,18],[210,18],[215,18],[217,18],[222,18],[224,18],[229,18],[231,18],[236,18],[238,18],[239,21],[243,21],[244,24],[247,24],[248,27],[252,27],[255,27],[256,27],[258,27],[260,27],[262,27],[264,27],[266,25],[268,25],[270,27],[278,27],[280,25],[282,25],[284,27],[288,27],[290,27],[292,27],[294,27],[296,27],[298,27],[300,27],[302,27],[304,27],[306,27],[308,27],[310,25],[312,25],[314,27],[322,27],[324,25],[326,25],[332,27],[334,27],[336,27],[340,27],[343,27],[344,30],[347,30],[348,33],[351,33],[352,36],[355,36],[360,36],[364,36],[369,36],[373,36],[378,36],[382,36],[387,36],[390,36],[391,33],[394,33],[395,30],[398,30],[399,27],[402,27],[403,24],[406,24],[407,24],[410,24],[413,24],[416,23],[419,23],[422,23],[425,23],[428,24],[431,24],[431,24],[432,24],[435,24],[438,23],[441,23],[444,24],[447,24],[450,23],[453,24],[456,23],[459,23],[462,24],[465,24],[467,24],[468,24],[472,24],[476,24],[479,24],[481,24],[488,24],[512,24]],
+ map:[
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                   h|         w      ####|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####w               |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                   h|t       ###    ###  |###########    ###  |###########<<<<###<<|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |      f             |                    |                    |                    |                    |                    |  ###    ###    ### |  ###    ###    ### |<<###<<<<###<<<<###<|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |       f            |                    |                    |                    |                    |                    |   ###    ###    ###|   ###    ###    ###|<<<###<<<<###<<<<###|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |            ########|            ########|            ########|        ############|        ############|  h w   ############|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |          h         |w       #####       |#####            ###|#####               |#####               |#################   |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |          f         |                    |                    |                    |                    |                    |##                  |      #####      h  |               #####|w                   |######              |###############     |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |     ####    #### w |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |              ###   |              ###   |              ###   |          ##########|          ##########|          ##########|      ##############|      ##############|      ##############|  ##################|  ##################|h ##################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |         f          |                    |                    |                    |                    |         h          | ###    ###    ###  | ###    ###    ###  | ###    ###    ###  |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |  ###    ###    ### |  ###    ###    ### |  ###    ###    ### |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |t                   |####                |####                |####                |########            |########            |########            |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|            P  P    |            P  P    |            P  P    |            P  P    |     ####   P  P   #|  w  #### h        #|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |##########          |      P             |      P             |      P             |      P             |###   P             |###             j h |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |    ################|                P  P|                P  P|                P  P|                P  P|         ####   P  P|      w  ####       |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |############        |         P          |         P          |         P          |         P          |   ####  P          |   ####h            |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |t                   |####                |####                |####                |########            |########            |########  h         |############        |############        |############        |################    |################### |################### |################### |####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |      f             |                    |                    |                    |                    |               h    |#####    #####    ##|                    |                    |                    |####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                   #|                   #|                   #|               #####|               #####|             h #####|           #########|           #########|         w #########|###    #############|    ################|    ################|    ################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |              w ####|   #################|   #################|   #################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |    f               |                    |                    |                    |                    |########        ####|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |            f       |                    |                    |                    |                    |w                   |####h   ####    ####|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |            h       |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
+  "                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################"
+ ]},
+{n:41,pref:0,name:"日本一の山 ふじさん",sub:"ラストステージ",boss:"p0",bossName:"ニッポンオー",bossTitle:"にっぽんの ぬし",weapon:"",weak:null,cap:"",capk:"",kana:"ふじさん",region:"にっぽん",fact:"日本でいちばん高い山は富士山（3776m）。静岡県と山梨県にまたがる。",water:false,
  pal:{bg:"mountain",style:"snow",haz:"spike",press:"block",sky1:"#bcd9f0",sky2:"#eef6ff",far:"#8aa6c0",mid:"#607f9c",tile:"#b8c6d6",tileHi:"#f4f8ff",tileLo:"#7f93ad",tileEdge:"#46586f",plat:"#ffffff",platLo:"#9fb3cc",spike:"#ff4d80",spikeLo:"#8c1f42",accent:"#ffd447",foe:"#b04cff",foeLo:"#5a1f8a",foe2:"#ff9a3c",foe2Lo:"#a4521a",waterTint:"#2aa6d8"},
  route:[[2,86],[12,86],[23,86],[43,86],[53,86],[58,86],[63,83],[68,80],[73,77],[78,74],[83,71],[88,68],[90,68],[100,68],[111,68],[121,69],[131,68],[141,68],[150,68],[157,65],[152,62],[157,59],[152,56],[157,53],[152,50],[152,44],[148,44],[138,44],[128,43],[118,45],[108,45],[98,43],[88,46],[78,46],[68,45],[56,44],[46,44],[41,44],[36,44],[36,22],[44,22],[55,22],[65,23],[75,23],[85,23],[95,24],[105,24],[115,24],[125,22],[135,23],[145,23],[165,22],[175,22],[188,22],[212,22]],
  map:[
@@ -1935,8 +1967,8 @@ var LEVELS=[
   "                    |                    |                    |                    |        ############|        ############|        ############|        ############|        ############|                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################",
   "                    |                    |                    |                    |###########         |###########         |###########         |###########         |###########         |                    |                    |                    |                    |                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|                  ##|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################|####################"
  ]},
-{n:41,pref:-1,name:"テレポート・へや",sub:"ボスラッシュ",boss:null,bossName:"",bossTitle:"",weapon:"",weak:null,cap:"",capk:"",kana:"",region:"にっぽん",fact:"",water:false,
- rush:{caps:[[8,14,0],[13,14,1],[18,14,2],[23,14,3],[28,14,4],[33,14,5],[38,14,6],[43,14,7],[48,14,8],[53,14,9],[58,14,10],[63,14,11],[68,14,12],[73,14,13],[78,14,14],[83,14,15],[88,14,16],[93,14,17],[98,14,18],[103,14,19],[108,14,20],[113,14,21],[118,14,22],[123,14,23],[128,14,24],[133,14,25],[138,14,26],[143,14,27],[148,14,28],[153,14,29],[158,14,30],[163,14,31],[168,14,32],[173,14,33],[178,14,34],[183,14,35],[188,14,36],[193,14,37],[198,14,38]],gate:[207,14]},
+{n:42,pref:-1,name:"テレポート・へや",sub:"ボスラッシュ",boss:null,bossName:"",bossTitle:"",weapon:"",weak:null,cap:"",capk:"",kana:"",region:"にっぽん",fact:"",water:false,
+ rush:{caps:[[8,14,0],[13,14,1],[18,14,2],[23,14,3],[28,14,4],[33,14,5],[38,14,6],[43,14,7],[48,14,8],[53,14,9],[58,14,10],[63,14,11],[68,14,12],[73,14,13],[78,14,14],[83,14,15],[88,14,16],[93,14,17],[98,14,18],[103,14,19],[108,14,20],[113,14,21],[118,14,22],[123,14,23],[128,14,24],[133,14,25],[138,14,26],[143,14,27],[148,14,28],[153,14,29],[158,14,30],[163,14,31],[168,14,32],[173,14,33],[178,14,34],[183,14,35],[188,14,36],[193,14,37],[198,14,38],[203,14,39]],gate:[212,14]},
  pal:{bg:"tower",style:"metal",haz:"spike",press:"block",sky1:"#0a1020",sky2:"#04080f",far:"#141c2e",mid:"#1d2740",tile:"#2a3450",tileHi:"#4a5a80",tileLo:"#161e30",tileEdge:"#080c14",plat:"#7df9ff",platLo:"#1f7f8a",spike:"#ff4d80",spikeLo:"#8c1f42",accent:"#9fe8ff",foe:"#b04cff",foeLo:"#5a1f8a",foe2:"#ff9a3c",foe2Lo:"#a4521a",waterTint:"#2aa6d8"},
  route:[[6,15],[6,15]],
  map:[
@@ -1950,13 +1982,14 @@ var LEVELS=[
   "####################|                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################",
   "####################|                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################",
   "####################|                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################",
-  "####################|                ####|                ####|                ####|                ####|                ####|                ####|                ####|                ####|                ####|                ####|                ####|                ####|                ####|                ####|####################"
+  "####################|                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |                    |####################",
+  "####################| ###################| ###################| ###################| ###################| ###################| ###################| ###################| ###################| ###################| ###################| ###################| ###################| ###################| ###################|####################"
  ]},
 ];
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-10-11 21:24";
+var BUILD_AT="2026-10-12 00:06";
 
 /* ===== 05_jpmap.js ===== */
 /* このファイルは src/gen_jpmap.py が書き出す。手で直さないこと。 */
@@ -7884,6 +7917,178 @@ function tsuchiHit(b,bl){
   return false;
 }
 
+/* ============================ 熟す マンゴー（宮崎 マンゴリラ。2026-10-11） ============================
+   b.myzMango＝ボスが 投げた マンゴーの ならび [{x,y,w,h,st,t,rip,vx,vy,tx,flash,spin}]（投げるのは 38_kyushu_bosses.js の マンゴー投げ）。
+     st "fly"＝とんでいる 青い マンゴー（落ちる 所に みどりの 輪。とんでいる 間は ふれても いたくない＝落ちた しゅんかんに 輪の 上だと いたい）
+        "ao" ＝床に ころがった 青い マンゴー → MYZ_RIPE[0] コマで "ki"（黄色）→ MYZ_RIPE[1] で "aka"（まっ赤）→ MYZ_RIPE[2] で **はじける**
+               （まわり MYZ_PAN_W の しぶき＝いたい・あとに あまい しるの 水たまり b.myzShiru）。色が 変わる 前の MYZ_RIPE_WARN コマは 次の 色で 点滅して ぷるぷる ゆれる
+     ＝**このボスだけの 借りもの**：
+       ・床の マンゴーは 主人公の まっすぐな 弾を 受け止める（ボスの まえの たてに なる）
+       ・**とんでいる 青い マンゴーを 撃ち落とすと 回復の マンゴー**（落ちる 所の 輪の 上で 待つと つぶれて 回復に ならない）。
+         床の 青い マンゴーは かたくて 3発で ころころ 消える・黄色は 1発で くずれる・赤は 撃つと その場で はじける（はなれて 撃てば 安全）
+       ・ボスの たたきつけ（ドン）で 床の マンゴーが いっぺんに 1つ 熟す（赤は はじける）
+       ・はじけた あとの あまい しるの 水たまりに ボスが 足を 入れると **すってんころりん**（あおむけに ころんで しばらく 起きられない＝口が開く 2倍）。
+         ＝早く 撃って 回復に するか、熟させて ボスを すべらせるか
+     合図は 文字に たよらない：色（青→黄→赤）・点滅・ぷるぷる・ポン／ブチュッと 鳴る 音・落ちる 所の みどりの 輪。
+   ⚠️ 倒れたら 30_bosscore.js が b.myzMango＝null・b.myzShiru＝null（マンゴーも 水たまりも いっしょに 消える） */
+var MYZ_RIPE=[180,126,90];            /* 青・黄・赤で いる コマ数（赤の おわりで はじける） */
+var MYZ_RIPE_WARN=42;                 /* 色が 変わる 前の 点滅（次の 色）と ぷるぷる */
+var MYZ_MANGO_W=14, MYZ_MANGO_H=14;   /* 床の マンゴーの 大きさ（立って 撃った 弾の 高さに かかる） */
+var MYZ_PAN_W=52, MYZ_PAN_H=28;       /* はじけた しぶきの 大きさ（いたい） */
+var MYZ_PAN_DMG=5, MYZ_POTO_DMG=4;    /* しぶき・落ちた マンゴーの いたさ */
+var MYZ_SHIRU_W=56, MYZ_SHIRU_LIFE=420;   /* あまい しるの 水たまりの はばと のこる コマ数 */
+var MYZ_HEAL_MAX=2;                   /* 床に 出ている 回復の マンゴーは 2つまで */
+var MYZ_NEXT={ao:"ki",ki:"aka"};
+var MYZ_COL={ao:["#4aa83a","#9ae06a","#2a6a22"],ki:["#f0c020","#fff07a","#a87a10"],aka:["#e8402a","#ff9a6a","#8a1a10"]};   /* 色ごとの［地・光・かげ］ */
+function myzSfx(k){
+  if(typeof beep!=="function") return;
+  if(k==="pon"){ beep(520,0.06,"square",0.14,780); return; }                                         /* 投げる：ポン */
+  if(k==="poto"){ beep(180,0.08,"sine",0.2,120); return; }                                           /* 落ちる：ポトッ */
+  if(k==="pan"){ beep(140,0.16,"sawtooth",0.18,60); setTimeout(function(){ beep(900,0.08,"square",0.12,300); },50); return; }   /* はじける：ブチュッ */
+  if(k==="heal"){ beep(660,0.07,"triangle",0.16,990); setTimeout(function(){ beep(990,0.09,"triangle",0.14,1320); },70); return; }   /* 青い マンゴーを 撃った：ポロン */
+  if(k==="kuzu"){ beep(300,0.07,"square",0.12,200); return; }                                        /* 黄色を 撃った：くしゃ */
+  if(k==="juku"){ beep(440,0.05,"triangle",0.1,560); return; }                                       /* 熟した：ぷるん */
+}
+/* 投げる：(x0,y0) から 床の tx へ fly コマで 山なりに。落ちる 所に みどりの 輪（noMark＝輪は 構えの ときに もう 出してある） */
+function myzMangoThrow(b,x0,y0,tx,fly,g,noMark){
+  if(!b.myzMango) b.myzMango=[];
+  var fy=bossFloorY(), y1=fy-MYZ_MANGO_H, gg=g||0.3;
+  var vy=((y1-y0)-0.5*gg*fly*fly)/fly;
+  var m={x:x0-MYZ_MANGO_W/2,y:y0-MYZ_MANGO_H/2,w:MYZ_MANGO_W,h:MYZ_MANGO_H,st:"fly",t:0,rip:0,vx:(tx-x0)/fly,vy:vy,g:gg,fly:fly,tx:tx,flash:0,spin:0};
+  b.myzMango.push(m);
+  if(!noMark) bfxMark(tx-11,fy-4,22,4,fly+2,"#7ae05a");
+  myzSfx("pon");
+  return m;
+}
+function myzMangoFloor(b){ var n=0; if(b.myzMango) for(var i=0;i<b.myzMango.length;i++) if(b.myzMango[i].st!=="fly") n++; return n; }
+/* はじける：しぶき（いたい）と あまい しるの 水たまり */
+function myzMangoPan(b,m){
+  var fy=bossFloorY(), cx=m.x+m.w/2;
+  eshot({x:cx-MYZ_PAN_W/2,y:fy-MYZ_PAN_H,w:MYZ_PAN_W,h:MYZ_PAN_H,vx:0,vy:0,dmg:MYZ_PAN_DMG,kind:"myzpan",life:10,l0:10,nosolid:true,stay:true});
+  part(cx,fy-6,"#ff8a3a",14,2.6); part(cx,fy-6,"#ffe07a",8,2); part(cx,fy-6,"#ffffff",4,1.4);
+  if(!b.myzShiru) b.myzShiru=[];
+  var x0=Math.max(arenaL(),cx-MYZ_SHIRU_W/2), x1=Math.min(arenaR(),cx+MYZ_SHIRU_W/2);
+  b.myzShiru.push({x0:x0,x1:x1,t:0,life:MYZ_SHIRU_LIFE});
+  myzSfx("pan"); shake=Math.max(shake,4);
+}
+/* 回復の マンゴー（青い うちに 撃った ごほうび）。ふつうの 回復と 同じ 落ちもの（25_game.js updatePickups）＝体力 +5 */
+function myzHealDrop(x,y){
+  var n=0;
+  for(var i=0;i<pickups.length;i++) if(!pickups[i].got && pickups[i].myz) n++;
+  if(n>=MYZ_HEAL_MAX) return;
+  pickups.push({x:x-6,y:y-6,got:false,t:0,kind:"life",drop:true,myz:1,vy:-2.4,vx:0,life:420});
+}
+/* 1コマ：とぶ・落ちる・熟す・はじける・水たまり */
+function myzMangoTick(b){
+  var ms=b.myzMango, fy=bossFloorY(), p=player, i;
+  if(ms){
+    for(i=ms.length-1;i>=0;i--){
+      var m=ms[i];
+      m.t++; if(m.flash>0) m.flash--;
+      if(m.st==="fly"){
+        m.x+=m.vx; m.y+=m.vy; m.vy+=m.g; m.spin+=0.3;
+        if(m.t>=m.fly){
+          m.x=m.tx-m.w/2; m.y=fy-m.h; m.st="ao"; m.t=0; m.rip=0;
+          var hb={x:m.tx-11,y:fy-12,w:22,h:12};
+          eshot({x:hb.x,y:hb.y,w:hb.w,h:hb.h,vx:0,vy:0,dmg:MYZ_POTO_DMG,kind:"myzpoto",life:5,l0:5,nosolid:true,stay:true});
+          part(m.tx,fy-2,"#9ae06a",6,1.6); myzSfx("poto");
+          /* 輪の 上に いた 主人公に ぶつかった マンゴーは つぶれる（回復には ならない＝輪の 上で 待って 撃つ のは 得に ならない） */
+          if(p && p.dead===0 && overlap(hb,p)){ part(m.tx,fy-6,"#9ae06a",10,2.2); part(m.tx,fy-6,"#ffe07a",6,1.6); ms.splice(i,1); }
+        }
+        continue;
+      }
+      m.y=fy-m.h; m.rip++;
+      var lim=MYZ_RIPE[m.st==="ao"?0:(m.st==="ki"?1:2)];
+      if(m.rip===lim-MYZ_RIPE_WARN && m.st!=="aka") myzSfx("juku");
+      if(m.rip>=lim){
+        if(m.st==="aka"){ myzMangoPan(b,m); ms.splice(i,1); continue; }
+        m.st=MYZ_NEXT[m.st]; m.rip=0; m.flash=10;
+      }
+    }
+  }
+  var sh=b.myzShiru;
+  if(sh){ for(i=sh.length-1;i>=0;i--){ sh[i].t++; if(sh[i].t>=sh[i].life) sh.splice(i,1); } }
+}
+/* ボスの たたきつけ（ドン）：床の マンゴーが いっぺんに 1つ 熟す（赤は はじける） */
+function myzMangoRipen(b){
+  var ms=b.myzMango; if(!ms) return;
+  for(var i=ms.length-1;i>=0;i--){
+    var m=ms[i];
+    if(m.st==="fly") continue;
+    if(m.st==="aka"){ myzMangoPan(b,m); ms.splice(i,1); continue; }
+    m.st=MYZ_NEXT[m.st]; m.rip=0; m.flash=14;
+    part(m.x+m.w/2,m.y,"#ffffff",4,1.4);
+  }
+}
+/* 色が 変わる 前の 点滅中か（たたきつけの 構えの 間は すべて 点滅） */
+function myzMangoWarn(b,m){ if(m.st==="fly") return false; if(b.myzRipenWarn>0) return true; var lim=MYZ_RIPE[m.st==="ao"?0:(m.st==="ki"?1:2)]; return m.rip>=lim-MYZ_RIPE_WARN; }
+/* 主人公の 弾が マンゴーに 当たった：青＝回復が 落ちる・黄＝くずれる・赤＝その場で はじける（30_bosscore.js の 被弾の 前に 見る） */
+function myzMangoHit(b,bl){
+  var ms=b.myzMango; if(!ms) return false;
+  for(var i=0;i<ms.length;i++){
+    var m=ms[i];
+    if(!overlap(bl,m)) continue;
+    var cx=m.x+m.w/2, cy=m.y+m.h/2;
+    if(m.st==="fly"){                                 /* とんでいる 青い マンゴーを 撃ち落とした：回復の マンゴーが 落ちる */
+      part(cx,cy,"#9ae06a",8,1.8); part(cx,cy,"#ffffff",4,1.2);
+      myzHealDrop(cx,cy); myzSfx("heal");
+      ms.splice(i,1);
+    } else if(m.st==="ao"){                           /* 床の 青い マンゴー：かたいので 1発では われない（ゆれて 弾を 止める）。3発で ころころ 消える */
+      m.hits=(m.hits||0)+1; m.flash=6; part(cx,cy,"#9ae06a",4,1.2);
+      if(typeof SFX!=="undefined"&&SFX.clink) SFX.clink();
+      if(m.hits>=3){ part(cx,cy,"#9ae06a",8,1.8); myzSfx("kuzu"); ms.splice(i,1); }
+    } else if(m.st==="ki"){
+      part(cx,cy,"#f0c020",8,1.8); myzSfx("kuzu");
+      ms.splice(i,1);
+    } else {
+      myzMangoPan(b,m); ms.splice(i,1);
+    }
+    return true;
+  }
+  return false;
+}
+/* その x に 水たまりが あるか（あれば 番号） */
+function myzShiruAt(b,x){
+  var sh=b&&b.myzShiru; if(!sh) return -1;
+  for(var i=0;i<sh.length;i++) if(x>=sh[i].x0 && x<=sh[i].x1) return i;
+  return -1;
+}
+/* 絵：あまい しるの 水たまり（だいだいの つやつや・ふちが 光る・消える 前は うすく）と マンゴー（色・つや・へた・葉っぱ。点滅と ぷるぷる） */
+function drawMyzMango(){
+  var b=(typeof boss!=="undefined")?boss:null;
+  if(!b || b.dead>0) return;
+  var fy=bossFloorY(), i, k;
+  var sh=b.myzShiru;
+  if(sh) for(i=0;i<sh.length;i++){
+    var q=sh[i], a=Math.min(1,q.t/10)*Math.min(1,(q.life-q.t)/60), w=q.x1-q.x0, cx=(q.x0+q.x1)/2;
+    ctx.globalAlpha=0.85*a; ctx.fillStyle="#f0901a"; ctx.beginPath(); ctx.ellipse(cx,fy-1,w/2,4,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#ffc040"; ctx.beginPath(); ctx.ellipse(cx-3,fy-2,w/2-6,2.4,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff4c0"; for(k=0;k<3;k++) ctx.fillRect(q.x0+8+k*(w-16)/2+Math.sin(frame*0.1+k)*2,fy-3,4,1);   /* つやの 光 */
+    if((frame+i*7)%40<20){ ctx.fillStyle="#ffffff"; ctx.fillRect(cx+w*0.25,fy-4,2,1); }
+    ctx.globalAlpha=1;
+  }
+  var ms=b.myzMango; if(!ms) return;
+  for(i=0;i<ms.length;i++){
+    var m=ms[i], warn=myzMangoWarn(b,m), nx=(m.st==="fly")?null:(MYZ_NEXT[m.st]||"pan");
+    var wob=warn?Math.sin(frame*1.4+i)*1.4:0, c=(m.st==="fly")?"ao":m.st;
+    var on=warn && (Math.floor(frame/5)%2===0);
+    var C=MYZ_COL[(on && nx && nx!=="pan")?nx:c];
+    var mx=m.x+m.w/2+wob, my=m.y+m.h/2+1;
+    if(m.st!=="fly"){ ctx.globalAlpha=0.35; ctx.fillStyle="#000"; ctx.beginPath(); ctx.ellipse(mx,fy-1,7,2,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+    ctx.save(); ctx.translate(mx,my); if(m.st==="fly") ctx.rotate(m.spin); else ctx.rotate(-0.35+wob*0.06);
+    ctx.fillStyle=C[2]; ctx.beginPath(); ctx.ellipse(0,0,7.5,6.2,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=C[0]; ctx.beginPath(); ctx.ellipse(-0.5,-0.5,6.8,5.6,0,0,Math.PI*2); ctx.fill();
+    if(c==="aka"){ ctx.fillStyle="#f0a020"; ctx.beginPath(); ctx.ellipse(2,1.5,3.6,2.6,0.3,0,Math.PI*2); ctx.fill(); }   /* 赤い マンゴーの おしりは だいだい */
+    if(c==="ki"){ ctx.fillStyle="#7ab83a"; ctx.beginPath(); ctx.ellipse(-3.5,-1,2.6,2.2,0,0,Math.PI*2); ctx.fill(); }  /* 黄色は へたの まわりが まだ 青い */
+    ctx.fillStyle=C[1]; ctx.beginPath(); ctx.ellipse(-2.5,-2.4,2.6,1.4,-0.4,0,Math.PI*2); ctx.fill();                  /* つや */
+    ctx.fillStyle="#5a3a1a"; ctx.fillRect(-7.5,-1,2,2);                                                                    /* へた */
+    ctx.fillStyle="#3a8a2a"; ctx.beginPath(); ctx.ellipse(-8.5,-3.4,3.2,1.4,-0.7,0,Math.PI*2); ctx.fill();               /* 葉っぱ */
+    ctx.restore();
+    if(on && nx==="pan"){ ctx.strokeStyle="#ffffff"; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(mx,my,10+(frame%10)*0.4,0,Math.PI*2); ctx.stroke(); }   /* もうすぐ はじける：白い 輪 */
+    if(m.flash>0){ ctx.globalAlpha=m.flash/14; ctx.fillStyle="#ffffff"; ctx.beginPath(); ctx.arc(mx,my,9,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+  }
+}
+
 /* ============================ 分身（ジェミニマン） ============================ */
 function cloneMake(b,x,y){ b.clone={x:x,y:y,w:b.w,h:b.h,face:-b.face,t:0,fade:0}; }
 function cloneUpdate(b){
@@ -8314,6 +8519,8 @@ function updateBoss(){
     if(b.kcKen && kcKenHit(b,bl)){ pbullets.splice(k,1); continue; }
     /* 焼き上がる つち人形（佐賀）：人形に 当たった弾は 人形が 受ける（やわらかい 人形は くずれる・焼けた 人形は はじく。26_bossfx.js） */
     if(b.tsuchi && tsuchiHit(b,bl)){ if(bl.pierce||bl.big>=1) bl.cd=12; else pbullets.splice(k,1); continue; }
+    /* 熟す マンゴー（宮崎）：床の マンゴー・とんでいる マンゴーに 当たった弾は マンゴーが 受ける（青＝回復が 落ちる・黄＝くずれる・赤＝はじける。26_bossfx.js） */
+    if(b.myzMango && myzMangoHit(b,bl)){ if(bl.pierce||bl.big>=1) bl.cd=12; else pbullets.splice(k,1); continue; }
     var why=bossBlock(b,bl);
     if(why){
       bossClink(b,bl,why);
@@ -8355,6 +8562,8 @@ function updateBoss(){
         if(b.sara){ burstAt(b.sara.x,b.sara.y,"#f4f6fa",0.6); b.sara=null; }   /* とんでいる 皿も 消える（佐賀） */
         if(b.oitYuka){ for(var oq=0;oq<b.oitYuka.n;oq++) burstAt(b.oitYuka.x0+b.oitYuka.w*(oq+0.5),bossFloorY()-2,b.oitYuka.col[oq]==="aka"?"#ff6a3a":(b.oitYuka.col[oq]==="ao"?"#7ad0f4":"#e8e4dc"),0.35); b.oitYuka=null; }   /* 地ごくの 色の 床も もとに もどる（大分。26_bossfx.js） */
         if(b.oitDrops){ b.oitDrops=null; }   /* とんでいる 熱湯の しずくも 消える（大分） */
+        if(b.myzMango){ for(var mq=0;mq<b.myzMango.length;mq++){ var mg=b.myzMango[mq]; burstAt(mg.x+mg.w/2,mg.y+mg.h/2,mg.st==="aka"?"#e8402a":(mg.st==="ki"?"#f0c020":"#4aa83a"),0.4); } b.myzMango=null; }   /* 熟す マンゴーも いっしょに 消える（宮崎。26_bossfx.js） */
+        if(b.myzShiru){ b.myzShiru=null; }   /* あまい しるの 水たまりも 消える（宮崎） */
         b.gone=true; flash=18; SFX.bossDie();
         b.orbs=[]; b.ball=null; b.clone=null; b.guard=0; b.ivul=0; b.armor=0; b.armorOff=0; b.mist=0; b.reflect=0; b.crater=0; b.erupt=0; b.spin=0; b.warp=0; b.shell=0; b.pearl=null; b.dive=0; b.parts=null; b.core=0;
         b.log=null; b.kwNeed=0; b.kwHits=null; b.kwGo=0; b.ghosts=null; b.shio=0; b.nobori=0; b.aibou=null; b.toge=0; b.tsukami=0; b.grab=0; b.uzu=null; b.kemuriA=1; b.kubi=null; b.clams=null; b.yubune=0; b.jaguchi=null; b.kcKen=null; bfxReset();   /* 湯船と じゃぐち（愛媛）・変わり身の 丸太・分身の 見た目（和歌山）・潮の 殻（広島。潮は bfxReset で すぐ引く）・旗の 守りと 相棒（岡山。相棒は bfxReset→aibouClear で 消える）・はさみの つかみと ありじごく（鳥取）・首と ふた（島根） */
@@ -19879,6 +20088,473 @@ cb("p44", {
   }
 });
 
+
+/* ---------------------------------------------------------------- 宮崎：マンゴリラ（2026-10-11）
+   宮崎の 完熟マンゴーを せおった 銀の ゴリラの ロボット（シルバーバック）。銀の 鉄の 毛なみ・むねに 太陽の 色の マンゴーの むね板（赤から だいだい）・
+   黄色く 光る 目・頭に マンゴーの 葉の ちょんまげ・せなかに マンゴーの 入った 竹かご・長い うでに 金の こて。
+   ⚠️ 名前は myz・MYZ_（test_dupnames.js が 見張る）。
+   **新しい 仕掛け「熟す マンゴー」**（26_bossfx.js の b.myzMango・b.myzShiru）：投げた マンゴーが 床で 青→黄→赤と 熟して はじける。
+     床の マンゴーは 主人公の まっすぐな 弾を 受け止める（たて）・**青い うちに 撃つと 回復の マンゴーが 落ちる**・赤は はじけて あまい しるの 水たまり。
+     **ボスが 水たまりに 足を 入れると すってんころりん**（あおむけに ころぶ＝口が開く 2倍）。たたきつけ（ドン）で 床の マンゴーが いっぺんに 1つ 熟す。
+   守り：歩く 間・マンゴーを 持ち上げる 間・つるを 見上げる 間は 金の こての うでを 顔の 前に たてる（正面の まっすぐな 弾は はじく。せなかは とどく）。
+     すき＝登場の ドラミング・たたきつけの 構えと 跳んでいる 間・マンゴーを 投げている 間（n_nage・n_ato）・こぶしが 床に めりこんで ぬけない（t_ato）・
+     つるから 落ちて 目を 回す（k_ato・2倍）・すべって ころぶ（suberu・2倍）。
+   合図は 文字に たよらない（BFX_SHOW_MSG=false）：
+     マンゴー投げ … かごから 青い マンゴーを とって 頭の 上で みどりに 光らせる＋落ちる 所に みどりの 輪（1つは 主人公の いる 所・のこりは 52px となり）
+                    → 1つずつ 山なりに 投げる（ポン）。とんでいる 間は 当たらない・輪の 上に 落ちた しゅんかんだけ いたい＝**輪から 出る**。
+                    とんでいる 青い マンゴーも 撃ち落とせる（回復）
+     たたきつけ … 両手の こぶしを 頭の 上に 上げて だいだいに 光る＋主人公の いる 所に だいだいの しるし（跳んで 落ちて くる 所。かべぎわには 30px の にげ場）＋床の マンゴーが ぜんぶ 点滅（いっぺんに 熟す 予告）
+                  → 大きく 跳んで しるしの 上に ドン：床の マンゴーが 1つ 熟す（赤は はじける）→ 床に ひびが 走って 8コマ（半分から 5コマ）あとに 左右へ 衝撃波（高さ 14px＝跳べば こえられる）
+                  ＝**しるしから 出る・着地の ドンを 見たら 跳ぶ・赤い マンゴーから はなれる**
+     つる回転 … 上を 見上げると 天井から つるが 下りてきて、床の まん中に みどりの 帯（いちばん 低く 来る 所）→ 跳びついて 体を まるめ、
+                つるに ぶら下がって 部屋を 2回 ふりこの ように 回る（半分から 速い。まるまった 間は どの向きの 弾も はじく＝つるへ 跳ぶ 間と あわせて 150コマ まで）。
+                いちばん 低い 所では 床すれすれ（高さ 26px＝跳べば こえられる）・はしの ほうは 頭の ずっと 上＝**まん中の 帯から はなれて はしで 待つ**。
+                つるに 跳びついた ときから 落ちる 所（主人公の いる がわ・かべぎわは あける）に 黄色い 輪 → さいごの 1回の とちゅうで つるを はなして 落ちて 目を 回す
+                （k_ato＝口が開く 2倍。上撃ちなしで 当たる 高さ）。さいごの 1回の ほかは いちばん 低い 所で 主人公へ マンゴーを 1つ（半分から 2つ）投げる（みどりの 輪）
+     hajime   … 登場：むねを たたいて ドコドコ（ドラミング）
+     wait     … 間合い（110〜170px）を 取って 歩く。**水たまりは よけない**（入ると すべる）。次の 技を 選ぶ
+     w_tobi   … かべに おされて 主人公が 近い とき：主人公を 跳びこえて まん中へ
+     n_tame → n_nage → n_ato（マンゴー投げ）／ t_tame → t_jump → t_don → t_ato（たたきつけ）／ k_tame → k_jump → k_bura → k_oriru → k_ato（つる回転）／ suberu → okiru
+   体力が半分を切ったら：マンゴーを 3つ・ドンを 2回 続けて（2回めの 構えは 短め・衝撃波も 早め）・つるが 速く 低い 所で マンゴーを 2つ 投げる。
+   子ども向け：しびれ・風・長い 無敵は 使わない（まるまって はじくのは つるに ぶら下がる 間だけ＝150コマ より みじかい）。技の 前には 必ず 光と しるし。
+   ⚠️ 倒れたら 30_bosscore.js が b.myzMango＝null・b.myzShiru＝null・bfxReset。しぶき・衝撃波は 敵の弾なので いっしょに 消える。 */
+var MYZ_WAIT = [24, 18];            /* 間合いを 取る長さ［ふつう, 体力が半分を切ったら］ */
+var MYZ_NTAME = [42, 36];           /* マンゴー投げの 構え（みどりの 輪が 出ている） */
+var MYZ_NN = [2, 3];                /* 投げる マンゴーの 数 */
+var MYZ_NSIDE = 46;                 /* となりに 落とす マンゴーの 間（px） */
+var MYZ_NGAP = 10;                  /* 1つ ずつ 投げる 間（コマ） */
+var MYZ_NFLY = 36;                  /* マンゴーが とんでいる コマ */
+var MYZ_NATO = [30, 24];            /* 投げた あとの ひと休み（守りが ない） */
+var MYZ_MANGO_MAX = 4;              /* 床に ころがる マンゴーは 4つまで（多いときは 投げずに ドン） */
+var MYZ_TTAME = [50, 42];           /* たたきつけの 構え（こぶしが 光る・床の 帯・マンゴーが 点滅） */
+var MYZ_TTAME2 = 30;                /* 体力が半分を切ってからの 2回めの ドンの 構え */
+var MYZ_TJUMP = 34;                 /* 跳んで たたく ときの 跳んでいる コマ */
+var MYZ_TJH = 64;                   /* 跳ぶ 高さ（px） */
+var MYZ_TPOCKET = 44;               /* 跳んで たたく 所は かべから この ぶん はなす（しるしと かべの あいだに 30px の にげ場） */
+var MYZ_DSP = [3.1, 3.5];           /* 衝撃波の 速さ（px/コマ） */
+var MYZ_DW = 18, MYZ_DH = 14;       /* 衝撃波の 大きさ（跳べば こえられる） */
+var MYZ_DDELAY = [8, 5];           /* ドンから 衝撃波が 出るまで（床に ひびが 走る 間＝跳ぶ じゅんび）［ふつう, 体力が半分を切ったら］ */
+var MYZ_DDMG = 5;                   /* 衝撃波の いたさ */
+var MYZ_TATO = [40, 30];            /* こぶしが 床に めりこんで ぬけない（守りが ない） */
+var MYZ_KTAME = [52, 44];           /* つる回転の 構え（つるが 下りてくる・まん中の 帯） */
+var MYZ_KJUMP = 26;                 /* つるへ 跳びつく コマ */
+var MYZ_KPASS = [2, 2];             /* ふりこの 回数（まるまって はじく 間は 150コマ まで＝つるへ 跳ぶ 26＋ふりこ） */
+var MYZ_KT = [64, 52];              /* ふりこ 1回の コマ（半分から 速い） */
+var MYZ_KANG = 1.18;                /* ふりこの はしの 角度（ラジアン） */
+var MYZ_KLET = 0.6;                 /* さいごの 1回で つるを はなす 角度（はしの 角度の 何倍か）＝はしより 内がわに 落ちる（かべぎわに 主人公が 立てる すきまが のこる） */
+var MYZ_KANCH = 160;                /* つるの ねもと（床から px。画面の 上の はし） */
+var MYZ_KBALL = 13;                 /* まるまった 体の 半径（px） */
+var MYZ_KLOW = 72;                  /* 立っていると 当たる はば（まん中から px）＝みどりの 帯 */
+var MYZ_KFLY = [36, 30];            /* つるから 投げる マンゴーの とぶ コマ */
+var MYZ_KNAGE = [1, 2];             /* つるの いちばん 低い 所で 投げる マンゴーの 数［ふつう, 体力が半分を切ったら］ */
+var MYZ_KATO = [76, 62];            /* 落ちて 目を 回す（口が開く＝2倍） */
+var MYZ_SUBERU = [96, 80];          /* すべって ころぶ（口が開く＝2倍） */
+var MYZ_NOSLIP = 90;                /* 起きた あと しばらくは すべらない */
+var MYZ_BW = 50, MYZ_BH = 48;       /* ふだんの 体の 大きさ（S.w・S.h に BOSS_SCALE を かけた もの） */
+var MYZ_SEQ = [["nage", "tataki", "tsuru", "nage", "tataki"], ["nage", "tataki2", "tsuru", "nage", "tataki", "tsuru"]];   /* 技の順番［ふつう, 半分を切ったら］ */
+function myzBossSfx(k) {
+  if (typeof SFX === "undefined") return;
+  if (k === "doko") { if (typeof beep === "function") { beep(110, 0.07, "square", 0.2, 90); setTimeout(function () { beep(130, 0.07, "square", 0.2, 100); }, 90); } return; }   /* ドラミング：ドコドコ */
+  if (k === "don") { if (typeof beep === "function") { beep(60, 0.26, "square", 0.26, 40); setTimeout(function () { beep(100, 0.14, "sawtooth", 0.14, 60); }, 70); } return; }   /* たたきつけ：ドーン */
+  if (k === "tsuru") { if (typeof beep === "function") beep(260, 0.12, "triangle", 0.14, 520); return; }          /* つるが 下りる：シュルッ */
+  if (k === "fu") { if (typeof beep === "function") beep(180 + (frame % 6) * 20, 0.06, "triangle", 0.1, 360); return; }   /* ふりこ：ブン */
+  if (k === "suberu") { if (typeof beep === "function") { beep(700, 0.1, "sine", 0.18, 1100); setTimeout(function () { beep(140, 0.22, "square", 0.2, 70); }, 120); } return; }   /* すってんころりん */
+  if (SFX[k]) SFX[k]();
+}
+function myzSetBox(b, w, h) { var cx = b.x + b.w / 2, by = b.y + b.h; b.w = w; b.h = h; b.x = cx - w / 2; b.y = by - h; }
+/* ふりこの 角度 th の ときの まるまった 体の まん中（とつるの ねもと） */
+function myzKPos(th) {
+  var L = arenaL(), R = arenaR(), fy = bossFloorY(), ax = (L + R) / 2, ay = fy - MYZ_KANCH, lr = MYZ_KANCH - 4 - MYZ_KBALL;
+  return { x: ax + lr * Math.sin(th), y: ay + lr * Math.cos(th), ax: ax, ay: ay };
+}
+function myzPlaceBall(b, q) { b.x = q.x - b.w / 2; b.y = q.y - b.h / 2; }
+cb("p45", {
+  hp: 64, w: 60, h: 58, top: 18, start: "hajime", /* 体力 64（手ごたえ合わせ 2026-10-11。node test/tegotae47.js 39・体力は 本物・各20回・上撃ちなし）：
+                                                      弾が来たら跳ぶだけ 0/20・向きを 直す 版 0/20・その場で 連打だけ 0/20・
+                                                      合図どおり（人の 反応の おくれ 6〜14コマ）15/20（勝ち 平均 3656コマ＝約61秒・受けた ダメージ 平均 20）。上撃ちあり 18/20。
+                                                      合わせた 順：① 体力 50・マンゴーの 回復が 床の 青でも 出る → 合図どおり 20/20・受けた 9（たいくつ）。
+                                                      ② 輪の 上で 待つと 落ちて きた マンゴーを すぐ 撃って 回復（得を する）→ 主人公に 当たった マンゴーは つぶれる・回復は とんでいる 青を 撃ち落とした ときだけ。
+                                                      ③ たたきつけを「主人公の いる 所へ 跳んで ドン」に（ガッツマン式）→ かべと ボスの あいだに はさまる 形が あった → かべぎわに 30px の にげ場・すぐ そばなら その場で ドン。
+                                                      ④ 着地と 同時の 衝撃波は 反応が 間に あわない → ドンから 8コマ（半分から 5コマ）あとに 出す（ひびが 走る 合図）。
+                                                      ⑤ たたきつけの 構えは こてを 上げている（絵）ので 守りを はずし、そのぶん 体力 64・ひと休みを みじかく。
+                                                      ⑥ 半分からの つるを 3回 → まるまって はじくのが 183コマ（150 こえ）→ 2回 のまま 速く */
+  ol: [26, 22, 26, 4],                             /* 縁どりの 四角（体の 四角から 左・上・右・下へ）。長い うで・かご・葉の ちょんまげが はいる 大きさ */
+  pface: [17, 12, 36],                             /* ボス選択の似顔絵は 顔（葉の ちょんまげ・まゆ・光る 目・口）を 写す（40_draw.js drawPortrait。顔は 体の 前の 上＝S.w 60 の 左 1/4） */
+  init: function (b) {
+    b.says = {}; b.seq = 0; b.combo = 0; b.glow = 0; b.noSlip = 0; b.spinA = 0; b.dizzy = 0; b.nT = null; b.nI = 0; b.kSide = 1; b.vineT = 0;
+    b.myzMango = []; b.myzShiru = []; b.myzRipenWarn = 0;
+    b.ivulCol = "#9ae06a";
+    if (typeof BOSS_ART !== "undefined" && BOSS_ART.p45 && BOSS_ART.p45.pal) { BOSS_ART.p45.pal.c = "#ffd890"; BOSS_ART.p45.pal.d = "#5e6874"; }   /* 似顔絵の 地と やられた ときの 玉の 色（マンゴーと 銀） */
+  },
+  ai: function (b, p) {
+    var h = (b.hp < b.maxhp / 2) ? 1 : 0, fy = bossFloorY(), L = arenaL(), R = arenaR(), i;
+    var pc = p.x + p.w / 2, cx = b.x + b.w / 2, dx = pc - cx, ad = Math.abs(dx), dir = (dx < 0) ? -1 : 1;
+    function say(key, msg, fr) { b.says[key] = (b.says[key] || 0) + 1; if (b.says[key] <= 2) bfxSay(msg, fr); }
+    function go(st) { b.state = st; b.t = 0; }
+    if (!b.myzMango) b.myzMango = [];
+    if (!b.myzShiru) b.myzShiru = [];
+    if (b.noTouch > 0) b.noTouch--;
+    if (b.noSlip > 0) b.noSlip--;
+    if (b.glow > 0) b.glow--;
+    if (b.myzRipenWarn > 0) b.myzRipenWarn--;
+    var air = (b.state === "k_jump" || b.state === "k_bura" || b.state === "t_jump");   /* つるに ぶら下がっている 間は 重さ なし（場所を じかに 決める） */
+    if (!air) { b.vy = Math.min(MAXFALL, b.vy + GRAV); bossMoveY(b); }
+    myzMangoTick(b);
+    /* こての 守り：かまえている 間は 正面の まっすぐな 弾を はじく（26_bossfx.js bossBlock の guard） */
+    if (b.state === "wait" || b.state === "n_tame" || b.state === "k_tame") b.guard = Math.max(b.guard || 0, 2);   /* 絵の 金の こての かまえと そろえる */
+    if (b.state === "k_ato" || b.state === "suberu") b.mouth = Math.max(b.mouth, 2);   /* 目を 回す・ころぶ＝口が開く（2倍） */
+    if (b.state === "k_jump" || b.state === "k_bura") b.ivul = Math.max(b.ivul || 0, 2);                                       /* まるまって つるに ぶら下がる 間は どの向きの 弾も はじく */
+
+    if (b.state === "hajime") {                        /* 登場：むねを たたいて ドコドコ */
+      b.vx = 0;
+      if (b.t === 1) say("hajime", "マンゴリラ さんじょう！ かんじゅくマンゴーを くらえ！", 110);
+      if (b.t % 16 === 4 && b.t < 70) { myzBossSfx("doko"); shake = Math.max(shake, 2); }
+      if (b.t > 76) go("wait");
+    } else if (b.state === "wait") {                   /* 間合いを 取って 歩く（水たまりは よけない＝入ると すべる） */
+      b.lockFace = false;
+      if (b.t === 1) b.wl = MYZ_WAIT[h] + Math.floor(Math.random() * 11) - 5;
+      if (ad < 110) b.vx = -dir * 0.9;
+      else if (ad > 170) b.vx = dir * 0.9;
+      else b.vx *= 0.8;
+      bossMoveX(b); clampX(b);
+      if (Math.abs(b.vx) > 0.2) b.step = (b.step || 0) + 1;
+      var si = myzShiruAt(b, b.x + b.w / 2);
+      if (si >= 0 && b.grounded && !(b.noSlip > 0)) {
+        b.myzShiru.splice(si, 1); b.vx = 0; b.lockFace = true; go("suberu");
+      } else if (b.wallHit && ad < 90 && b.grounded && b.t > 12) { b.wallHit = false; b.lockFace = true; go("w_tobi"); }
+      else if (b.t >= b.wl && b.grounded) {
+        var seq = MYZ_SEQ[h], nx = seq[b.seq % seq.length];
+        b.seq++;
+        b.vx = 0; b.lockFace = true; b.face = dir; b.combo = 0;
+        if (nx === "nage" && myzMangoFloor(b) >= MYZ_MANGO_MAX) nx = "tataki";   /* 床が マンゴーで いっぱい：投げずに ドン（熟させる） */
+        if (nx === "nage") go("n_tame");
+        else if (nx === "tataki" || nx === "tataki2") { b.combo = (nx === "tataki2") ? 1 : 0; go("t_tame"); }
+        else go("k_tame");
+      }
+    } else if (b.state === "w_tobi") {                 /* かべぎわで 主人公が 近い：主人公を 跳びこえて まん中へ（跳んでいる 間は ふれても いたくない） */
+      b.noTouch = 2;
+      if (b.t === 1) { var cdir = (cx < (L + R) / 2) ? 1 : -1; b.face = cdir; b.vy = -8.6; b.vx = cdir * 3.4; myzBossSfx("jump"); part(cx, fy - 2, "#c8b890", 8, 1.8); }
+      bossMoveX(b); clampX(b);
+      if (b.t > 6 && b.grounded) { b.vx = 0; b.noTouch = 10; b.noSlip = Math.max(b.noSlip, 30); shake = Math.max(shake, 4); part(b.x + b.w / 2, fy - 2, "#c8b890", 10, 2); if (SFX.land) SFX.land(); b.lockFace = false; go("wait"); }
+    } else if (b.state === "n_tame") {                 /* マンゴー投げの 構え：青い マンゴーを 頭の 上で 光らせる・落ちる 所に みどりの 輪 */
+      b.vx = 0; b.glow = Math.max(b.glow, 4);
+      if (b.t === 1) {
+        b.face = dir;
+        var n = Math.max(1, Math.min(MYZ_NN[h], MYZ_MANGO_MAX - myzMangoFloor(b)));
+        var sides = [0, (Math.random() < 0.5) ? -1 : 1]; sides.push(-sides[1]);
+        b.nT = [];
+        for (i = 0; i < n; i++) {
+          var tx = Math.max(L + 10, Math.min(R - 10, pc + sides[i] * MYZ_NSIDE));
+          if (Math.abs(tx - cx) < b.w / 2 + 8) tx = cx - b.face * (b.w / 2 + 14);   /* 自分の 足もとには 落とさない */
+          b.nT.push(tx);
+          bfxMark(tx - 11, fy - 4, 22, 4, MYZ_NTAME[h] + MYZ_NGAP * i + MYZ_NFLY + 2, "#7ae05a");
+        }
+        b.nI = 0;
+        say("n_tame", "マンゴーを なげるぞ！ みどりの わから でろ！ あおい うちに うてば かいふくだ！", MYZ_NTAME[h] + 20);
+        myzBossSfx("charge_up");
+      }
+      if (b.t >= MYZ_NTAME[h]) go("n_nage");
+    } else if (b.state === "n_nage") {                 /* 1つずつ 山なりに 投げる（守りが ない） */
+      b.vx = 0;
+      if (b.nT && b.nI < b.nT.length && (b.t - 1) % MYZ_NGAP === 0) {
+        var hx = cx + b.face * b.w * 0.3, hy = b.y - 8;
+        myzMangoThrow(b, hx, hy, b.nT[b.nI], MYZ_NFLY, 0.3, true);
+        b.nI++;
+      }
+      if (b.nT && b.nI >= b.nT.length && b.t >= MYZ_NGAP * (b.nT.length - 1) + 8) { b.nT = null; go("n_ato"); }
+    } else if (b.state === "n_ato") {                  /* 投げた あとの ひと休み（守りが ない） */
+      b.vx = 0;
+      if (b.t >= MYZ_NATO[h]) { b.lockFace = false; go("wait"); b.cycle++; }
+    } else if (b.state === "t_tame") {                 /* たたきつけの 構え：しゃがんで こぶしが 光る・跳んで 落ちる 所に だいだいの しるし・マンゴーが 点滅 */
+      b.vx = 0; b.glow = Math.max(b.glow, 4);
+      var tt = (b.combo === 2) ? MYZ_TTAME2 : MYZ_TTAME[h];
+      if (b.t === 1) {
+        b.myzRipenWarn = tt + MYZ_TJUMP + 2;
+        b.tX = Math.max(L + b.w / 2 + MYZ_TPOCKET, Math.min(R - b.w / 2 - MYZ_TPOCKET, pc));   /* 主人公の いる 所へ 跳んで たたく（かべぎわには にげ場を のこす） */
+        if (Math.abs(b.tX - cx) < b.w / 2 + 40) b.tX = cx;                       /* 主人公が すぐ そば：その場で 跳んで たたく（かべと ボスの あいだに はさまない） */
+        bfxMark(b.tX - b.w / 2 - 14, fy - 6, b.w + 28, 6, tt + MYZ_TJUMP + 4, "#ff9a3a");   /* 体より 14px ずつ 広く（外に 出れば 衝撃波まで すこし 間が ある） */
+        say("t_tame", "とんで ドンと たたくぞ！ だいだいの しるしから にげて、ゆかを はしる なみを とびこえろ！", tt + 20);
+        myzBossSfx("charge_up");
+      }
+      if (b.t === Math.floor(tt / 2)) myzBossSfx("doko");
+      if (b.t >= tt) { b.tX0 = cx; b.tY0 = b.y; myzBossSfx("jump"); go("t_jump"); }
+    } else if (b.state === "t_jump") {                 /* 主人公の いた 所へ 大きく 跳ぶ（しるしの 上に 落ちる） */
+      var tu = Math.min(1, b.t / MYZ_TJUMP);
+      b.x = b.tX0 + (b.tX - b.tX0) * tu - b.w / 2; b.y = b.tY0 - Math.sin(tu * Math.PI) * MYZ_TJH; b.vx = 0; b.vy = 0;
+      if (b.t >= MYZ_TJUMP) { b.y = fy - b.h; go("t_don"); }
+    } else if (b.state === "t_don") {                  /* ドン：床の マンゴーが 1つ 熟す → MYZ_DDELAY コマ あとに 左右へ 衝撃波（床に ひびが 走る） */
+      b.vx = 0;
+      if (b.t === 1) {
+        myzMangoRipen(b);
+        myzBossSfx("don"); shake = Math.max(shake, 10);
+        for (i = 0; i < 14; i++) part(b.x + Math.random() * b.w, fy - 2, (i % 2) ? "#c8b890" : "#8a7a5a", 1, 2.4);
+      }
+      if (b.t === MYZ_DDELAY[h]) {
+        var sp = MYZ_DSP[h], xl = b.x - MYZ_DW + 4, xr = b.x + b.w - 4;
+        if (xl > L + 2) eshot({ x: xl, y: fy - MYZ_DH, w: MYZ_DW, h: MYZ_DH, vx: -sp, vy: 0, dmg: MYZ_DDMG, kind: "myzdon", life: Math.max(4, Math.ceil((xl - L + MYZ_DW) / sp)), nosolid: true });
+        if (xr + MYZ_DW < R - 2) eshot({ x: xr, y: fy - MYZ_DH, w: MYZ_DW, h: MYZ_DH, vx: sp, vy: 0, dmg: MYZ_DDMG, kind: "myzdon", life: Math.max(4, Math.ceil((R - xr) / sp)), nosolid: true });
+        if (typeof beep === "function") beep(90, 0.12, "sawtooth", 0.14, 50);
+      }
+      if (b.t >= MYZ_DDELAY[h] + 6) go("t_ato");
+    } else if (b.state === "t_ato") {                  /* こぶしが 床に めりこんで ぬけない（守りが ない）。半分から すぐ もう1回 */
+      b.vx = 0;
+      if (b.combo === 1 && b.t >= 14) { b.combo = 2; go("t_tame"); }
+      else if (b.t >= MYZ_TATO[h]) { b.lockFace = false; b.combo = 0; go("wait"); b.cycle++; }
+    } else if (b.state === "k_tame") {                 /* つる回転の 構え：上を 見る・つるが 下りる・まん中に みどりの 帯 */
+      b.vx = 0;
+      if (b.t === 1) {
+        var pside = (pc < (L + R) / 2) ? -1 : 1;
+        b.kSide = (MYZ_KPASS[h] % 2 === 0) ? pside : -pside;   /* さいごに 落ちる がわ＝主人公の いる がわ（ふりこの 回数で 始める がわを 決める） */
+        var kq = myzKPos(0), kall = MYZ_KTAME[h] + MYZ_KJUMP + MYZ_KPASS[h] * MYZ_KT[h] + 6;
+        bfxMark(kq.ax - MYZ_KLOW, fy - 4, MYZ_KLOW * 2, 4, kall, "#5ac83a");
+        b.vineT = 0;
+        say("k_tame", "つるで ぐるぐる まわるぞ！ まんなかの みどりの おびから はなれろ！", MYZ_KTAME[h] + 20);
+        myzBossSfx("tsuru");
+      }
+      b.vineT = Math.min(1, b.t / 24);
+      if (b.t >= MYZ_KTAME[h]) {
+        b.k0 = { x: cx, y: b.y + b.h / 2 };
+        myzSetBox(b, MYZ_KBALL * 2, MYZ_KBALL * 2); b.ivul = 2; myzBossSfx("jump");
+        go("k_jump");
+      }
+    } else if (b.state === "k_jump") {                 /* つるへ 跳びつく（まるまる） */
+      var ku = Math.min(1, b.t / MYZ_KJUMP), kt = myzKPos(b.kSide * MYZ_KANG);
+      var jx = b.k0.x + (kt.x - b.k0.x) * ku, jy = b.k0.y + (kt.y - b.k0.y) * ku - Math.sin(ku * Math.PI) * 30;
+      myzPlaceBall(b, { x: jx, y: jy }); b.spinA += 0.4; b.vx = 0; b.vy = 0;
+      if (b.t === 1) {                                   /* つるに 跳びついた ときから：さいごに 落ちる 所に 黄色い 輪 */
+        var kT = MYZ_KT[h], kP = MYZ_KPASS[h], kEnd = Math.round(kP * kT - kT * Math.acos(MYZ_KLET) / Math.PI);
+        var ke = myzKPos(b.kSide * MYZ_KANG * Math.cos(Math.PI * kEnd / kT)), kx = Math.max(L + MYZ_BW / 2, Math.min(R - MYZ_BW / 2, ke.x));
+        bfxMark(kx - MYZ_BW / 2, fy - 4, MYZ_BW, 4, MYZ_KJUMP + kEnd + 30, "#ffd040");
+      }
+      if (b.t >= MYZ_KJUMP) { b.kT = 0; go("k_bura"); }
+    } else if (b.state === "k_bura") {                 /* つるに ぶら下がって ふりこの ように 回る */
+      var T = MYZ_KT[h], P = MYZ_KPASS[h], th = b.kSide * MYZ_KANG * Math.cos(Math.PI * b.t / T);
+      var tEnd = Math.round(P * T - T * Math.acos(MYZ_KLET) / Math.PI);   /* さいごの 1回は はしの 手前（角度の MYZ_KLET 倍）で つるを はなす */
+      myzPlaceBall(b, myzKPos(th)); b.spinA += 0.55; b.vx = 0; b.vy = 0;
+      if (b.t % T === Math.floor(T / 2)) {               /* いちばん 低い 所 */
+        myzBossSfx("fu");
+        if (b.t < (P - 1) * T) {                           /* さいごの 1回の ほかは 主人公へ マンゴーを 1つ（半分から 2つ＝となりにも） */
+          var kn = [0, (pc < (L + R) / 2) ? 1 : -1];
+          for (var kk = 0; kk < MYZ_KNAGE[h] && b.myzMango.length < MYZ_MANGO_MAX; kk++) {
+            var ktx = Math.max(L + 10, Math.min(R - 10, pc + kn[kk] * MYZ_NSIDE));
+            myzMangoThrow(b, b.x + b.w / 2, b.y + b.h / 2, ktx, MYZ_KFLY[h], 0.3, false);
+          }
+        }
+      }
+      if (b.t >= tEnd) { b.vy = 0; go("k_oriru"); }
+    } else if (b.state === "k_oriru") {                /* つるを はなして 落ちる → 目を 回す（水たまりなら すべる） */
+      b.vx = 0; b.spinA += 0.3;
+      if (b.grounded && b.t > 2) {
+        myzSetBox(b, MYZ_BW, MYZ_BH); b.y = fy - b.h; clampX(b); b.ivul = 0; b.vineT = 0;
+        myzBossSfx("don"); shake = Math.max(shake, 8); for (i = 0; i < 12; i++) part(b.x + Math.random() * b.w, fy - 2, "#c8b890", 1, 2.2);
+        var ks = myzShiruAt(b, b.x + b.w / 2);
+        if (ks >= 0) { b.myzShiru.splice(ks, 1); go("suberu"); }
+        else { b.dizzy = MYZ_KATO[h]; go("k_ato"); }
+      }
+    } else if (b.state === "k_ato") {                  /* 落ちて 目を 回す（口が開く＝2倍） */
+      b.vx = 0;
+      if (b.dizzy > 0) b.dizzy--;
+      if (b.t >= MYZ_KATO[h]) { b.lockFace = false; go("wait"); b.cycle++; }
+    } else if (b.state === "suberu") {                 /* あまい しるで すってんころりん（口が開く＝2倍） */
+      b.vx = 0;
+      if (b.t === 1) { myzBossSfx("suberu"); shake = Math.max(shake, 6); for (i = 0; i < 12; i++) part(cx - 20 + Math.random() * 40, fy - 2, (i % 2) ? "#ffc040" : "#f0901a", 1, 2.2); }
+      if (b.t >= MYZ_SUBERU[h]) go("okiru");
+    } else if (b.state === "okiru") {                  /* 起き上がる */
+      b.vx = 0;
+      if (b.t >= 14) { b.noSlip = MYZ_NOSLIP; b.lockFace = false; go("wait"); b.cycle++; }
+    }
+  },
+  /* 縁どりの外で描くもの：つる・こぶしの 光・マンゴーの 光・目を 回す 星・ころんだ ときの 汗 */
+  fx: function (b) {
+    if (b.dead > 0) return;
+    var i, f = b.face || -1, st = b.state, cx = b.x + b.w / 2, fy = bossFloorY();
+    if (st === "k_tame" || st === "k_jump" || st === "k_bura") {   /* つる（天井の 上から 下りる。葉っぱつき） */
+      var kq = myzKPos(0), ax = kq.ax, ay = kq.ay - 60, ex, ey;
+      if (st === "k_tame") { ex = ax + Math.sin(frame * 0.08) * 6; ey = kq.ay - 60 + (MYZ_KANCH - 30) * (b.vineT || 0); }
+      else { ex = cx; ey = b.y + b.h / 2 - MYZ_KBALL + 2; }
+      if (st !== "k_tame" || b.vineT > 0) {
+        ctx.strokeStyle = "#2a5a1e"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo((ax + ex) / 2 + Math.sin(frame * 0.05) * 6, (ay + ey) / 2, ex, ey); ctx.stroke();
+        ctx.strokeStyle = "#5aa83a"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ax + 1, ay); ctx.quadraticCurveTo((ax + ex) / 2 + 1 + Math.sin(frame * 0.05) * 6, (ay + ey) / 2, ex + 1, ey); ctx.stroke();
+        for (i = 1; i < 6; i++) { var u = i / 6, lx = ax + (ex - ax) * u + Math.sin(frame * 0.05) * 6 * Math.sin(u * Math.PI), ly = ay + (ey - ay) * u; ctx.fillStyle = (i % 2) ? "#3a8a2a" : "#5ab83a"; ctx.beginPath(); ctx.ellipse(lx + ((i % 2) ? 4 : -4), ly, 4, 2, (i % 2) ? 0.6 : -0.6, 0, Math.PI * 2); ctx.fill(); }
+      }
+    }
+    if (st === "k_bura" || st === "k_jump") {         /* まるまって 回る：みどりの 光の 輪（はじく） */
+      ctx.globalAlpha = 0.35 + 0.15 * Math.sin(frame * 0.6); ctx.strokeStyle = "#bff08a"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, b.y + b.h / 2, MYZ_KBALL + 4, b.spinA, b.spinA + Math.PI * 1.4); ctx.stroke(); ctx.globalAlpha = 1; ctx.lineWidth = 1;
+    }
+    if (st === "t_tame") {                            /* 上げた 両こぶしが だいだいに 光る */
+      var a = Math.min(1, b.t / 20);
+      ctx.globalAlpha = (0.3 + 0.25 * Math.sin(frame * 0.5)) * a; ctx.fillStyle = "#ff8a2a";
+      ctx.beginPath(); ctx.arc(cx - b.w * 0.28, b.y - 10, 11, 0, Math.PI * 2); ctx.arc(cx + b.w * 0.28, b.y - 10, 11, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    if (st === "n_tame") {                            /* 頭の 上の 青い マンゴーが みどりに 光る（うしろの 手） */
+      var ga = Math.min(1, b.t / 16), mx = cx - f * b.w * 0.04, my = b.y - 23;
+      ctx.globalAlpha = (0.35 + 0.25 * Math.sin(frame * 0.5)) * ga; ctx.fillStyle = "#9ae06a"; ctx.beginPath(); ctx.arc(mx, my, 12, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    if (st === "k_ato" && b.dizzy > 0) {              /* 目を 回す 星 */
+      for (i = 0; i < 3; i++) { var sa = frame * 0.15 + i * 2.1; ctx.fillStyle = "#ffe066"; ctx.beginPath(); var stx = cx + Math.cos(sa) * 18, sty = b.y - 6 + Math.sin(sa) * 4; for (var k = 0; k < 5; k++) { var an = -Math.PI / 2 + k * Math.PI * 0.8; ctx.lineTo(stx + Math.cos(an) * 4, sty + Math.sin(an) * 4); } ctx.closePath(); ctx.fill(); }
+    }
+    if (st === "suberu") {                            /* あせ と マンゴーの しる */
+      for (i = 0; i < 2; i++) { var sp = ((frame * 0.05 + i * 0.5) % 1); ctx.fillStyle = "#bfe8ff"; ctx.beginPath(); ctx.ellipse(cx + (i ? 18 : -14), b.y + 6 - sp * 8, 2, 3, 0, 0, Math.PI * 2); ctx.fill(); }
+    }
+  },
+  /* 銀の ゴリラの ロボット（自前で 描く）。うしろから：かご → うしろの うで → 足 → 体（かたの もりあがり）→ むね板 → 頭（葉の ちょんまげ・まゆ・目・はな・口）→ 前の うでと 金の こて */
+  draw: function (b, x, y, hl) {
+    var f = b.face || -1, W = b.w, H = b.h, st = b.state, i;
+    function C2(c) { return hl ? "#ffffff" : c; }
+    var FUR = C2("#5e6874"), FUR2 = C2("#363c46"), FUR3 = C2("#94a0ae"), GOLD = C2("#d8a830"), GOLD2 = C2("#ffe08a"), GOLD3 = C2("#8a6418");
+    function limb(x0, y0, x1, y1, w, col) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); ctx.lineCap = "butt"; ctx.lineWidth = 1; }
+    function bracer(x0, y0, x1, y1, w) {             /* うでの 先の 金の こて（ひじから 手首まで） */
+      var a = Math.atan2(y1 - y0, x1 - x0), L = Math.hypot(x1 - x0, y1 - y0);
+      ctx.save(); ctx.translate(x0, y0); ctx.rotate(a);
+      ctx.fillStyle = GOLD3; ctx.fillRect(L * 0.45, -w / 2 - 1, L * 0.5, w + 2);
+      ctx.fillStyle = GOLD; ctx.fillRect(L * 0.45, -w / 2, L * 0.5, w);
+      if (!hl) { ctx.fillStyle = GOLD2; ctx.fillRect(L * 0.47, -w / 2 + 1, L * 0.46, 1.5); ctx.fillStyle = GOLD3; ctx.fillRect(L * 0.6, -w / 2, 1, w); ctx.fillRect(L * 0.78, -w / 2, 1, w); }
+      ctx.restore();
+    }
+    function fist(hx, hy, r) { ctx.fillStyle = FUR2; ctx.beginPath(); ctx.arc(hx, hy, r + 1, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = FUR; ctx.beginPath(); ctx.arc(hx, hy, r, 0, Math.PI * 2); ctx.fill(); if (!hl) { ctx.fillStyle = FUR3; ctx.fillRect(hx - r * 0.5, hy - r * 0.6, r * 0.7, 1.5); ctx.fillStyle = FUR2; ctx.fillRect(hx - r * 0.6, hy, r * 1.2, 1); } }
+    if (st === "k_jump" || st === "k_bura" || (st === "k_oriru" && W < 40)) {   /* まるまった 体：銀の 玉に マンゴーの しま・金の こてが 光る・目が のぞく */
+      var r = W / 2, ccx = x + r, ccy = y + r, a = b.spinA || 0;
+      ctx.fillStyle = FUR2; ctx.beginPath(); ctx.arc(ccx, ccy, r + 1, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = FUR; ctx.beginPath(); ctx.arc(ccx, ccy, r - 0.5, 0, Math.PI * 2); ctx.fill();
+      if (!hl) {
+        ctx.save(); ctx.beginPath(); ctx.arc(ccx, ccy, r - 0.5, 0, Math.PI * 2); ctx.clip();
+        ctx.save(); ctx.translate(ccx, ccy); ctx.rotate(a);
+        ctx.fillStyle = "#e8602a"; ctx.fillRect(-r, -3, r * 2, 6); ctx.fillStyle = "#ffc040"; ctx.fillRect(-r, -3, r * 2, 2);
+        ctx.fillStyle = GOLD; ctx.fillRect(-r, -r * 0.75, r * 2, 3); ctx.fillRect(-r, r * 0.55, r * 2, 3);
+        ctx.restore();
+        ctx.fillStyle = FUR3; ctx.beginPath(); ctx.arc(ccx - r * 0.35, ccy - r * 0.4, r * 0.35, 0, Math.PI * 2); ctx.fill();   /* つや */
+        ctx.restore();
+        var eyx = ccx + Math.cos(a + 1.2) * 5, eyy = ccy + Math.sin(a + 1.2) * 5;
+        ctx.fillStyle = "#1a1a1a"; ctx.fillRect(eyx - 5, eyy - 2, 10, 4); ctx.fillStyle = "#ffe060"; ctx.fillRect(eyx - 4, eyy - 1, 3, 2); ctx.fillRect(eyx + 1, eyy - 1, 3, 2);
+        ctx.fillStyle = "#4aa83a"; ctx.beginPath(); ctx.ellipse(ccx + Math.cos(a - 1.6) * r, ccy + Math.sin(a - 1.6) * r, 5, 2.5, a, 0, Math.PI * 2); ctx.fill();   /* 葉の ちょんまげ */
+      }
+      return;
+    }
+    var cx = x + W / 2, by = y + H, k = W / 50;
+    if (st === "suberu") {                            /* あおむけに すってんころりん：おなか（むね板）を 上・手足を ばたばた・×の 目・口が 開く */
+      var lcy = by - H * 0.24, bk = Math.sin(frame * 0.5);
+      limb(cx + f * W * 0.12, lcy - 4, cx + f * W * 0.22 + bk * 2, lcy - H * 0.42, 9 * k, FUR2);     /* 足（上へ） */
+      limb(cx + f * W * 0.3, lcy - 2, cx + f * W * 0.4 - bk * 2, lcy - H * 0.36, 9 * k, FUR);
+      ctx.fillStyle = FUR2; ctx.beginPath(); ctx.ellipse(cx, lcy + 1, W * 0.5, H * 0.24, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = FUR; ctx.beginPath(); ctx.ellipse(cx, lcy, W * 0.48, H * 0.22, 0, 0, Math.PI * 2); ctx.fill();
+      if (!hl) { var gs = ctx.createLinearGradient(cx, lcy - H * 0.2, cx, lcy + 4); gs.addColorStop(0, "#e8402a"); gs.addColorStop(1, "#ffc040"); ctx.fillStyle = gs; ctx.beginPath(); ctx.ellipse(cx + f * 2, lcy - H * 0.04, W * 0.26, H * 0.14, 0, 0, Math.PI * 2); ctx.fill(); }
+      var hx0 = cx - f * W * 0.44, hy0 = lcy - 1;
+      ctx.fillStyle = FUR; ctx.beginPath(); ctx.arc(hx0, hy0, W * 0.18, 0, Math.PI * 2); ctx.fill();
+      if (!hl) {
+        ctx.fillStyle = "#e0c098"; ctx.beginPath(); ctx.ellipse(hx0 + f * 1, hy0 - 2, W * 0.13, W * 0.11, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = "#1a1a1a"; ctx.lineWidth = 1.4; for (i = 0; i < 2; i++) { var ex = hx0 - 4 + i * 7, ey = hy0 - 5; ctx.beginPath(); ctx.moveTo(ex - 2, ey - 2); ctx.lineTo(ex + 2, ey + 2); ctx.moveTo(ex + 2, ey - 2); ctx.lineTo(ex - 2, ey + 2); ctx.stroke(); } ctx.lineWidth = 1;
+        ctx.fillStyle = "#5a1a10"; ctx.beginPath(); ctx.ellipse(hx0 + f, hy0 + 3, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#4aa83a"; ctx.beginPath(); ctx.ellipse(hx0 - f * W * 0.16, hy0 + 4, 6, 3, f * 0.8, 0, Math.PI * 2); ctx.fill();
+      }
+      limb(cx - f * W * 0.2, lcy - 6, cx - f * W * 0.3 + bk * 3, lcy - H * 0.34, 9 * k, FUR);           /* じたばたする うで */
+      bracer(cx - f * W * 0.2, lcy - 6, cx - f * W * 0.3 + bk * 3, lcy - H * 0.34, 8 * k); fist(cx - f * W * 0.3 + bk * 3, lcy - H * 0.36, 4.5 * k);
+      return;
+    }
+    var bob = (st === "wait" || st === "hajime" || st === "n_ato" || st === "k_ato" || st === "okiru") ? Math.sin(frame * 0.12) * 0.8 : 0;
+    var crouch = (st === "t_don" || st === "t_ato") ? 6 : ((st === "k_ato") ? 7 : (st === "t_tame" ? 3 : 0));
+    var top = y + bob + crouch, lf = (Math.abs(b.vx) > 0.2) ? Math.sin((b.step || 0) * 0.35) * 2 : 0;
+    var air = (st === "t_jump" || st === "w_tobi");
+    /* せなかの 竹かご（マンゴーが のぞく） */
+    var kx0 = cx - f * W * 0.34, ky0 = top + H * 0.14;
+    ctx.fillStyle = C2("#b8864a"); ctx.beginPath(); ctx.moveTo(kx0 - 11, ky0); ctx.lineTo(kx0 + 11, ky0); ctx.lineTo(kx0 + 8, ky0 + 22); ctx.lineTo(kx0 - 8, ky0 + 22); ctx.closePath(); ctx.fill();
+    if (!hl) {
+      ctx.strokeStyle = "#7a5428"; ctx.lineWidth = 1; for (i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(kx0 - 10 + i * 0.8, ky0 + 4 + i * 5); ctx.lineTo(kx0 + 10 - i * 0.8, ky0 + 4 + i * 5); ctx.stroke(); }
+      var mc = [["#e8402a", "#f0a020"], ["#4aa83a", "#9ae06a"], ["#f0c020", "#fff07a"]];
+      for (i = 0; i < 3; i++) { ctx.fillStyle = mc[i][0]; ctx.beginPath(); ctx.ellipse(kx0 - 6 + i * 6, ky0 - 2 - (i % 2) * 2, 4.5, 3.6, 0.3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = mc[i][1]; ctx.fillRect(kx0 - 8 + i * 6, ky0 - 4 - (i % 2) * 2, 2, 1); }
+    }
+    /* うしろの うで（長い。ひじ→手） */
+    var bsx = cx - f * W * 0.18, bsy = top + H * 0.3, bhx, bhy;
+    if (st === "t_tame" || st === "t_jump") { bhx = cx - W * 0.26 * f; bhy = y - 12 - (st === "t_tame" ? Math.min(1, b.t / 14) * 4 : 6); }
+    else if (st === "t_don" || st === "t_ato") { bhx = cx - f * W * 0.38; bhy = by - 4; }
+    else if (st === "hajime") { bhx = cx - f * 2; bhy = top + H * 0.42 + ((Math.floor(b.t / 8) % 2) ? -4 : 2); }
+    else if (st === "k_tame") { bhx = cx - f * W * 0.06; bhy = y - 24; }                                           /* つるへ 手を のばす */
+    else if (st === "n_tame") { bhx = cx - f * W * 0.04; bhy = y - 14; }                                           /* かごから とった マンゴーを 頭の 上へ */
+    else if (air) { bhx = cx - f * W * 0.46; bhy = top + H * 0.1; }
+    else { bhx = cx - f * W * 0.42; bhy = by - 4 + (lf > 0 ? -lf : 0); }                                         /* こぶしを 床に つく（ナックルウォーク） */
+    limb(bsx, bsy, bhx, bhy, 10 * k, FUR2); bracer(bsx, bsy, bhx, bhy, 9 * k); fist(bhx, bhy, 5 * k);
+    /* 足（みじかい・がっしり） */
+    var legY = by - H * 0.22 + crouch * 0.3;
+    if (air) { limb(cx - W * 0.12, legY, cx - W * 0.2, by - 6, 9 * k, FUR2); limb(cx + W * 0.1, legY, cx + W * 0.2, by - 6, 9 * k, FUR); }
+    else {
+      ctx.fillStyle = FUR2; ctx.fillRect(cx - W * 0.26, legY + lf, W * 0.18, by - legY - lf); ctx.fillStyle = FUR; ctx.fillRect(cx + W * 0.06, legY - lf, W * 0.18, by - legY + lf);
+      ctx.fillStyle = C2("#2a2e36"); ctx.fillRect(cx - W * 0.29 + f * 2, by - 3, W * 0.24, 3); ctx.fillRect(cx + W * 0.03 + f * 2, by - 3, W * 0.24, 3);
+    }
+    /* 体：大きな かたと せなかの 銀の 毛（シルバーバック）・こい 色の むね */
+    var tcx = cx - f * W * 0.05, tcy = top + H * 0.5, tw = W * 0.38, th2 = H * 0.3;
+    ctx.fillStyle = FUR2; ctx.beginPath(); ctx.ellipse(tcx, tcy + 1, tw + 1, th2 + 1, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx - f * W * 0.02, top + H * 0.3, W * 0.38, H * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = FUR; ctx.beginPath(); ctx.ellipse(tcx, tcy, tw, th2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx - f * W * 0.02, top + H * 0.3, W * 0.36, H * 0.18, 0, 0, Math.PI * 2); ctx.fill();   /* かたの もりあがり */
+    if (!hl) {
+      ctx.fillStyle = "#aeb8c4"; ctx.beginPath(); ctx.ellipse(cx - f * W * 0.2, top + H * 0.3, W * 0.16, H * 0.1, -f * 0.3, 0, Math.PI * 2); ctx.fill();   /* せなかの 銀の 毛（シルバーバック） */
+      ctx.fillStyle = "#d8e0e8"; ctx.fillRect(cx - f * W * 0.24 - 3, top + H * 0.25, 6, 1.5);
+      ctx.fillStyle = "#3e4650"; ctx.beginPath(); ctx.ellipse(tcx + f * W * 0.1, tcy + H * 0.04, tw * 0.62, th2 * 0.78, 0, 0, Math.PI * 2); ctx.fill();   /* こい 色の むねと おなか */
+      ctx.strokeStyle = "#4a525e"; ctx.lineWidth = 1; for (i = 0; i < 3; i++) { var sx0 = tcx - f * tw * 0.7 + i * f * 4; ctx.beginPath(); ctx.moveTo(sx0, tcy - th2 * 0.2); ctx.lineTo(sx0 - f * 2, tcy + th2 * 0.6); ctx.stroke(); }   /* 鉄の 毛なみの すじ */
+    }
+    /* むね板（太陽の 色の マンゴー） */
+    var px0 = cx + f * W * 0.1, py0 = tcy + H * 0.02;
+    var gp = hl ? null : ctx.createLinearGradient(px0, py0 - 12, px0, py0 + 12);
+    if (gp) { gp.addColorStop(0, "#e8402a"); gp.addColorStop(0.55, "#f07a2a"); gp.addColorStop(1, "#f8c040"); }
+    ctx.fillStyle = gp || "#ffffff"; ctx.beginPath(); ctx.ellipse(px0, py0, W * 0.17, H * 0.18, f * 0.25, 0, Math.PI * 2); ctx.fill();
+    if (!hl) {
+      ctx.fillStyle = "rgba(255,240,200,.6)"; ctx.beginPath(); ctx.ellipse(px0 - 3, py0 - 5, W * 0.06, H * 0.05, -0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#3a8a2a"; ctx.beginPath(); ctx.ellipse(px0 - f * W * 0.11, py0 - H * 0.15, 5, 2.4, f * 0.7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = GOLD3; for (i = 0; i < 4; i++) { var ra = i * Math.PI / 2 + 0.78; ctx.fillRect(px0 + Math.cos(ra) * W * 0.14 - 1, py0 + Math.sin(ra) * H * 0.15 - 1, 2, 2); }   /* びょう */
+    }
+    /* 頭（前に つき出た 大きな 顔・頭の てっぺんの とさか・葉の ちょんまげ） */
+    var hcx = cx + f * W * 0.26, hcy = top + H * 0.19, hr = W * 0.21;
+    ctx.fillStyle = FUR2; ctx.beginPath(); ctx.arc(hcx, hcy, hr + 1, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = FUR; ctx.beginPath(); ctx.arc(hcx, hcy, hr, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(hcx - f * 3, hcy - hr * 0.78, hr * 0.55, hr * 0.45, 0, 0, Math.PI * 2); ctx.fill();               /* とさか */
+    ctx.fillStyle = C2("#4aa83a"); ctx.beginPath(); ctx.ellipse(hcx - f * 4, hcy - hr - 4, 6, 3, -0.5, 0, Math.PI * 2); ctx.ellipse(hcx + f * 2, hcy - hr - 5, 7, 3, 0.6, 0, Math.PI * 2); ctx.fill();   /* 葉の ちょんまげ */
+    if (!hl) {
+      ctx.fillStyle = "#8ad85a"; ctx.fillRect(hcx + f * 2 - 3, hcy - hr - 6, 5, 1);
+      ctx.fillStyle = "#8a5a2a"; ctx.fillRect(hcx - f, hcy - hr - 2, 2, 4);
+      ctx.fillStyle = "#e0c098"; ctx.beginPath(); ctx.ellipse(hcx + f * 3, hcy + 2, hr * 0.74, hr * 0.7, 0, 0, Math.PI * 2); ctx.fill();   /* 顔 */
+      ctx.fillStyle = "#c8a078"; ctx.beginPath(); ctx.ellipse(hcx + f * 5, hcy + hr * 0.44, hr * 0.52, hr * 0.32, 0, 0, Math.PI * 2); ctx.fill();   /* 口もと */
+      ctx.fillStyle = "#2a2e36"; ctx.fillRect(hcx - hr * 0.7 + f * 3, hcy - hr * 0.4, hr * 1.4, hr * 0.28);                             /* まゆの 出っぱり */
+      var angry = (st === "t_tame" || st === "n_tame" || st === "k_tame" || st === "t_don" || st === "t_jump");
+      var dz = (st === "k_ato" && b.dizzy > 0);
+      var ey0 = hcy - hr * 0.02, e1 = hcx - hr * 0.3 + f * 3, e2 = hcx + hr * 0.3 + f * 3;
+      if (dz) { ctx.strokeStyle = "#1a1a1a"; ctx.lineWidth = 1.2; for (i = 0; i < 2; i++) { var ex2 = i ? e2 : e1; ctx.beginPath(); for (var sp2 = 0; sp2 < 9; sp2++) { var sa2 = frame * 0.3 + sp2 * 0.7, sr = sp2 * 0.34; if (sp2 === 0) ctx.moveTo(ex2, ey0); else ctx.lineTo(ex2 + Math.cos(sa2) * sr, ey0 + Math.sin(sa2) * sr); } ctx.stroke(); } ctx.lineWidth = 1; }
+      else { ctx.fillStyle = "#1a1a1a"; ctx.fillRect(e1 - 3, ey0 - 2, 6, 4); ctx.fillRect(e2 - 3, ey0 - 2, 6, 4); ctx.fillStyle = "#ffe060"; ctx.fillRect(e1 - 2, ey0 - 1, 4, 2); ctx.fillRect(e2 - 2, ey0 - 1, 4, 2); ctx.fillStyle = "#ffffff"; ctx.fillRect(e1 + f - 1, ey0 - 1, 1, 1); ctx.fillRect(e2 + f - 1, ey0 - 1, 1, 1); }
+      if (angry) { ctx.fillStyle = "#2a2e36"; ctx.beginPath(); ctx.moveTo(e1 - 4, ey0 - 6); ctx.lineTo(e1 + 4, ey0 - 3); ctx.lineTo(e1 + 4, ey0 - 5); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(e2 + 4, ey0 - 6); ctx.lineTo(e2 - 4, ey0 - 3); ctx.lineTo(e2 - 4, ey0 - 5); ctx.closePath(); ctx.fill(); }
+      ctx.fillStyle = "#6a4a2a"; ctx.fillRect(hcx + f * 5 - 3, hcy + hr * 0.26, 2, 2); ctx.fillRect(hcx + f * 5 + 1, hcy + hr * 0.26, 2, 2);   /* はな */
+      var open = (b.mouth > 0) || st === "hajime";
+      if (open) { ctx.fillStyle = "#4a1208"; ctx.beginPath(); ctx.ellipse(hcx + f * 5, hcy + hr * 0.58, hr * 0.32, hr * 0.2, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#ffffff"; ctx.fillRect(hcx + f * 5 - hr * 0.22, hcy + hr * 0.46, hr * 0.44, 1.5); ctx.fillStyle = "#ff6a4a"; ctx.fillRect(hcx + f * 5 - 2, hcy + hr * 0.64, 4, 2); }
+      else { ctx.fillStyle = "#4a2a14"; ctx.fillRect(hcx + f * 5 - hr * 0.3, hcy + hr * 0.58, hr * 0.6, 2); }
+    }
+    /* 前の うでと 金の こて */
+    var fsx = cx + f * W * 0.16, fsy = top + H * 0.32, fhx, fhy;
+    if (st === "t_tame" || st === "t_jump") { fhx = cx + W * 0.26 * f; fhy = y - 12 - (st === "t_tame" ? Math.min(1, b.t / 14) * 4 : 6); }
+    else if (st === "t_don" || st === "t_ato") { fhx = cx + f * W * 0.42; fhy = by - 4; }
+    else if (st === "n_nage") { fhx = cx + f * W * 0.6; fhy = top + H * 0.18; }                                          /* 投げる */
+    else if (st === "hajime") { fhx = cx + f * 6; fhy = top + H * 0.42 + ((Math.floor(b.t / 8) % 2) ? 2 : -4); }         /* ドラミング */
+    else if (st === "k_ato" || st === "n_ato" || st === "okiru") { fhx = cx + f * W * 0.44; fhy = by - 4; }
+    else if (air) { fhx = cx + f * W * 0.5; fhy = top + H * 0.08; }
+    else { fhx = cx + f * W * 0.52; fhy = top + H * 0.34; }                                                            /* かまえ：金の こてを 顔の 前（少し 下）に たてる（盾） */
+    var guardPose = (st === "wait" || st === "n_tame" || st === "k_tame" || st === "ceil" || st === "intro");   /* 守っている 状態と そろえる（ai の guard） */
+    limb(fsx, fsy, fhx, fhy, 10 * k, FUR);
+    if (guardPose) {                                  /* こてを たてに して 顔と むねの 前を まもる（金の 盾の ように）。こぶしは 上 */
+      ctx.fillStyle = GOLD3; ctx.fillRect(fhx - 5 * k, fhy - 12 * k, 10 * k, 26 * k);
+      ctx.fillStyle = GOLD; ctx.fillRect(fhx - 4 * k, fhy - 12 * k, 8 * k, 26 * k);
+      if (!hl) { ctx.fillStyle = GOLD2; ctx.fillRect(fhx - 3 * k, fhy - 11 * k, 2, 24 * k); ctx.fillStyle = GOLD3; ctx.fillRect(fhx - 4 * k, fhy - 3 * k, 8 * k, 1); ctx.fillRect(fhx - 4 * k, fhy + 6 * k, 8 * k, 1); }
+      fist(fhx, fhy - 13 * k, 5 * k);
+    } else { bracer(fsx, fsy, fhx, fhy, 9 * k); fist(fhx, fhy, 5.5 * k); }
+    if (st === "n_tame" && !hl) {                     /* 頭の 上の 青い マンゴー（うしろの 手） */
+      var mx = bhx, my = bhy - 9;
+      ctx.fillStyle = "#2a6a22"; ctx.beginPath(); ctx.ellipse(mx, my, 7.5, 6.2, -0.3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#4aa83a"; ctx.beginPath(); ctx.ellipse(mx - 0.5, my - 0.5, 6.8, 5.6, -0.3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#9ae06a"; ctx.beginPath(); ctx.ellipse(mx - 2.5, my - 2.4, 2.6, 1.4, -0.4, 0, Math.PI * 2); ctx.fill();
+    }
+    if ((st === "t_don" || st === "t_ato") && !hl) {  /* こぶしの まわりの ひび */
+      ctx.strokeStyle = "#3a3020"; ctx.lineWidth = 1; ctx.beginPath();
+      for (i = 0; i < 2; i++) { var fx0 = i ? fhx : bhx; ctx.moveTo(fx0 - 8, by); ctx.lineTo(fx0 - 3, by - 2); ctx.lineTo(fx0 + 2, by); ctx.lineTo(fx0 + 8, by - 1); }
+      ctx.stroke();
+    }
+  }
+});
+
 /* ===== 34_lastboss.js ===== */
 /* ============================ ラスボス ニッポンオー ============================
    全県を制はしたあとの最後の相手（デンタルマンの大魔王にあたる）。
@@ -20234,6 +20910,7 @@ function draw(){
     ngsFront();              /* 長崎の 中島川の 水面（2026-10-11） */
     sgaFront();              /* 佐賀の 泥に しずむ 足・ガタスキーの 板（2026-10-11） */
     oitFront();              /* 大分の 坊主地獄の 泥・ボス部屋の 白い 泥に しずむ 足（2026-10-11） */
+    myzFront();              /* 宮崎の 洗濯板の みぞ・五ヶ瀬川の 水面（2026-10-11） */
     drawLava();
     drawParts();
     drawBfxWorld();          /* ボスの仕掛け（予告じるし・回る盾・鉄球・分身・風。2026-09-22） */
@@ -21125,6 +21802,7 @@ function drawTiles(){
   oknArt();                              /* 沖縄：フクギ・なごみの塔の 屋根・マングローブの 木・ヤシ・グスクの アーチ門・立て札（タイルより 先に 描く。2026-10-11） */
   ngsArt();                              /* 長崎：ガス灯・石塀・洋館の 屋根・噴水・柳・石灯籠・旗・架線・つり荷・立て札（タイルより 先に 描く。2026-10-11） */
   sgaArt();                              /* 佐賀：のり網・ムツゴロウ・やぐらの 柱・倉庫の 柱・磁器の 鳥居・お店の 皿・窯の 焚き口・煙突・棚（タイルより 先に 描く。2026-10-11） */
+  myzArt();                              /* 宮崎：立て札・弥生橋の 手すり・ビロウと 朱の 鳥居・フェニックスの 幹・ハウスの アーチと マンゴーの 木・真名井の滝・参道・神楽殿（タイルより 先に 描く。2026-10-11） */
   oitArt();                              /* 大分：立て札・地獄蒸しの かまど・展望台・赤い 鳥居・竜巻地獄の 石の 屋根・洞門の 中・もみじ・吊橋の 塔と ケーブル（タイルより 先に 描く。2026-10-11） */
   kagawaArt();                           /* 香川：お土産屋・石灯籠・大門・かごかき・本宮・工場の 看板・麺を 干す 棚・大きな 釜（タイルより 先に 描く。2026-09-25） */
   /* 動かない地形は 画面外のキャンバス（地形のキャッシュ）から貼る。ここで描くのは 時間で変わるマスだけ（2026-09-25） */
@@ -21151,6 +21829,7 @@ function drawTiles(){
   oknVeil();                             /* 沖縄：軒の ひさし・屋根の シーサー・ブーゲンビリア・川と 浅瀬の 水（タイルの あと。2026-10-11） */
   ngsVeil();                             /* 長崎：中島川の 水と アーチの かげ・表門橋の らんかん・電車の パンタグラフ・ちょうちん（タイルの あと。2026-10-11） */
   sgaVeil();                             /* 佐賀：澪と 濠の 水・窯と 煙突の けむり（タイルの あと。2026-10-11） */
+  myzVeil();                             /* 宮崎：ボス部屋の 熟す マンゴー・洗濯板の みぞの 波・五ヶ瀬川の 水と ボート・滝つぼ・灯ろうと かがり火（タイルの あと。2026-10-11） */
   oitVeil();                             /* 大分：ボス部屋の 地ごくの 色の 床・池の 湯と 泥・町の 湯けむり・吊橋の 手すり・洞門の 暗がり（タイルの あと。2026-10-11） */
   kagawaVeil();                          /* 香川：工場の 入口の のれん・釜の 湯気・小麦粉の ほこり（タイルの あと。2026-09-25） */
   drawPresses(r0,r1);
@@ -21663,6 +22342,9 @@ function solidTile(x,y,c,r,st){
   } else if(OIT_ST.indexOf(st)>=0){
     /* 大分（別府の 地獄めぐりと 耶馬渓と 九重“夢”大吊橋。2026-10-11）。下の oitTile */
     oitTile(x,y,c,r,st);
+  } else if(MYZ_ST.indexOf(st)>=0){
+    /* 宮崎（青島の 鬼の洗濯板と 日南海岸と 高千穂峡と 夜神楽。2026-10-11）。下の myzTile */
+    myzTile(x,y,c,r,st);
   } else if(st==="wood"){
     /* 岐阜：合掌造りの 木の壁・床（たての板と、太い はり） */
     px(x,y,16,16,PAL.tile);
@@ -22863,6 +23545,7 @@ function drawPickups(){
     if(k.drop && k.life<120 && Math.floor(k.life/5)%2===0) continue;
     var b=(k.drop&&k.vy!==0)?0:Math.sin(k.t*0.11)*2;
     var x=Math.round(k.x), y=Math.round(k.y+b);
+    if(k.myz && typeof myzDrawPickup==="function"){ myzDrawPickup(x,y); continue; }   /* 宮崎：撃ち落とした 青い マンゴーの ごほうび（26_bossfx.js myzHealDrop。2026-10-11） */
 
     if(k.kind==="ammo"){
       /* 特殊武器のエネルギー。いなずま入りの電池 */
@@ -24310,6 +24993,9 @@ function drawBullets(){
     } else if(k==="oitshibuki"||k==="oitjoki"||k==="oitshizuku"){
       /* 大分：ジゴクユゲンの 熱湯の しぶき・湯気の 柱（下の oitDrawShot） */
       oitDrawShot(b,k);
+    } else if(k==="myzdon"||k==="myzpan"||k==="myzpoto"){
+      /* 宮崎：マンゴリラの 衝撃波・はじけた マンゴーの しぶき・落ちた マンゴー（下の myzDrawShot） */
+      myzDrawShot(b,k);
     } else if(k==="asohinoko"){
       /* 熊本：顔を 出した 竜が はく ひのこ（まっすぐ とぶ 小さな 炎） */
       var kx=b.x+b.w/2, ky=b.y+b.h/2, kd=(b.vx<0)?-1:1;
@@ -24568,6 +25254,7 @@ function beltTile(x,y,c,t){
   if(PAL.kcKawa && typeof kcKawaTile==="function"){ kcKawaTile(x,y,c,t); return; }    /* 高知：四万十川の 浅い 流れ（2026-09-25） */
   if(PAL.fkBelt && typeof fkBeltTile==="function"){ fkBeltTile(x,y,c,t); return; }    /* 福岡：中洲の 動く 歩道（2026-09-25） */
   if(PAL.sgaGata && typeof sgaGataTile==="function"){ sgaGataTile(x,y,c,t); return; }  /* 佐賀：ガタスキーの すべり道（2026-10-11） */
+  if(PAL.myzNami && typeof myzNamiTile==="function"){ myzNamiTile(x,y,c,t); return; }  /* 宮崎：鬼の洗濯板の みぞの 引き波（2026-10-11） */
   var d=(t===">")?1:-1;
   px(x,y,TS,TS,PAL.tileLo);
   px(x,y+3,TS,10,PAL.tileEdge);
@@ -24725,6 +25412,9 @@ function drawPresses(r0,r1){
       ctx.strokeStyle="#8a6a3a"; ctx.lineWidth=1; ctx.beginPath(); ctx.ellipse(x+8,sb-9,9,9,0,0,Math.PI*2); ctx.stroke();
       ctx.fillStyle="#c8321e"; ctx.font="bold 6px system-ui, sans-serif"; ctx.textAlign="center"; ctx.fillText("宮",x+8,sb-7); ctx.textAlign="left";
       if(f>0 && f<1){ ctx.globalAlpha=0.5; px(x-1,sb+1,TS+2,2,"#ffffff"); ctx.globalAlpha=1; }
+    } else if(kd==="myzmango"){
+      /* 宮崎：マンゴーの ハウスで 熟して 落ちる マンゴー（ひもで つるした 白い ネット）。下の はしが 危ない所 */
+      myzMangoPress(x,top,bottom,f,pr);
     } else if(kind==="fang"){
       var h=Math.max(6,bottom-top);
       ctx.fillStyle="#f7f2e8";
@@ -30295,6 +30985,496 @@ function oitDrawShot(b,k){
   }
 }
 
+/* ============================ 宮崎（青島の 鬼の洗濯板と 日南海岸と 高千穂峡と 夜神楽。2026-10-11） ============================
+   ⚠️ 名前は myz（ほかの 県と ぶつけない。test_dupnames.js が 見張る）。
+   床タイル（solidTile から）：myz_suna＝青島の 砂浜・myz_hashi＝弥生橋の 床・myz_umi＝橋の 下の 海（岩の マスを 海の 色で）・
+   myz_sentaku＝鬼の洗濯板（かたい 岩と やわらかい 岩が こうごに 重なった しま）・myz_iso＝平らな 岩だな（潮だまり・フジツボ）・
+   myz_jinja＝青島神社の 石だたみ・myz_road＝日南海岸の 道路（白い 線・中央の しきりの 植えこみ・下は 崖）・myz_yashi＝フェニックスの 葉の 上・
+   myz_shiba＝サンメッセの 丘の 芝生・myz_daiza＝モアイの 台座・myz_moai＝モアイ（3×3マスで 1体の 顔）・myz_hatake＝ハウスの 床（黒い マルチ）・
+   myz_hachi＝マンゴーの 木の 鉢（木の 板）・myz_vinyl＝ハウスの 天井（鉄の ほねと ビニール）・myz_chuu＝高千穂峡の 柱状節理・
+   myz_kawa＝五ヶ瀬川の 川底（まるい 石）・myz_fune＝貸しボート（白い ふなべりと 木の 床）・myz_gake＝がけの 上・遊歩道（こけと シダ）・
+   myz_sando＝夜の 参道の 石だたみ・myz_kaguraden＝神楽殿の 板の 床。
+   引き波（<）は myzNamiTile＝ぬれた 岩の みぞを 左へ 流れる 波・熟して 落ちる マンゴー（P）は myzMangoPress。
+   飾り＝myzArt（タイルの 前：立て札・弥生橋の 手すりと 街灯・ビロウの 木と 朱の 鳥居・フェニックスの 幹・ハウスの アーチと マンゴーの 木・
+         真名井の滝・参道の 鳥居と 夫婦杉と 灯ろう・神楽殿の 注連縄と 彫り物と 天岩戸）・
+         myzVeil（タイルの あと：ボス部屋の マンゴーと 水たまり・洗濯板の みぞに 寄せては 引く 波・五ヶ瀬川の 水と ボートの 船体・滝つぼの しぶき・灯ろうの 火）・
+         myzFront（主人公の あと：みぞと 川の 水面）。
+   ⚠️ タイルの 絵は 時間（frame）を 読まない（地形の キャッシュに 入る）。乱数の かわりの h は >>> で 取り出す（>> だと 負に なって マスの 外＝空に 点が 出る） */
+var MYZ_ST=["myz_suna","myz_hashi","myz_umi","myz_sentaku","myz_iso","myz_jinja","myz_road","myz_yashi","myz_shiba","myz_daiza","myz_moai",
+            "myz_hatake","myz_hachi","myz_vinyl","myz_chuu","myz_kawa","myz_fune","myz_gake","myz_sando","myz_kaguraden"];
+var _myzCache={n:-1,d:null};
+function myzDesc(){
+  if(_myzCache.n===stageIdx) return _myzCache.d;
+  var d=null;
+  if(typeof zonesOf==="function"){
+    var zs=zonesOf();
+    for(var i=0;i<zs.length;i++){ var p=zs[i].pal; if(p && p.myzArt){ try{ d=JSON.parse(p.myzArt); }catch(e){ d=null; } break; } }
+  }
+  _myzCache={n:stageIdx,d:d};
+  return d;
+}
+function myzIn(list,c){ if(!list) return -1; for(var i=0;i<list.length;i++) if(c>=list[i][0] && c<=list[i][1]) return i; return -1; }
+/* 地面の 深い ところ（上から 3行め より 下）：くらい 土に 小石 */
+function myzDeep(x,y,h,col){
+  ctx.fillStyle=PAL.tileEdge; ctx.globalAlpha=0.35;
+  ctx.fillRect(x+(h%13),y+((h>>>4)%13),2,1); ctx.fillRect(x+((h>>>8)%12),y+((h>>>12)%12),3,2);
+  ctx.globalAlpha=1;
+  if((h%5)===0){ ctx.fillStyle=col||PAL.tile; ctx.beginPath(); ctx.ellipse(x+4+((h>>>16)%8),y+5+((h>>>20)%7),2.6,1.8,0,0,Math.PI*2); ctx.fill(); }
+}
+function myzTile(x,y,c,r,st){
+  var SL="#=IbK<>M";
+  var openAbove=(SL.indexOf(tileAt(c,r-1))<0), openBelow=(SL.indexOf(tileAt(c,r+1))<0), openL=(SL.indexOf(tileAt(c-1,r))<0), openR=(SL.indexOf(tileAt(c+1,r))<0);
+  var h=(((c*73856093)^(r*19349663))>>>0), i;
+  var deep=0; for(var k=1;k<=3;k++){ if(SL.indexOf(tileAt(c,r-k))<0){ deep=k-1; break; } deep=k; }
+  var d=myzDesc();
+  function edges(){ if(openL) px(x,y,2,16,PAL.tileEdge); if(openR) px(x+14,y,2,16,PAL.tileEdge); }
+  if(st==="myz_suna"){                                                          /* 青島の 砂浜：こまかい 砂と 貝がら */
+    px(x,y,16,16,deep>=2?PAL.tileLo:PAL.tile);
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(x+((h>>>2)%13),y+5+((h>>>6)%9),1,1); ctx.fillRect(x+((h>>>9)%13),y+9+((h>>>13)%6),1,1);
+    ctx.fillStyle=PAL.tileHi; ctx.fillRect(x+((h>>>5)%14),y+3+((h>>>11)%10),1,1);
+    if(deep>=2){ myzDeep(x,y,h,"#c8b080"); edges(); return; }
+    if(openAbove){
+      px(x,y,16,3,PAL.tileHi); px(x,y+3,16,1,"#d8bc84");
+      if((h%5)===0){ ctx.fillStyle="#ffd8e0"; ctx.beginPath(); ctx.ellipse(x+3+((h>>>7)%9),y+1.5,2,1.3,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#e8a8b8"; ctx.fillRect(x+3+((h>>>7)%9),y+1,1,1); }   /* 桜貝 */
+      if((h%7)===3){ ctx.fillStyle="#ffffff"; ctx.fillRect(x+((h>>>4)%13),y+1,2,1); }
+    }
+    edges(); return;
+  }
+  if(st==="myz_hashi"){                                                         /* 弥生橋の 床：コンクリートの 板と けた */
+    px(x,y,16,5,"#d8d4cc"); px(x,y,16,1,"#f4f2ec"); px(x,y+4,16,1,"#a8a49c");
+    if((c%3)===0) px(x,y,1,5,"#8a867e");
+    px(x,y+5,16,11,"#9a968e"); px(x,y+5,16,2,"#6a665e"); px(x,y+14,16,2,"#7a766e");
+    ctx.fillStyle="#b8b4ac"; ctx.fillRect(x+2+((c%2)?6:0),y+9,4,1);
+    return;
+  }
+  if(st==="myz_umi"){                                                           /* 橋の 下の 海（岩の マスを 海の 色で。橋脚は 6列おき） */
+    var dep=(d?r-(d.G0+1):1);
+    px(x,y,16,16,dep<=0?"#3a9ac8":(dep===1?"#2a80b0":(dep===2?"#1a6898":"#125280")));
+    ctx.fillStyle=(dep<=0)?"#9ae0f4":"#4aa0c8";
+    ctx.fillRect(x+((h>>>3)%10),y+2+((h>>>7)%5),5,1); ctx.fillRect(x+((h>>>11)%9),y+9+((h>>>15)%5),4,1);
+    if(dep<=0){ ctx.fillStyle="#d8f4ff"; ctx.fillRect(x,y,16,1); }
+    if((c%6)===2||(c%6)===3){ px(x+((c%6)===2?6:0),y,10,16,"#8a867e"); px(x+((c%6)===2?6:0),y,2,16,"#aeaaa2"); if(dep<=0) px(x+((c%6)===2?6:0),y+2,10,2,"#c8f0ff"); }   /* 橋脚（水の 線） */
+    return;
+  }
+  if(st==="myz_sentaku"){                                                       /* 鬼の洗濯板：かたい 岩（明るい しま）と やわらかい 岩（くぼんだ しま）が 4px ずつ */
+    px(x,y,16,16,PAL.tile);
+    for(i=0;i<4;i++){ var sy=y+i*4; if(((r*4+i)%2)===0){ px(x,sy,16,2,PAL.tileHi); px(x,sy+2,16,1,PAL.tile); } else { px(x,sy,16,3,PAL.tileLo); px(x,sy+3,16,1,PAL.tileEdge); } }
+    if(deep>=2){ ctx.globalAlpha=0.35; px(x,y,16,16,PAL.tileEdge); ctx.globalAlpha=1; edges(); return; }
+    if(openAbove){
+      ctx.fillStyle=PAL.tileHi; ctx.beginPath(); ctx.moveTo(x,y+4); ctx.quadraticCurveTo(x+8,y-1,x+16,y+4); ctx.lineTo(x+16,y+5); ctx.lineTo(x,y+5); ctx.closePath(); ctx.fill();
+      px(x+2,y+1,6,1,"#e8e2cc");                                                   /* ぬれて 光る */
+      if((h%3)===0){ ctx.fillStyle="#3a7a3a"; ctx.fillRect(x+((h>>>5)%12),y+3,3,2); ctx.fillStyle="#5aa84a"; ctx.fillRect(x+((h>>>5)%12),y+3,1,1); }   /* 海そう */
+      if((h%4)===1){ ctx.fillStyle="#f4f0e4"; ctx.fillRect(x+((h>>>9)%13),y+5,2,2); ctx.fillStyle="#8a867a"; ctx.fillRect(x+((h>>>9)%13),y+6,1,1); }   /* フジツボ */
+    }
+    edges(); return;
+  }
+  if(st==="myz_iso"){                                                           /* 平らな 岩だな：潮だまり・フジツボ */
+    px(x,y,16,16,deep>=2?PAL.tileLo:PAL.tile);
+    ctx.fillStyle=PAL.tileLo; ctx.globalAlpha=0.7; ctx.fillRect(x,y+6+(r%2)*3,16,1); ctx.globalAlpha=1;
+    if(deep>=2){ myzDeep(x,y,h,"#8a8474"); edges(); return; }
+    if(openAbove){
+      px(x,y,16,3,PAL.tileHi); px(x,y+3,16,1,PAL.tileLo);
+      if((h%3)===0){ ctx.fillStyle="#2a6a8a"; ctx.beginPath(); ctx.ellipse(x+8,y+1.5,5,1.6,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#8ad0e8"; ctx.fillRect(x+5,y+1,3,1); }   /* 潮だまり */
+      if((h%4)===2){ ctx.fillStyle="#f0ece0"; ctx.fillRect(x+((h>>>6)%12),y+3,2,2); }
+    }
+    edges(); return;
+  }
+  if(st==="myz_jinja"){                                                         /* 青島神社の 石だたみ（目地を ずらす）・上は じゃり */
+    px(x,y,16,16,deep>=2?PAL.tileLo:PAL.tile);
+    var off=(r%2)?8:0;
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(x,y+7,16,1); ctx.fillRect(x,y+15,16,1); ctx.fillRect(x+off,y,1,7); ctx.fillRect(x+((off+8)%16),y+8,1,7);
+    ctx.fillStyle=PAL.tileHi; ctx.fillRect(x+1+off%8,y+1,5,1);
+    if(deep>=2){ myzDeep(x,y,h,"#a8a090"); edges(); return; }
+    if(openAbove){ px(x,y,16,3,"#e8e2d4"); px(x,y+3,16,1,PAL.tileLo); ctx.fillStyle="#b8b0a0"; for(i=0;i<3;i++) ctx.fillRect(x+((h>>>(i*4))%14),y+1,1,1); }
+    edges(); return;
+  }
+  if(st==="myz_road"){                                                          /* 日南海岸の 道路（下は 崖）。中央の しきり＝植えこみと ハイビスカス */
+    var bump=d?myzIn(d.bump,c)>=0:false;
+    if(deep>=1 && !(openAbove)){                                              /* 道の 下：日南の 崖（砂岩と 泥岩の しま） */
+      px(x,y,16,16,deep>=2?"#6a5e4a":"#7a6e58");
+      ctx.fillStyle="#5a4e3a"; ctx.fillRect(x,y+4+(r%3)*4,16,1);
+      ctx.fillStyle="#8e826a"; ctx.fillRect(x+((h>>>3)%12),y+2+((h>>>7)%10),3,1);
+      if(deep>=2) myzDeep(x,y,h,"#7a6e58");
+      edges(); return;
+    }
+    if(bump){
+      px(x,y,16,16,"#7a6e58"); px(x,y,16,5,"#5a9a3a"); px(x,y+5,16,2,"#c8c4bc"); px(x,y+7,16,1,"#8a867e");
+      ctx.fillStyle="#7ac84a"; for(i=0;i<4;i++) ctx.fillRect(x+1+i*4,y-2+((h>>>i)%2),1,3);
+      if((h%2)===0){ ctx.fillStyle="#ff3a4a"; ctx.beginPath(); ctx.arc(x+4+((h>>>5)%8),y+1,2.2,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#ffe070"; ctx.fillRect(x+4+((h>>>5)%8),y+1,1,1); }   /* ハイビスカス */
+      edges(); return;
+    }
+    px(x,y,16,16,PAL.tile);
+    px(x,y,16,2,PAL.tileHi); px(x,y+2,16,1,PAL.tileLo);
+    if((c%3)!==2) px(x+2,y+5,12,2,"#f4f4f0");                                 /* 白い 点線 */
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(x+((h>>>4)%13),y+9+((h>>>8)%5),2,1); ctx.fillRect(x+((h>>>12)%13),y+12,1,1);
+    px(x,y+14,16,2,"#7a6e58");
+    edges(); return;
+  }
+  if(st==="myz_yashi"){                                                         /* フェニックスの 葉の ねもと（乗れる ところ）。大きく たれる 葉は myzVeil の myzCrown */
+    px(x,y+2,16,6,PAL.tile); px(x,y+2,16,1,PAL.tileHi); px(x,y+7,16,1,PAL.tileLo);
+    ctx.fillStyle=PAL.tileHi; for(i=0;i<4;i++){ ctx.beginPath(); ctx.moveTo(x+i*4,y+3); ctx.lineTo(x+i*4+2,y); ctx.lineTo(x+i*4+4,y+3); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle=PAL.tileLo; for(i=0;i<4;i++) ctx.fillRect(x+i*4+1,y+5,2,1);
+    var yi=d?myzIn(d.yashi,c):-1;
+    if(yi>=0 && c===d.yashi[yi][0]+2){ ctx.fillStyle="#f09a2a"; for(i=0;i<5;i++){ ctx.beginPath(); ctx.arc(x+4+i*2,y+10+(i%2),1.6,0,Math.PI*2); ctx.fill(); } }   /* だいだいの 実 */
+    return;
+  }
+  if(st==="myz_shiba"){                                                         /* サンメッセの 丘：芝生と 土 */
+    px(x,y,16,16,deep>=2?PAL.tileLo:PAL.tile);
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(x+((h>>>2)%12),y+7+((h>>>6)%7),3,2);
+    if(deep>=2){ myzDeep(x,y,h,"#7a5a3a"); edges(); return; }
+    if(openAbove){ px(x,y,16,5,"#5aa83a"); px(x,y+5,16,1,"#3a6a22"); ctx.fillStyle="#8ad85a"; for(i=0;i<4;i++) ctx.fillRect(x+1+i*4+((h>>>i)%2),y-2,1,3); if((h%4)===0){ ctx.fillStyle="#ffe070"; ctx.fillRect(x+((h>>>5)%13),y+1,2,2); } }
+    edges(); return;
+  }
+  if(st==="myz_daiza"){                                                         /* モアイの 台座：大きな 石を 積んだ 段 */
+    px(x,y,16,16,deep>=2?PAL.tileLo:PAL.tile);
+    var off2=(r%2)?0:8;
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(x,y+7,16,1); ctx.fillRect(x,y+15,16,1); if((c%2)===0) ctx.fillRect(x+off2,y,1,16);
+    ctx.fillStyle=PAL.tileHi; ctx.fillRect(x+2,y+1,4,1); ctx.fillRect(x+9,y+9,4,1);
+    if(openAbove){ px(x,y,16,3,PAL.tileHi); px(x,y+3,16,1,PAL.tileLo); if((h%3)===0){ ctx.fillStyle="#6a9a4a"; ctx.fillRect(x+((h>>>4)%12),y+2,3,1); } }
+    edges(); return;
+  }
+  if(st==="myz_moai"){                                                          /* モアイ（3×3マスで 1体。顔の 絵を マスの 中で 切りぬく） */
+    var mi=d?myzIn(d.moai,c):-1;
+    px(x,y,16,16,PAL.tile);
+    if(mi<0){ edges(); return; }
+    var ox=d.moai[mi][0]*TS, oy=(d.H-3)*TS, MW=48, MH=48;
+    ctx.save(); ctx.beginPath(); ctx.rect(x,y,16,16); ctx.clip();
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(ox,oy,4,MH); ctx.fillRect(ox+MW-5,oy,5,MH);                           /* 体の かげ */
+    ctx.fillStyle=PAL.tileHi; ctx.fillRect(ox+6,oy+2,MW-14,3);                                                      /* 頭の 上の 光 */
+    ctx.fillStyle=PAL.tileEdge; ctx.fillRect(ox+7,oy+10,MW-14,3);                                                   /* まゆの でっぱり の かげ */
+    ctx.fillStyle=PAL.tileHi; ctx.fillRect(ox+7,oy+8,MW-14,2);
+    ctx.fillStyle="#2a2620"; ctx.fillRect(ox+11,oy+13,9,6); ctx.fillRect(ox+MW-20,oy+13,9,6);                     /* ふかい 目の くぼみ */
+    ctx.fillStyle=PAL.tileHi; ctx.beginPath(); ctx.moveTo(ox+MW/2-3,oy+11); ctx.lineTo(ox+MW/2+3,oy+11); ctx.lineTo(ox+MW/2+5,oy+28); ctx.lineTo(ox+MW/2-5,oy+28); ctx.closePath(); ctx.fill();   /* 長い はな */
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(ox+MW/2+3,oy+14,2,14); ctx.fillRect(ox+MW/2-6,oy+27,4,2); ctx.fillRect(ox+MW/2+2,oy+27,4,2);
+    ctx.fillStyle=PAL.tileEdge; ctx.fillRect(ox+MW/2-8,oy+32,16,2); ctx.fillStyle=PAL.tileHi; ctx.fillRect(ox+MW/2-7,oy+34,14,1);   /* むすんだ 口 */
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(ox+MW/2-9,oy+38,18,2);                                                    /* あご */
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(ox+3,oy+12,4,18); ctx.fillRect(ox+MW-7,oy+12,4,18);                    /* 長い 耳 */
+    ctx.fillStyle=PAL.tileEdge; ctx.fillRect(ox+4,oy+42,MW-8,1); ctx.fillRect(ox+10,oy+44,10,1); ctx.fillRect(ox+MW-20,oy+44,10,1);   /* うでと 手の すじ */
+    ctx.fillStyle="#8aa86a"; ctx.globalAlpha=0.55; ctx.fillRect(ox+30,oy+3,6,2); ctx.fillRect(ox+8,oy+36,4,3); ctx.globalAlpha=1;   /* こけ */
+    ctx.restore();
+    if(openL) px(x,y,2,16,PAL.tileEdge); if(openR) px(x+14,y,2,16,PAL.tileEdge);
+    return;
+  }
+  if(st==="myz_hatake"){                                                        /* ハウスの 床：黒い マルチ（ビニール）と 土 */
+    px(x,y,16,16,deep>=2?PAL.tileLo:PAL.tile);
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(x+((h>>>2)%12),y+7+((h>>>6)%7),3,2);
+    if(deep>=2){ myzDeep(x,y,h,"#5a3e28"); edges(); return; }
+    if(openAbove){ px(x,y,16,4,"#2a2a2e"); px(x,y,16,1,"#5a5a62"); ctx.fillStyle="#4a4a52"; ctx.fillRect(x+((h>>>3)%10),y+1,5,1); if((h%5)===0){ ctx.fillStyle="#c8a860"; ctx.fillRect(x+((h>>>7)%13),y+3,3,1); } }   /* マルチ・わら */
+    edges(); return;
+  }
+  if(st==="myz_hachi"){                                                         /* マンゴーの 木の 鉢：木の 板の 枠と 土 */
+    px(x,y,16,16,PAL.tile);
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(x,y+5,16,1); ctx.fillRect(x,y+11,16,1);
+    ctx.fillStyle=PAL.tileHi; ctx.fillRect(x,y+6,16,1);
+    if(openL) px(x,y,3,16,"#5a3018"); if(openR) px(x+13,y,3,16,"#5a3018");
+    if(openAbove){ px(x,y,16,4,"#4a3020"); px(x,y,16,1,"#6a4a30"); ctx.fillStyle="#8a6a40"; ctx.fillRect(x+((h>>>4)%12),y+1,3,1); }
+    return;
+  }
+  if(st==="myz_vinyl"){                                                         /* ハウスの 天井：白い 鉄パイプと すける ビニール */
+    px(x,y,16,16,PAL.tile);
+    px(x,y,16,3,PAL.tileHi); px(x,y+7,16,2,PAL.tileHi); px(x,y+13,16,3,PAL.tileLo);
+    ctx.fillStyle=PAL.tileEdge; ctx.fillRect(x+((c%2)?3:11),y+3,2,10);                                            /* つり金具 */
+    ctx.fillStyle="#ffffff"; ctx.fillRect(x+1,y+1,10,1);
+    if(openBelow){ px(x,y+15,16,1,"#5a6468"); }
+    return;
+  }
+  if(st==="myz_chuu"){                                                          /* 高千穂峡の 柱状節理：たてに ならぶ 六角の 柱 */
+    px(x,y,16,16,deep>=2?PAL.tileLo:PAL.tile);
+    for(i=0;i<3;i++){ var cxx=x+i*6-((c%2)?3:0); ctx.fillStyle=(i%2)?PAL.tileHi:PAL.tile; ctx.fillRect(cxx+1,y,3,16); ctx.fillStyle=PAL.tileEdge; ctx.fillRect(cxx+5,y,1,16); }   /* 柱と 柱の われめ */
+    if(((h>>>3)%4)===0){ ctx.fillStyle=PAL.tileEdge; ctx.fillRect(x+((h>>>6)%10),y+((h>>>9)%14),5,1); }          /* よこの ひび */
+    if(deep>=2){ ctx.globalAlpha=0.3; px(x,y,16,16,PAL.tileEdge); ctx.globalAlpha=1; }
+    if(openAbove){                                                                                                  /* 柱の あたま（六角の ふた）と こけ */
+      for(i=0;i<3;i++){ var hx2=x+i*6-((c%2)?3:0); ctx.fillStyle=PAL.tileHi; ctx.beginPath(); ctx.moveTo(hx2,y+2); ctx.lineTo(hx2+2,y); ctx.lineTo(hx2+4,y); ctx.lineTo(hx2+6,y+2); ctx.lineTo(hx2+4,y+4); ctx.lineTo(hx2+2,y+4); ctx.closePath(); ctx.fill(); }
+      if((h%2)===0){ ctx.fillStyle="#4a8a3a"; ctx.fillRect(x+((h>>>4)%10),y,5,2); ctx.fillStyle="#7ab85a"; ctx.fillRect(x+((h>>>4)%10)+1,y,2,1); }
+    }
+    edges(); return;
+  }
+  if(st==="myz_kawa"){                                                          /* 五ヶ瀬川の 川底：まるい 石 */
+    px(x,y,16,16,deep>=2?PAL.tileLo:PAL.tile);
+    for(i=0;i<3;i++){ var rx=x+2+((h>>>(i*5))%11), ry=y+3+((h>>>(i*5+2))%10); ctx.fillStyle=(i%2)?PAL.tileHi:PAL.tileLo; ctx.beginPath(); ctx.ellipse(rx,ry,3,2,0,0,Math.PI*2); ctx.fill(); }
+    if(openAbove){ px(x,y,16,2,PAL.tileHi); ctx.fillStyle="#9ab88a"; ctx.fillRect(x+((h>>>3)%12),y,4,1); }
+    edges(); return;
+  }
+  if(st==="myz_fune"){                                                          /* 貸しボート：白い ふなべり・赤い 線・木の 床・まん中に こしかけ */
+    px(x,y,16,4,"#f4f2ea"); px(x,y+3,16,1,"#c8402a"); px(x,y+4,16,4,"#a87a4a"); px(x,y+4,16,1,"#d0a070"); px(x,y+8,16,8,"#e8e4d8"); px(x,y+8,16,1,"#ffffff"); px(x,y+14,16,2,"#a8a498");
+    var fi=d?myzIn(d.fune,c):-1;
+    if(fi>=0 && c===d.fune[fi][0]+2){ px(x+2,y+1,12,2,"#8a5a2a"); }                                              /* こしかけ */
+    if(fi>=0 && (c===d.fune[fi][0]+1||c===d.fune[fi][1]-1)){ px(x+7,y-3,2,4,"#5a3a1a"); }                          /* オール受け */
+    if(openL){ ctx.fillStyle="#e8e4d8"; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-5,y+1); ctx.lineTo(x,y+12); ctx.closePath(); ctx.fill(); }   /* へさき */
+    if(openR){ ctx.fillStyle="#e8e4d8"; ctx.beginPath(); ctx.moveTo(x+16,y); ctx.lineTo(x+21,y+1); ctx.lineTo(x+16,y+12); ctx.closePath(); ctx.fill(); }
+    return;
+  }
+  if(st==="myz_gake"){                                                          /* がけの 上・遊歩道：こけと シダ */
+    px(x,y,16,16,deep>=2?PAL.tileLo:PAL.tile);
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(x+((h>>>2)%12),y+6+((h>>>6)%8),3,2);
+    if(deep>=2){ myzDeep(x,y,h,"#4e4e48"); edges(); return; }
+    if(openAbove){
+      px(x,y,16,4,"#3a7a3a"); px(x,y+4,16,1,"#22421e");
+      ctx.fillStyle="#6ab84a"; ctx.fillRect(x+((h>>>5)%12),y,3,1);
+      if((h%3)===0){ ctx.strokeStyle="#4a9a3a"; ctx.lineWidth=1; ctx.beginPath(); var fx=x+3+((h>>>7)%9); ctx.moveTo(fx,y); ctx.quadraticCurveTo(fx-3,y-4,fx-6,y-3); ctx.moveTo(fx,y); ctx.quadraticCurveTo(fx+3,y-5,fx+6,y-4); ctx.stroke(); }   /* シダ */
+    }
+    edges(); return;
+  }
+  if(st==="myz_sando"){                                                         /* 夜の 参道：石だたみ・こけ */
+    px(x,y,16,16,deep>=2?PAL.tileLo:PAL.tile);
+    var off3=(r%2)?5:0;
+    ctx.fillStyle=PAL.tileLo; ctx.fillRect(x,y+7,16,1); ctx.fillRect(x+off3,y,1,7); ctx.fillRect(x+off3+8,y+8,1,8);
+    if(deep>=2){ myzDeep(x,y,h,"#5a5660"); edges(); return; }
+    if(openAbove){ px(x,y,16,3,PAL.tileHi); px(x,y+3,16,1,PAL.tileLo); if((h%3)===0){ ctx.fillStyle="#3a6a3a"; ctx.fillRect(x+((h>>>4)%12),y+2,4,1); } }
+    edges(); return;
+  }
+  if(st==="myz_kaguraden"){                                                     /* 神楽殿の 板の 床（みがいた 板・ふちは 黒い 木） */
+    if(openAbove){ px(x,y,16,6,"#a8743a"); px(x,y,16,1,"#e0a868"); px(x,y+5,16,1,"#5a3a1a"); if((c%3)===0) px(x,y,1,6,"#6a4420"); ctx.fillStyle="#c8904a"; ctx.fillRect(x+((h>>>3)%10),y+2,5,1);
+      px(x,y+6,16,10,"#3a2414"); px(x,y+6,16,2,"#1e120a"); }
+    else { px(x,y,16,16,"#2e1c10"); myzDeep(x,y,h,"#3a2414"); }
+    return;
+  }
+  px(x,y,16,16,PAL.tile); edges();
+}
+/* 鬼の洗濯板の みぞ（<）：ぬれた 岩の みぞを 引き波が 左へ 流れる（すじと あわ）。⚠️ 時間で 変わるので キャッシュには 入らない（TC_ALWAYS の <） */
+function myzNamiTile(x,y,c,t){
+  px(x,y,16,16,PAL.tile); px(x,y,16,1,PAL.tileHi); px(x,y+12,16,4,PAL.tileLo);
+  var sh=(frame*BELT_V)%16, i;
+  ctx.fillStyle="rgba(120,200,230,.55)"; ctx.fillRect(x,y,16,5);
+  ctx.fillStyle="#d8f4ff"; for(i=0;i<2;i++){ var sx=x+((i*8+16-sh+c*5)%16); ctx.fillRect(sx,y+1+(i%2)*2,5,1); }   /* 左へ ながれる すじ */
+  ctx.fillStyle="#ffffff"; ctx.fillRect(x+((c*7+64-Math.floor(frame*BELT_V*0.5))%16),y,2,1);                          /* あわ */
+  ctx.fillStyle=PAL.tileLo; ctx.fillRect(x+3,y+7,4,1); ctx.fillRect(x+10,y+9,3,1);
+}
+function myzSign(sx,sy,txt,wd,L,R){ ngsSign(sx,sy,txt,wd,L,R); }
+/* フェニックス（カナリーヤシ）の 幹：ひし形の もようの 太い 幹（葉は タイルの myz_yashi） */
+function myzPhoenix(x,base,top){
+  px(x-5,top,10,base-top,"#8a6a44"); px(x-5,top,2,base-top,"#a8865a"); px(x+3,top,2,base-top,"#5a4428");
+  ctx.strokeStyle="#5a4428"; ctx.lineWidth=1; ctx.beginPath();
+  for(var y=top+4;y<base;y+=6){ ctx.moveTo(x-5,y); ctx.lineTo(x,y+3); ctx.lineTo(x+5,y); }
+  ctx.stroke();
+}
+/* ビロウ（青島に しげる ヤシの なかま）：細い 幹と 扇の 葉 */
+function myzBirou(x,base,s,k){
+  px(x-1.5*s,base-40*s,3*s,40*s,"#7a6a4a");
+  for(var i=0;i<9;i++){ var a=-Math.PI*0.95+i*Math.PI*0.11+(k||0)*0.05, L=18*s; ctx.strokeStyle=(i%2)?"#2e7a3a":"#3e9a4a"; ctx.lineWidth=2.4*s; ctx.beginPath(); ctx.moveTo(x,base-40*s); ctx.quadraticCurveTo(x+Math.cos(a)*L*0.6,base-40*s+Math.sin(a)*L*0.6-4*s,x+Math.cos(a)*L,base-40*s+Math.sin(a)*L*0.5+6*s); ctx.stroke(); }
+  ctx.lineWidth=1;
+}
+/* 鳥居（col＝はしらの 色） */
+function myzTorii(cx,base,w,hh,col,dark){
+  px(cx-w/2+3,base-hh,5,hh,col); px(cx+w/2-8,base-hh,5,hh,col);
+  px(cx-w/2-4,base-hh-6,w+8,6,col); px(cx-w/2-6,base-hh-8,w+12,3,dark||"#2a1a14"); px(cx-w/2+1,base-hh+8,w-2,4,col);
+  px(cx-4,base-hh-2,8,10,dark||"#2a1a14");
+}
+/* 杉の 巨木（夫婦杉）。s＝大きさ */
+function myzSugi(x,base,hh){
+  px(x-6,base-hh,12,hh,"#4a3020"); px(x-6,base-hh,3,hh,"#6a4a30"); px(x+3,base-hh,3,hh,"#2e1c10");
+  ctx.fillStyle="#1e3a2a"; for(var i=0;i<4;i++){ ctx.beginPath(); ctx.moveTo(x-22+i*3,base-hh+30+i*22); ctx.lineTo(x,base-hh-10+i*22); ctx.lineTo(x+22-i*3,base-hh+30+i*22); ctx.closePath(); ctx.fill(); }
+}
+/* 石灯ろう（火は myzVeil） */
+function myzToro(x,base){
+  px(x-6,base-4,12,4,"#7a7680"); px(x-2,base-18,4,14,"#8a8690"); px(x-7,base-28,14,10,"#8a8690"); px(x-5,base-26,10,6,"#3a2a1a");
+  ctx.fillStyle="#6a6670"; ctx.beginPath(); ctx.moveTo(x-10,base-28); ctx.lineTo(x,base-36); ctx.lineTo(x+10,base-28); ctx.closePath(); ctx.fill(); px(x-1,base-39,2,3,"#6a6670");
+}
+/* ハウスの 中の マンゴーの 木（鉢から 天井の 下まで。白い ネットに 入った 赤い マンゴー） */
+function myzMangoTree(cx,base,ceil){
+  px(cx-3,ceil+10,6,base-ceil-10,"#6a4a2a"); px(cx-3,ceil+10,2,base-ceil-10,"#8a6a40");
+  ctx.strokeStyle="#6a4a2a"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,ceil+24); ctx.lineTo(cx-18,ceil+12); ctx.moveTo(cx,ceil+20); ctx.lineTo(cx+20,ceil+10); ctx.stroke(); ctx.lineWidth=1;
+  ctx.fillStyle="#1e5a2a"; ctx.beginPath(); ctx.ellipse(cx,ceil+10,34,10,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#2e7a3a"; for(var i=0;i<7;i++){ ctx.beginPath(); ctx.ellipse(cx-28+i*9,ceil+9+(i%2)*3,6,2.4,(i%2)?0.5:-0.5,0,Math.PI*2); ctx.fill(); }
+  for(var k=0;k<3;k++){ var mx=cx-20+k*20, my=ceil+22+(k%2)*5;                                                    /* ネットの マンゴー */
+    ctx.strokeStyle="#f4f4f0"; ctx.beginPath(); ctx.moveTo(mx,ceil+14); ctx.lineTo(mx,my-5); ctx.stroke();
+    ctx.fillStyle="#d8302a"; ctx.beginPath(); ctx.ellipse(mx,my,4.5,5.5,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#f0902a"; ctx.fillRect(mx,my+1,2,2);
+    ctx.strokeStyle="rgba(255,255,255,.8)"; ctx.beginPath(); ctx.moveTo(mx-4,my-3); ctx.lineTo(mx+4,my+3); ctx.moveTo(mx+4,my-3); ctx.lineTo(mx-4,my+3); ctx.moveTo(mx-5,my); ctx.lineTo(mx+5,my); ctx.stroke(); }
+}
+/* フェニックスの 大きな 葉（乗れる ねもとの まわりに 横と 下へ たれる 葉。上の 葉は みじかい＝乗る 面を かくさない） */
+function myzCrown(cx,cy,k){
+  var sw=Math.sin(frame*0.03+k)*1.5, i, j;
+  var fr=[[-2.9,46,16],[-0.24,46,16],[-2.55,34,22],[-0.6,34,22],[2.2,26,10],[0.95,26,10],[1.57,18,6],[-1.9,14,-6],[-1.25,14,-6]];   /* [向き, 長さ, たれる 量] */
+  for(i=0;i<fr.length;i++){
+    var a=fr[i][0], len=fr[i][1], dr=fr[i][2];
+    var ex=cx+Math.cos(a)*len, ey=cy+Math.sin(a)*len*0.5+dr+sw*(i%2?1:-1), mx=cx+Math.cos(a)*len*0.55, my=cy+Math.sin(a)*len*0.3-4;
+    ctx.strokeStyle="#2a5a22"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.quadraticCurveTo(mx,my,ex,ey); ctx.stroke(); ctx.lineWidth=1;
+    for(j=1;j<8;j++){ var t=j/8, qx=(1-t)*(1-t)*cx+2*t*(1-t)*mx+t*t*ex, qy=(1-t)*(1-t)*cy+2*t*(1-t)*my+t*t*ey, ll=5*(1-t*0.6);
+      ctx.strokeStyle=(j%2)?"#3e8a32":"#5aa83a"; ctx.beginPath(); ctx.moveTo(qx,qy); ctx.lineTo(qx-ll*0.6,qy+ll); ctx.moveTo(qx,qy); ctx.lineTo(qx+ll*0.6,qy+ll); ctx.stroke(); }
+  }
+}
+/* 宮崎の 飾り（タイルの 前） */
+function myzArt(){
+  var d=myzDesc(); if(!d) return;
+  var L=cam.x-160, R=cam.x+VW+160, T=TS, i, x, k;
+  myzSign(1*T,d.G0*T,"あおしま",44,L,R);
+  var br=d.bridge, bx0=br[0]*T, bx1=(br[1]+1)*T, by=d.G0*T;                                   /* 弥生橋の 手すりと 街灯 */
+  if(bx1>L && bx0<R){
+    px(bx0,by-11,bx1-bx0,2,"#e8f0f0"); px(bx0,by-6,bx1-bx0,1,"#b8c8c8");
+    for(x=bx0+2;x<bx1;x+=16) px(x,by-12,2,12,"#c8d4d4");
+    for(x=bx0+40;x<bx1;x+=96){ px(x,by-40,2,40,"#5a6a72"); px(x-6,by-42,14,3,"#5a6a72"); px(x-5,by-40,6,3,"#fff4c0"); }
+    myzSign(bx0-6,by,"やよいばし",50,L,R);
+  }
+  myzSign((d.ridges[0][0]-1)*T,(d.G0-1)*T,"おにの せんたくいた",80,L,R);
+  var pl=d.plaza, pz=d.PZ*T;                                                                   /* 青島神社：ビロウの 林と 朱の 鳥居 */
+  if((pl[1]+12)*T>L && (pl[0]-14)*T<R){
+    myzBirou((pl[0]-6)*T,d.G0*T,1.1,0); myzBirou((pl[0]+1)*T,pz,0.9,2); myzBirou((pl[1]-1)*T,pz,1.2,1); myzBirou((pl[1]+3)*T,(d.R1)*T,1.0,3);
+    myzTorii((pl[0]+7)*T,pz,46,50,"#d8301e","#2a1a14");
+    px((pl[0]+10)*T,pz-30,30,30,"#c8401e"); px((pl[0]+10)*T-4,pz-36,38,6,"#3a2a22"); px((pl[0]+10)*T+11,pz-22,8,22,"#2a1a10");   /* 小さな お社 */
+    myzSign((d.jinja[0][0])*T,d.jinja[0][2]*T,"あおしまじんじゃ",70,L,R);
+  }
+  var yy=d.yashi;                                                                              /* フェニックス並木：葉の 下に 幹（葉は タイル） */
+  for(i=0;i<yy.length;i++){ var px2=(yy[i][0]+2.5)*T; if(px2<L||px2>R) continue; myzPhoenix(px2,(yy[i][2]+4)*T,yy[i][2]*T+8); }   /* 葉ごとに 1行ずつ 下る（下の 道は 葉の 4行 下） */
+  myzSign((d.road[0]+1)*T,d.R1*T,"にちなん かいがん",70,L,R);
+  myzSign((d.hill[0][0])*T,d.hill[0][2]*T,"サンメッセにちなん",76,L,R);
+  var hs=d.house;                                                                              /* マンゴーの ビニールハウス：アーチの 屋根・おくの ビニール・マンゴーの 木 */
+  for(i=0;i<hs.length;i++){
+    var ha=hs[i][0]*T, hb=(hs[i][1]+1)*T, ce=d.CE*T, fl=d.G2*T;
+    if(hb<L||ha>R) continue;
+    ctx.fillStyle="rgba(228,238,242,.38)"; ctx.fillRect(ha,ce+16,hb-ha,fl-ce-16);              /* おくの ビニールの かべ（すけて 見える） */
+    ctx.fillStyle="rgba(255,255,255,.35)"; for(x=ha+8;x<hb;x+=32) ctx.fillRect(x,ce+16,2,fl-ce-16);
+    ctx.fillStyle="rgba(232,240,244,.55)"; ctx.beginPath(); ctx.moveTo(ha,ce+2); ctx.quadraticCurveTo((ha+hb)/2,ce-44,hb,ce+2); ctx.closePath(); ctx.fill();   /* アーチの 屋根 */
+    ctx.strokeStyle="#f4f8fa"; ctx.lineWidth=1.5; for(x=ha;x<=hb;x+=32){ var u=(x-ha)/(hb-ha), ay=ce+2-92*u*(1-u); ctx.beginPath(); ctx.moveTo(x,ce+2); ctx.lineTo(x,ay); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(ha,ce+2); ctx.quadraticCurveTo((ha+hb)/2,ce-44,hb,ce+2); ctx.stroke(); ctx.lineWidth=1;
+    px(ha-3,ce,3,fl-ce,"#e8eef0"); px(hb,ce,3,fl-ce,"#e8eef0");                                 /* はしの 柱 */
+    px(hb-30,ce+20,14,14,"#5a6468"); ctx.fillStyle="#9aa4a8"; ctx.beginPath(); ctx.arc(hb-23,ce+27,5,0,Math.PI*2); ctx.fill();   /* 換気扇 */
+  }
+  for(i=0;i<d.hachi.length;i++){ var hc=d.hachi[i], mcx=(hc[0]+2)*T; if(mcx<L-60||mcx>R+60) continue; myzMangoTree(mcx,(d.G2-2)*T,d.CE*T+16); }
+  myzSign((hs[0][0]-3)*T,d.G2*T,"マンゴーハウス",64,L,R);
+  myzSign((d.hatake[0]+3)*T,d.G2*T,"かんじゅく マンゴー",76,L,R);
+  myzSign((d.rim[0]+1)*T,d.G2*T,"たかちほきょう",64,L,R);
+  var ka=d.kawa[0]*T;                                                                          /* 真名井の滝（左の がけの 上から 川へ） */
+  if(ka+60>L && ka-80<R){
+    var wt=(d.G2-7)*T, wb=d.RV*T+8;
+    ctx.fillStyle="rgba(230,246,255,.82)"; ctx.fillRect(ka,wt,12,wb-wt);
+    ctx.fillStyle="rgba(170,215,240,.8)"; ctx.fillRect(ka+3,wt,3,wb-wt); ctx.fillRect(ka+9,wt,2,wb-wt);
+    ctx.fillStyle="#3a6a3a"; ctx.beginPath(); ctx.ellipse(ka+6,wt,16,6,0,0,Math.PI*2); ctx.fill();
+    myzSign(ka-44,d.kudari[0][2]*T,"まないの たき",54,L,R);
+  }
+  var sd=d.sando, s0=sd[0]*T;                                                                  /* 高千穂神社の 参道：鳥居・夫婦杉・灯ろう */
+  if((sd[1]+40)*T>L && s0-60<R){
+    myzSign(s0+8,d.sandoTop[0]*T,"たかちほじんじゃ",70,L,R);
+    myzTorii(s0+12*T,d.B*T,58,66,"#6a6a72","#2a2a32");
+    var sx1=s0+22*T, sx2=s0+27*T;
+    myzSugi(sx1,d.B*T,150); myzSugi(sx2,d.B*T,160);
+    ctx.strokeStyle="#e8d8a0"; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(sx1+5,d.B*T-60); ctx.quadraticCurveTo((sx1+sx2)/2,d.B*T-48,sx2-5,d.B*T-60); ctx.stroke(); ctx.lineWidth=1;   /* しめなわ */
+    for(k=0;k<3;k++){ var zx=sx1+20+k*20; px(zx,d.B*T-54,4,10,"#ffffff"); }
+    myzToro(s0+6*T,d.sandoTop[6]*T); myzToro(s0+18*T,d.sandoTop[18]*T); myzToro(s0+31*T,d.sandoTop[31]*T);
+  }
+  var bxr=d.boss*T, bfy=d.B*T;                                                                 /* 神楽殿（ボス部屋）：おくの かべ・天岩戸・注連縄と 彫り物・太鼓 */
+  if(bxr+40*T>L && bxr<R){
+    var w0=bxr, w1=bxr+38*T, top=bfy-11*T;
+    px(w0,top,w1-w0,bfy-top,"#2a1a10");
+    for(x=w0;x<w1;x+=48){ px(x,top,3,bfy-top,"#4a2e18"); }
+    ctx.fillStyle="#5a5a62"; ctx.beginPath(); ctx.moveTo(w0+150,bfy); ctx.quadraticCurveTo(w0+150,top+40,w0+200,top+36); ctx.quadraticCurveTo(w0+250,top+40,w0+250,bfy); ctx.closePath(); ctx.fill();   /* 天岩戸の 岩 */
+    ctx.fillStyle="#3a3a42"; ctx.fillRect(w0+198,top+44,4,bfy-top-44);
+    ctx.fillStyle="#7a7a84"; ctx.beginPath(); ctx.ellipse(w0+176,top+66,10,6,0,0,Math.PI*2); ctx.ellipse(w0+226,top+90,9,5,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle="#e8d8a0"; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(w0,top+14); ctx.quadraticCurveTo((w0+w1)/2,top+30,w1,top+14); ctx.stroke(); ctx.lineWidth=1;   /* 注連縄 */
+    for(x=w0+16;x<w1;x+=26){ var u2=(x-w0)/(w1-w0), sy2=top+14+Math.sin(u2*Math.PI)*16; var cr=["#ffffff","#d8302a","#ffd040","#3a8a3a","#2a5ac8"][((x/26)|0)%5];
+      px(x-6,sy2+2,12,14,cr); ctx.fillStyle="#2a1a10"; ctx.fillRect(x-3,sy2+6,2,2); ctx.fillRect(x+1,sy2+6,2,2); ctx.fillRect(x-4,sy2+10,8,1); }   /* 彫り物（えりもの） */
+    px(w0+40,bfy-22,26,22,"#8a2a1a"); ctx.fillStyle="#e8d0a0"; ctx.beginPath(); ctx.ellipse(w0+53,bfy-22,13,5,0,0,Math.PI*2); ctx.fill();   /* 太鼓 */
+    px(w1-60,bfy-22,26,22,"#8a2a1a"); ctx.beginPath(); ctx.ellipse(w1-47,bfy-22,13,5,0,0,Math.PI*2); ctx.fill();
+    myzSign(bxr-20*T,d.B*T,"よかぐら",44,L,R);
+  }
+}
+/* 宮崎の 飾り（タイルの あと）：ボス部屋の マンゴー・洗濯板の みぞの 波・川の 水と ボート・滝つぼ・灯ろうの 火 */
+function myzVeil(){
+  if(typeof drawMyzMango==="function") drawMyzMango();                                     /* ボス部屋の 熟す マンゴーと あまい しるの 水たまり（26_bossfx.js） */
+  var d=myzDesc(); if(!d) return;
+  var L=cam.x-40, R=cam.x+VW+40, T=TS, i, x;
+  for(i=0;i<d.yashi.length;i++){ var ya=d.yashi[i], ycx=(ya[0]+2.5)*T; if(ycx<L-60||ycx>R+60) continue; myzCrown(ycx,ya[2]*T+4,i); }   /* フェニックスの 大きな 葉 */
+  var g0=d.G0*T, mz=d.mizo;                                                                    /* 鬼の洗濯板：みぞに 寄せては 引く 波（見た目。<＝引き波） */
+  if((mz[mz.length-1][1]+2)*T>L && mz[0][0]*T<R){
+    var tide=0.5+0.5*Math.sin(frame*0.03);
+    for(i=0;i<mz.length;i++){
+      var a=mz[i][0]*T, b=(mz[i][1]+1)*T; if(b<L||a>R) continue;
+      var lv=(d.G0+1)*T-2-tide*16-Math.sin(frame*0.05+i*0.9)*2;
+      ctx.fillStyle="rgba(70,170,210,.42)"; ctx.fillRect(a,lv,b-a,(d.G0+1)*T+3-lv);
+      ctx.fillStyle="rgba(235,250,255,.9)"; ctx.fillRect(a,lv,b-a,1);
+      for(x=0;x<3;x++){ var fx=a+((x*23+frame*(0.6+tide*0.6)+i*11)%(b-a)); ctx.fillRect(fx,lv+2+x*3,3,1); }
+    }
+    if(tide>0.8){                                                                            /* 満ちる ときは すじの 上も あわが こえる */
+      ctx.globalAlpha=(tide-0.8)*3; ctx.fillStyle="#f4fcff";
+      for(i=0;i<d.ridges.length;i++){ var ra=d.ridges[i][0]*T; if(ra<L||ra>R) continue; ctx.fillRect(ra+2+((frame+i*7)%10),g0-T+1,8,1); }
+      ctx.globalAlpha=1;
+    }
+  }
+  var ka=d.kawa[0]*T, kb=(d.kawa[1]+1)*T, surf=d.RV*T+9, bot=d.kawaBot*T;                     /* 五ヶ瀬川：エメラルドの 水・ボートの 船体・滝つぼ */
+  if(kb>L && ka<R){
+    var fn=d.fune;
+    for(i=0;i<fn.length;i++){ var fa=fn[i][0]*T, fb=(fn[i][1]+1)*T, fy=d.RV*T; if(fb<L||fa>R) continue;
+      var bob=Math.sin(frame*0.05+i)*0.8;
+      ctx.fillStyle="#e8e4d8"; ctx.beginPath(); ctx.moveTo(fa-5,fy+12+bob); ctx.lineTo(fb+5,fy+12+bob); ctx.quadraticCurveTo(fb-4,fy+24+bob,fb-12,fy+24+bob); ctx.lineTo(fa+12,fy+24+bob); ctx.quadraticCurveTo(fa+4,fy+24+bob,fa-5,fy+12+bob); ctx.closePath(); ctx.fill();
+      ctx.fillStyle="#2a6ab8"; ctx.fillRect(fa+4,fy+15+bob,fb-fa-8,2);
+      ctx.strokeStyle="#6a4a2a"; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(fa+20,fy+2); ctx.lineTo(fa-6,fy+26+Math.sin(frame*0.04+i)*3); ctx.stroke(); ctx.lineWidth=1;   /* オール */
+    }
+    var xa=Math.max(ka,L), xb=Math.min(kb,R);
+    var gw=ctx.createLinearGradient(0,surf,0,bot); gw.addColorStop(0,"rgba(40,160,130,.55)"); gw.addColorStop(1,"rgba(10,70,60,.75)");
+    ctx.fillStyle=gw; ctx.fillRect(xa,surf,xb-xa,bot-surf);
+    ctx.fillStyle="rgba(200,255,235,.8)"; ctx.fillRect(xa,surf,xb-xa,1);
+    for(i=0;i<8;i++){ var rx=ka+((i*61+frame*0.25)%(kb-ka)); if(rx<L||rx>R) continue; ctx.fillRect(rx,surf+4+(i%3)*5,7,1); }
+    var mx=ka+6;                                                                               /* 滝つぼの しぶき */
+    if(mx>L && mx<R){ for(i=0;i<4;i++){ var sp=((frame*0.04+i*0.25)%1); ctx.globalAlpha=0.6*(1-sp); ctx.fillStyle="#ffffff"; ctx.beginPath(); ctx.arc(mx+Math.sin(i*2)*10,surf-sp*14,3+sp*8,0,Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; }
+  }
+  var sd=d.sando, s0=sd[0]*T;                                                                  /* 灯ろうの 火（ゆらぐ） */
+  if((sd[1]+40)*T>L && s0-60<R){
+    var tx=[s0+6*T,s0+18*T,s0+31*T], ty=[d.sandoTop[6]*T,d.sandoTop[18]*T,d.sandoTop[31]*T];
+    for(i=0;i<3;i++){ if(tx[i]<L||tx[i]>R) continue; var fl=0.75+0.25*Math.sin(frame*0.3+i*2); ctx.globalAlpha=0.25*fl; ctx.fillStyle="#ffb040"; ctx.beginPath(); ctx.arc(tx[i],ty[i]-23,16,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; ctx.fillStyle="#ffd060"; ctx.fillRect(tx[i]-3,ty[i]-25,6,4*fl+1); }
+  }
+  var bxr=d.boss*T, bfy=d.B*T;                                                                 /* 神楽殿の かがり火（両はし） */
+  if(bxr+40*T>L && bxr<R){
+    var fx2=[bxr+20,bxr+38*T-28];
+    for(i=0;i<2;i++){ var cx=fx2[i]; px(cx-6,bfy-20,12,20,"#3a2a1a"); px(cx-9,bfy-22,18,3,"#5a3a1a");
+      for(var q=0;q<5;q++){ var fp=((frame*0.06+q*0.2+i*0.1)%1); ctx.globalAlpha=1-fp; ctx.fillStyle=(q%2)?"#ff8a2a":"#ffd040"; ctx.beginPath(); ctx.arc(cx+Math.sin(frame*0.2+q)*3,bfy-24-fp*22,5-fp*3,0,Math.PI*2); ctx.fill(); }
+      ctx.globalAlpha=0.18; ctx.fillStyle="#ffa040"; ctx.beginPath(); ctx.arc(cx,bfy-34,36,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+  }
+}
+/* 宮崎（主人公の あと）：洗濯板の みぞ・五ヶ瀬川の 水面（足が 水に つかって 見える） */
+function myzFront(){
+  var d=myzDesc(); if(!d || !player || player.dead>0) return;
+  var p=player, T=TS, fb=p.y+p.h, pc=p.x+p.w/2, c=Math.floor(pc/T), i;
+  var mi=myzIn(d.mizo,c);
+  if(mi>=0 && fb>=(d.G0+1)*T-2){ var tide=0.5+0.5*Math.sin(frame*0.03), lv=(d.G0+1)*T-2-tide*16-Math.sin(frame*0.05+mi*0.9)*2; if(lv<fb){ ctx.fillStyle="rgba(70,170,210,.35)"; ctx.fillRect(p.x-3,lv,p.w+6,fb-lv); ctx.fillStyle="rgba(235,250,255,.9)"; ctx.fillRect(p.x-3,lv,p.w+6,1); } }
+  if(c>=d.kawa[0] && c<=d.kawa[1] && fb>d.RV*T+9){ var sf=d.RV*T+9; ctx.fillStyle="rgba(40,160,130,.45)"; ctx.fillRect(p.x-3,sf,p.w+6,Math.min(fb,d.kawaBot*T)-sf); ctx.fillStyle="rgba(200,255,235,.9)"; ctx.fillRect(p.x-4,sf,p.w+8,1); }
+}
+/* 熟して 落ちる マンゴー（press "myzmango"）：ハウスの はりから ひもで つるした 赤い マンゴー（白い ネット）。
+   落ちる 前の 20コマは ぷるぷる ゆれて 光る（合図）→ ひもが のびて 床の すぐ 上まで 落ちる → ゆっくり もどる */
+function myzMangoPress(x,top,bottom,f,pr){
+  var t=(frame+pr.off)%PRESS_T, warn=(f===0 && t>=50), wob=warn?Math.sin(frame*1.3)*1.6:0;
+  var my=Math.max(top+12,bottom-8), cx=x+8+wob;
+  px(x+2,top-2,12,3,"#6a4a2a");                                                                 /* はりの 枝 */
+  ctx.strokeStyle="#f4f4f0"; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x+8,top); ctx.lineTo(cx,my-6); ctx.stroke();
+  if(warn){ ctx.globalAlpha=0.35+0.25*Math.sin(frame*0.8); ctx.fillStyle="#ffb040"; ctx.beginPath(); ctx.arc(cx,my,10,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+  ctx.fillStyle="#b8201a"; ctx.beginPath(); ctx.ellipse(cx,my,6,7.5,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#e8402a"; ctx.beginPath(); ctx.ellipse(cx-0.5,my-0.5,5.2,6.6,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#f0a020"; ctx.beginPath(); ctx.ellipse(cx+2,my+3,2.6,2.6,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#ffd0b0"; ctx.fillRect(cx-3,my-5,2,2);
+  ctx.strokeStyle="rgba(255,255,255,.85)"; ctx.beginPath(); ctx.moveTo(cx-6,my-3); ctx.lineTo(cx+6,my+3); ctx.moveTo(cx+6,my-3); ctx.lineTo(cx-6,my+3); ctx.moveTo(cx-6,my+1); ctx.lineTo(cx+6,my+1); ctx.stroke();   /* ネット */
+  if(f>0 && f<1){ ctx.globalAlpha=0.5; px(x+2,my+8,12,2,"#ffffff"); ctx.globalAlpha=1; }
+  if(f>=1){ ctx.fillStyle="rgba(255,200,120,.6)"; ctx.fillRect(x-2,my+7,20,2); }
+}
+/* 宮崎：マンゴリラの 弾。myzdon＝床を 走る 衝撃波（土と 石が もり上がる）／myzpan＝はじけた マンゴーの しぶき／myzpoto＝落ちた マンゴーの ドスン */
+function myzDrawShot(b,k){
+  var cx=b.x+b.w/2, bot=b.y+b.h, i;
+  if(k==="myzdon"){
+    var dd=(b.vx<0)?-1:1;
+    ctx.fillStyle="#8a6a3a"; ctx.beginPath(); ctx.moveTo(b.x,bot); for(i=0;i<=4;i++){ ctx.lineTo(b.x+i*b.w/4,bot-((i%2)?b.h:b.h*0.55)); } ctx.lineTo(b.x+b.w,bot); ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#c8a86a"; ctx.beginPath(); ctx.moveTo(b.x+3,bot); for(i=0;i<=4;i++){ ctx.lineTo(b.x+3+i*(b.w-6)/4,bot-((i%2)?b.h-3:b.h*0.4)); } ctx.lineTo(b.x+b.w-3,bot); ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#e8d8a8"; for(i=0;i<3;i++) ctx.fillRect(cx-dd*(8+i*5)+((frame+i*3)%4),bot-4-((frame*2+i*5)%10),2,2);   /* 土けむり */
+    return;
+  }
+  if(k==="myzpan"){
+    var a=Math.max(0,Math.min(1,(b.life||0)/(b.l0||10))), sp=1-a;
+    ctx.globalAlpha=0.9*a+0.1;
+    for(i=0;i<9;i++){ var t=i/8, hx=b.x+b.w*t, hh=b.h*(0.4+0.6*Math.sin(t*Math.PI))*(0.6+sp*0.6); ctx.fillStyle=(i%2)?"#ff9a2a":"#ffd040"; ctx.beginPath(); ctx.moveTo(hx-4,bot); ctx.quadraticCurveTo(hx+(t-0.5)*sp*10,bot-hh,hx+4,bot); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle="#ffffff"; for(i=0;i<5;i++) ctx.fillRect(b.x+6+i*9+(i-2)*sp*4,bot-b.h*0.7-sp*6-(i%2)*4,2,2);
+    ctx.globalAlpha=1;
+    return;
+  }
+  if(k==="myzpoto"){
+    var a2=Math.max(0,Math.min(1,(b.life||0)/(b.l0||5)));
+    ctx.globalAlpha=a2; ctx.strokeStyle="#bff08a"; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(cx,bot-2,b.w/2+(1-a2)*6,3,0,0,Math.PI*2); ctx.stroke(); ctx.lineWidth=1; ctx.globalAlpha=1;
+  }
+}
+/* 回復の マンゴー（とんでいる 青い マンゴーを 撃ち落とした ごほうび）：さいの目に 切った マンゴー（たいようの タマゴ）。12×12 */
+function myzDrawPickup(x,y){
+  ctx.fillStyle="#2a7a2a"; ctx.fillRect(x+1,y+8,10,3); ctx.fillStyle="#4aa83a"; ctx.fillRect(x+1,y+8,10,1);       /* かわ */
+  ctx.fillStyle="#f0901a"; ctx.beginPath(); ctx.moveTo(x+1,y+8); ctx.quadraticCurveTo(x+6,y-1,x+11,y+8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#ffc040"; for(var i=0;i<3;i++) for(var j=0;j<2;j++) ctx.fillRect(x+2+i*3,y+3+j*3,2,2);              /* さいの目 */
+  ctx.fillStyle="#ffffff"; ctx.fillRect(x+4,y+2,1,1);
+  ctx.fillStyle=C.mint; ctx.fillRect(x+9,y-1,3,1); ctx.fillRect(x+10,y-2,1,3);                                     /* 回復の しるし */
+}
+
 /* ===== 41_bg.js ===== */
 /* ============================ 背景と区間ごとの色（2026-09-07 全面再編） ============================
    院長「カラーも全然工夫できてない。1面1面、被ることのない独特な雰囲気に」
@@ -30505,6 +31685,11 @@ function bgByKind(p) {
   else if (k === "oityaba") bg2OitYaba(p);          /*                   耶馬渓の 紅葉と 奇岩の 峰・山国川 */
   else if (k === "oitkokonoe") bg2OitKokonoe(p);    /*                   夕方の 九重の 深い 谷と 震動の滝 */
   else if (k === "oityufu") bg2OitYufu(p);          /*                   夕やけの 由布岳と 湯布院の 湯けむり */
+  else if (k === "myzaoshima") bg2MyzAoshima(p);    /* 宮崎（2026-10-11）：朝の 青島と 日向灘・沖へ のびる 洗濯板 */
+  else if (k === "myznichinan") bg2MyzNichinan(p);  /*                   昼の 日南海岸と 入道雲・岬の モアイの かげ */
+  else if (k === "myzhouse") bg2MyzHouse(p);        /*                   マンゴー畑の ハウスの ならびと 霧島の 山 */
+  else if (k === "myzkyo") bg2MyzKyo(p);            /*                   夕方の 高千穂峡（柱状節理の がけ・滝・川） */
+  else if (k === "myzkagura") bg2MyzKagura(p);      /*                   夜の 高千穂（星・月・杉の 森・神社の 明かり） */
   else { skyFill(p, 0); }
 }
 function scrollX(rate, span) { return ((cam.x * rate) % span + span) % span; }
@@ -34426,6 +35611,145 @@ function bg2OitYufu(p) {
   if (boss) { for (i = 0; i < 4; i++) oitSteam(W * 0.12 + i * 26, H * 0.95, 1.4, i, 0.4); }   /* ボス部屋：手前に 大きな 湯けむり */
 }
 
+/* ---------------------------------------------------------------- 宮崎（青島の 鬼の洗濯板と 日南海岸と 高千穂峡と 夜神楽。2026-10-11）の背景
+   myzaoshima ＝朝の 青島（日の出の 空・日向灘・ビロウの しげる まるい 青島・沖へ のびる 洗濯板の しま・カモメ）
+   myznichinan＝昼の 日南海岸（入道雲・青い 海・岬の 崖・遠くの フェニックスの 並木・丘の 上の 7体の モアイの かげ）
+   myzhouse   ＝昼すぎの マンゴー畑（白い ハウスが ならぶ 畑・霧島の 山なみ・畑の 道）
+   myzkyo     ＝夕方の 高千穂峡（両がわから せまる 柱状節理の がけ・上に 木・とおくの 滝・エメラルドの 川と ボート・光の すじ）
+   myzkagura  ＝夜の 高千穂（星と 月・杉の 森の かげ・神社の 屋根・ちょうちんの 明かり・かがり火の 火の粉）
+   ⚠️ 名前は myz（ほかの 県と ぶつけない）。画面の はしで 回す 数は ((a % n) + n) % n（負に しない） */
+function myzMod(a, n) { return ((a % n) + n) % n; }
+function myzGull(x, y, s) {                                     /* カモメ（Mの 字） */
+  var f = Math.sin(frame * 0.15 + x * 0.01) * 2 * s;
+  ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x - 6 * s, y - f); ctx.quadraticCurveTo(x - 3 * s, y - 3 * s, x, y); ctx.quadraticCurveTo(x + 3 * s, y - 3 * s, x + 6 * s, y - f); ctx.stroke(); ctx.lineWidth = 1;
+}
+function bg2MyzAoshima(p) {
+  skyFill(p, 0);
+  var sy = -scrollY(0.05), hz = Math.round(H * 0.56 + sy * 0.3), i;
+  var sunx = W * 0.22 - scrollX(0.01, 60);                      /* 朝日（東の 海から） */
+  ctx.fillStyle = "rgba(255,230,180,.55)"; ctx.beginPath(); ctx.arc(sunx, hz - 26, 30, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff0c8"; ctx.beginPath(); ctx.arc(sunx, hz - 26, 15, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.75)";
+  for (i = 0; i < 4; i++) { var cx = myzMod(i * 260 - scrollX(0.03, 1040) - frame * 0.04, 1040) - 120; ctx.beginPath(); ctx.ellipse(cx, 30 + (i % 2) * 18 + sy * 0.2, 42, 9, 0, 0, Math.PI * 2); ctx.ellipse(cx + 26, 26 + (i % 2) * 18 + sy * 0.2, 24, 8, 0, 0, Math.PI * 2); ctx.fill(); }
+  var gs = ctx.createLinearGradient(0, hz, 0, H); gs.addColorStop(0, "#5ab0d8"); gs.addColorStop(1, "#1a6a9a");
+  ctx.fillStyle = gs; ctx.fillRect(0, hz, W, H - hz);           /* 日向灘 */
+  ctx.fillStyle = "rgba(255,240,200,.6)"; for (i = 0; i < 6; i++) ctx.fillRect(sunx - 20 + i * 6 + Math.sin(frame * 0.05 + i) * 3, hz + 4 + i * 5, 14 - i * 2, 1);   /* 朝日の 光の 道 */
+  var im = scrollX(0.06, 1300), ix = W * 0.7 - im;              /* 青島（まるい 島に ビロウの 林） */
+  for (var rep = 0; rep < 2; rep++) {
+    var x0 = ix + rep * 1300;
+    if (x0 < -200 || x0 > W + 200) continue;
+    ctx.fillStyle = "#c8b890"; ctx.beginPath(); ctx.ellipse(x0, hz + 4, 110, 10, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#2a6a3a"; ctx.beginPath(); ctx.ellipse(x0, hz - 6, 90, 26, 0, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = "#3a8a4a"; for (i = 0; i < 12; i++) { var tx = x0 - 80 + i * 14, th = 18 + ((i * 7) % 9); ctx.fillRect(tx, hz - th - 6, 2, th); ctx.beginPath(); ctx.ellipse(tx + 1, hz - th - 8, 8, 4, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = "#d8301e"; ctx.fillRect(x0 - 6, hz - 16, 2, 12); ctx.fillRect(x0 + 4, hz - 16, 2, 12); ctx.fillRect(x0 - 9, hz - 18, 18, 2);   /* 小さな 鳥居 */
+  }
+  var wm = scrollX(0.18, 48);                                   /* 沖へ のびる 洗濯板の しま（波に うかぶ 岩の 線） */
+  for (i = 0; i < 7; i++) {
+    var yy = hz + 20 + i * 8 + sy * 0.1;
+    ctx.fillStyle = "rgba(90,84,70," + (0.35 + i * 0.06).toFixed(2) + ")";
+    for (var k = -1; k < W / 48 + 2; k++) { var xx = k * 48 - (wm % 48) + (i % 2) * 24; ctx.fillRect(xx, yy, 34 - i, 2 + (i >> 2)); }
+  }
+  ctx.fillStyle = "rgba(255,255,255,.8)"; for (i = 0; i < 9; i++) { var fx = myzMod(i * 67 - scrollX(0.2, 600) - frame * 0.3, 600) - 40; ctx.fillRect(fx, hz + 22 + (i % 5) * 9, 10, 1); }   /* 白い 波がしら */
+  for (i = 0; i < 3; i++) myzGull(myzMod(i * 170 + frame * 0.4 - scrollX(0.05, 520), 520) - 20, 50 + i * 16 + Math.sin(frame * 0.02 + i) * 6, 1);
+}
+function bg2MyzNichinan(p) {
+  skyFill(p, 0);
+  var sy = -scrollY(0.05), hz = Math.round(H * 0.6 + sy * 0.3), i;
+  for (i = 0; i < 3; i++) {                                     /* 入道雲 */
+    var cx = myzMod(i * 360 - scrollX(0.02, 1080) - frame * 0.02, 1080) - 120, cy = hz - 70 + (i % 2) * 10 + sy * 0.2;
+    ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(cx, cy, 30, 0, Math.PI * 2); ctx.arc(cx + 30, cy - 14, 26, 0, Math.PI * 2); ctx.arc(cx + 58, cy, 24, 0, Math.PI * 2); ctx.arc(cx + 20, cy + 14, 28, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#dcecf8"; ctx.beginPath(); ctx.ellipse(cx + 26, cy + 26, 52, 10, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = "#2a8ac8"; ctx.fillRect(0, hz, W, H - hz);   /* 青い 海 */
+  ctx.fillStyle = "#5ab8e8"; ctx.fillRect(0, hz, W, 3);
+  ctx.fillStyle = "rgba(255,255,255,.7)"; for (i = 0; i < 8; i++) ctx.fillRect(myzMod(i * 73 - scrollX(0.15, 584) + frame * 0.2, 584) - 30, hz + 8 + (i % 4) * 7, 12, 1);
+  var cm = scrollX(0.05, 900);                                  /* 岬の 崖（日南の 海岸） */
+  for (var rep = 0; rep < 2; rep++) {
+    var x0 = W * 0.85 - cm + rep * 900;
+    ctx.fillStyle = "#6a7a4a"; ctx.beginPath(); ctx.moveTo(x0 - 160, hz + 2); ctx.quadraticCurveTo(x0 - 100, hz - 50, x0 - 20, hz - 54); ctx.lineTo(x0 + 120, hz - 50); ctx.lineTo(x0 + 140, hz + 2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#8a7a5a"; ctx.fillRect(x0 - 10, hz - 30, 130, 32);
+    ctx.globalAlpha = 0.7; ctx.fillStyle = "#4a6a4a"; for (i = 0; i < 6; i++) { var mx = x0 + 6 + i * 18; ctx.fillRect(mx, hz - 62, 2, 10); for (var q = 0; q < 5; q++) { var qa = -Math.PI + q * Math.PI / 4; ctx.beginPath(); ctx.ellipse(mx + 1 + Math.cos(qa) * 5, hz - 63 + Math.sin(qa) * 2.5, 5, 1.2, qa, 0, Math.PI * 2); ctx.fill(); } } ctx.globalAlpha = 1;   /* 岬の 上の フェニックス */
+    ctx.fillStyle = "#6a6458"; for (i = 0; i < 7; i++) ctx.fillRect(x0 - 70 + i * 8, hz - 46 + Math.abs(i - 3) * 2, 4, 7);   /* 丘の モアイの かげ */
+  }
+  var pm = scrollX(0.12, 56);                                   /* とおくの フェニックスの 並木（小さく うすい かげ＝乗れる 葉と まちがえない） */
+  ctx.globalAlpha = 0.55;
+  for (i = -1; i < W / 56 + 2; i++) {
+    var px3 = i * 56 - (pm % 56);
+    ctx.fillStyle = "#5a6a52"; ctx.fillRect(px3 - 1, hz - 18, 3, 30);
+    ctx.fillStyle = "#4a7a52"; for (var k = 0; k < 7; k++) { var a = -Math.PI + k * Math.PI / 6; ctx.beginPath(); ctx.ellipse(px3 + Math.cos(a) * 6, hz - 18 + Math.sin(a) * 3, 6, 1.6, a, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#5a8a3a"; ctx.fillRect(0, hz + 18, W, H - hz - 18);
+}
+function bg2MyzHouse(p) {
+  skyFill(p, 0);
+  var sy = -scrollY(0.05), hz = Math.round(H * 0.58 + sy * 0.3), i;
+  ctx.fillStyle = "rgba(255,250,235,.75)";
+  for (i = 0; i < 3; i++) { var cx = myzMod(i * 300 - scrollX(0.03, 900) - frame * 0.03, 900) - 120; ctx.beginPath(); ctx.ellipse(cx, 34 + i * 14 + sy * 0.2, 46, 8, 0, 0, Math.PI * 2); ctx.fill(); }
+  var mm = scrollX(0.015, 1000);                                /* 霧島の 山なみ */
+  for (var rep = 0; rep < 2; rep++) {
+    var mx = W * 0.4 - mm + rep * 1000;
+    ctx.fillStyle = "#8aa0b8"; ctx.beginPath(); ctx.moveTo(mx - 300, hz); ctx.quadraticCurveTo(mx - 160, hz - 70, mx - 60, hz - 84); ctx.lineTo(mx - 40, hz - 80); ctx.quadraticCurveTo(mx + 60, hz - 96, mx + 120, hz - 70); ctx.quadraticCurveTo(mx + 220, hz - 40, mx + 340, hz); ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle = "#6a9a4a"; ctx.fillRect(0, hz, W, H - hz);
+  var gm = scrollX(0.12, 120);                                  /* 白い ハウスの ならび */
+  for (i = -1; i < W / 120 + 2; i++) {
+    var gx = i * 120 - (gm % 120), gy = hz + 6;
+    ctx.fillStyle = "rgba(240,246,248,.92)"; ctx.beginPath(); ctx.moveTo(gx, gy + 22); ctx.quadraticCurveTo(gx + 50, gy - 10, gx + 100, gy + 22); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#cfd8dc"; ctx.fillRect(gx, gy + 22, 100, 6);
+    ctx.strokeStyle = "rgba(160,180,190,.8)"; ctx.lineWidth = 1; for (var k = 1; k < 5; k++) { ctx.beginPath(); ctx.moveTo(gx + k * 20, gy + 22); ctx.lineTo(gx + k * 20, gy + 22 - 32 * (k * 20 / 100) * (1 - k * 20 / 100) * 2.4); ctx.stroke(); }
+    ctx.fillStyle = "#3a6a2a"; ctx.fillRect(gx + 104, gy + 18, 12, 10);
+  }
+  var tm = scrollX(0.3, 90);                                    /* 手前の マンゴーの 木と 畑の 道 */
+  ctx.fillStyle = "#b89a6a"; ctx.fillRect(0, hz + 34, W, 6);
+  for (i = -1; i < W / 90 + 2; i++) { var tx = i * 90 - (tm % 90); ctx.fillStyle = "#5a3a1a"; ctx.fillRect(tx, hz + 20, 4, 16); ctx.fillStyle = "#2e6a2e"; ctx.beginPath(); ctx.ellipse(tx + 2, hz + 18, 16, 9, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#e8402a"; ctx.fillRect(tx - 6, hz + 22, 3, 3); ctx.fillRect(tx + 8, hz + 21, 3, 3); }
+}
+function bg2MyzKyo(p) {
+  skyFill(p, 0);
+  var sy = -scrollY(0.05), i, k, rep;
+  var top = Math.round(H * 0.2 + sy * 0.2), bot = H;
+  ctx.fillStyle = "rgba(255,220,170,.6)"; ctx.beginPath(); ctx.ellipse(W * 0.5, top + 6, 90, 16, 0, 0, Math.PI * 2); ctx.fill();   /* 谷の 上の 夕やけの 空の 光 */
+  var vm = scrollX(0.04, 1100), vx = W * 0.5 - (myzMod(vm, 1100) - 550) * 0.25;
+  var gv = ctx.createLinearGradient(0, top, 0, bot); gv.addColorStop(0, "#5a5a4a"); gv.addColorStop(1, "#1a2a24");
+  ctx.fillStyle = gv; ctx.fillRect(0, top + 20, W, bot - top);   /* 谷の おくの かべ */
+  ctx.fillStyle = "rgba(230,245,255,.85)"; ctx.fillRect(vx + 30, top + 40, 6, bot - top - 80);   /* とおくの 滝 */
+  ctx.fillStyle = "rgba(200,230,245,.9)"; for (i = 0; i < 4; i++) ctx.fillRect(vx + 31 + (i % 2) * 2, top + 40 + myzMod(frame * 1.8 + i * 33, bot - top - 80), 1, 8);
+  for (k = 0; k < 2; k++) {                                     /* 両がわの 柱状節理の がけ（たての すじ・上に 木） */
+    var sd = k ? 1 : -1, inner = vx + sd * 70, ex = k ? W + 20 : -20;
+    var gc = ctx.createLinearGradient(0, top, 0, bot); gc.addColorStop(0, k ? "#4a4a46" : "#5a5a54"); gc.addColorStop(1, "#22221e");
+    ctx.fillStyle = gc; ctx.beginPath(); ctx.moveTo(ex, top); ctx.lineTo(inner + sd * 40, top); ctx.lineTo(inner, top + 60); ctx.lineTo(inner + sd * 10, bot - 40); ctx.lineTo(inner - sd * 6, bot); ctx.lineTo(ex, bot); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(20,20,18,.55)"; ctx.lineWidth = 1;
+    var cm = scrollX(0.08, 9);
+    for (i = 0; i < 26; i++) { var lx = inner + sd * (8 + i * 9) - sd * (cm % 9); if (lx < -10 || lx > W + 10) continue; ctx.beginPath(); ctx.moveTo(lx, top + 6); ctx.lineTo(lx + sd * 2, bot); ctx.stroke(); }
+    ctx.fillStyle = "#2e5a2a"; for (i = 0; i < 10; i++) { var tx = inner + sd * (30 + i * 22); ctx.beginPath(); ctx.ellipse(tx, top + 2, 16, 9, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = "#3a7a3a"; for (i = 0; i < 6; i++) { var vy2 = top + 30 + i * 22; ctx.fillRect(inner + sd * (4 + (i % 3) * 3), vy2, 3, 10); }   /* つたと こけ */
+  }
+  ctx.fillStyle = "#1e7a64"; ctx.fillRect(0, bot - 26, W, 26);   /* エメラルドの 五ヶ瀬川 */
+  ctx.fillStyle = "rgba(200,255,235,.6)"; for (i = 0; i < 6; i++) ctx.fillRect(myzMod(i * 79 - scrollX(0.3, 474) + frame * 0.2, 474) - 20, bot - 22 + (i % 3) * 6, 10, 1);
+  for (i = 0; i < 2; i++) { var bx = myzMod(i * 230 - scrollX(0.3, 460), 460) - 30; ctx.fillStyle = "#f4f0e4"; ctx.beginPath(); ctx.ellipse(bx, bot - 20, 13, 3.5, 0, 0, Math.PI); ctx.fill(); ctx.fillStyle = "#2a5ac8"; ctx.fillRect(bx - 9, bot - 20, 18, 1); }
+  ctx.globalAlpha = 0.12; ctx.fillStyle = "#fff4c0"; ctx.beginPath(); ctx.moveTo(vx - 20, top); ctx.lineTo(vx + 50, top); ctx.lineTo(vx + 100, bot); ctx.lineTo(vx + 10, bot); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;   /* 光の すじ */
+}
+function bg2MyzKagura(p) {
+  skyFill(p, 0);
+  var sy = -scrollY(0.05), hz = Math.round(H * 0.6 + sy * 0.3), boss = (typeof gateOn !== "undefined" && gateOn), i;
+  for (i = 0; i < 40; i++) { var h1 = ((i * 2654435761) >>> 0), sx = myzMod((h1 % 997) - scrollX(0.01, 997), 997) - 20, sy2 = ((h1 >>> 12) % 120) + 6; ctx.globalAlpha = 0.5 + 0.5 * Math.sin(frame * 0.05 + i); ctx.fillStyle = "#ffffff"; ctx.fillRect(sx, sy2, (i % 5 === 0) ? 2 : 1, (i % 5 === 0) ? 2 : 1); }
+  ctx.globalAlpha = 1;
+  var mxp = W * 0.8 - scrollX(0.005, 40);                       /* 月 */
+  ctx.fillStyle = "rgba(255,250,220,.25)"; ctx.beginPath(); ctx.arc(mxp, 40, 22, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#fff8d8"; ctx.beginPath(); ctx.arc(mxp, 40, 12, 0, Math.PI * 2); ctx.fill();
+  var fm = scrollX(0.08, 40);                                   /* 杉の 森の かげ（2だん） */
+  ctx.fillStyle = "#14203a";
+  for (i = -1; i < W / 40 + 2; i++) { var fx = i * 40 - (fm % 40), fh = 70 + ((i * 37 + Math.floor(scrollX(0.08, 4000) / 40) * 37) % 40); ctx.beginPath(); ctx.moveTo(fx - 18, hz + 10); ctx.lineTo(fx, hz - fh); ctx.lineTo(fx + 18, hz + 10); ctx.closePath(); ctx.fill(); }
+  var rm = scrollX(0.14, 600), rx = W * 0.4 - myzMod(rm, 600) + 200;   /* 神社の 屋根 */
+  ctx.fillStyle = "#0e1428"; ctx.beginPath(); ctx.moveTo(rx - 80, hz - 6); ctx.quadraticCurveTo(rx - 20, hz - 20, rx, hz - 44); ctx.quadraticCurveTo(rx + 20, hz - 20, rx + 80, hz - 6); ctx.closePath(); ctx.fill();
+  ctx.fillRect(rx - 60, hz - 8, 120, 30);
+  ctx.fillStyle = "#ffb050"; for (i = 0; i < 5; i++) { var lx = rx - 48 + i * 24; ctx.globalAlpha = 0.7 + 0.3 * Math.sin(frame * 0.2 + i); ctx.fillRect(lx, hz + 2, 5, 7); } ctx.globalAlpha = 1;   /* ちょうちん */
+  ctx.fillStyle = "#0a1020"; ctx.fillRect(0, hz + 20, W, H - hz - 20);
+  var em = scrollX(0.2, 80);                                    /* 手前の 杉の かげ */
+  ctx.fillStyle = "#0c1424"; for (i = -1; i < W / 80 + 2; i++) { var tx = i * 80 - (em % 80); ctx.fillRect(tx, hz - 60, 6, 90); ctx.beginPath(); ctx.moveTo(tx - 20, hz - 10); ctx.lineTo(tx + 3, hz - 90); ctx.lineTo(tx + 26, hz - 10); ctx.closePath(); ctx.fill(); }
+  for (i = 0; i < (boss ? 14 : 6); i++) { var sp = myzMod(frame * 0.006 + i * 0.13, 1), fx2 = myzMod(i * 53 + Math.sin(frame * 0.02 + i) * 10, W), fy2 = H - sp * H * 0.8; ctx.globalAlpha = 1 - sp; ctx.fillStyle = (i % 2) ? "#ffb040" : "#ff7a2a"; ctx.fillRect(fx2, fy2, 2, 2); }   /* かがり火の 火の粉 */
+  ctx.globalAlpha = 1;
+}
+
 /* ===== 44_text.js ===== */
 /* デンタルマンのエンディングから、演出で使う道具だけを持ってきた（45_ending.js の一部）。 */
 function etext(str,x,y,size,col,alpha,align){
@@ -35132,7 +36456,7 @@ function fitFrame(){
   var pt=cs?n(cs.paddingTop):0,  pb=cs?n(cs.paddingBottom):0;
   var cg=cs?n(cs.columnGap):0,   rg=cs?n(cs.rowGap):0;
   var vh=(window.innerHeight||app.clientHeight);
-  var availW, availH;
+  var availW, availH, tallH=0;
 
   var cl=document.querySelectorAll("#pad > .cluster");
   if(MQ_TALL.matches){
@@ -35153,11 +36477,16 @@ function fitFrame(){
     var used=h("bar")+h("wbar")+h("pad")+h("tip");
     var kids=app.children?app.children.length:5;
     availH=vh - pt - pb - used - rg*Math.max(0,kids-1) - 6;   /* はみ出さないよう少し余裕 */
+    /* 縦持ちで 地図（ステージセレクト）を 出している 間は、枠を 下の ボタンの 所まで 縦に のばす（2026-10-11）。
+       480:272 の 枠の ままだと 縦持ちの スマホ（390×844）で 地図の 高さが 200px ほどしか なく、地図と 下の 文字・ボタンが 重なっていた。
+       絵（canvas）は object-fit:contain なので 上下に 帯が 出るだけ。地図を 出していない ときは 今までどおり（showScreen が scheduleFit を 呼ぶ） */
+    var ssel=document.getElementById("s-select");
+    if(ssel && ssel.classList.contains("on") && vh>app.clientWidth*1.15) tallH=vh - pt - pb - h("bar") - rg - 8;
   }
   var sc=Math.min(availW/480, availH/272);
   if(!(sc>0.15)) sc=0.15;
   f.style.width =Math.floor(480*sc)+"px";
-  f.style.height=Math.floor(272*sc)+"px";
+  f.style.height=Math.floor(Math.max(272*sc, tallH))+"px";
 }
 var fitPending=false;
 function scheduleFit(){
@@ -35409,6 +36738,7 @@ function showScreen(id) {
     var e = document.getElementById(s);
     if (e) e.classList.toggle("on", s === id);
   });
+  if (typeof scheduleFit === "function") scheduleFit();   /* 縦持ちで 地図を 出す 間は 枠を 縦に のばす（50_shell.js fitFrame。2026-10-11） */
 }
 function hideScreens() { showScreen(""); }
 function setTag(txt) { document.getElementById("stage-tag").textContent = txt || ""; }

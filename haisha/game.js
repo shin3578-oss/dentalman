@@ -17,10 +17,14 @@ function resize() {
   const wrap = $('#stageWrap');
   if (!wrap.clientHeight) return;
   const s = Math.max(0.3, Math.min(wrap.clientWidth / W, wrap.clientHeight / H));
-  const d = Math.min(window.devicePixelRatio || 1, 2.5);
+  const d = Math.min(window.devicePixelRatio || 1, 2);
+  const pw = Math.round(W * s * d), ph = Math.round(H * s * d);
+  // 大きさが かわらないときは さわらない（canvas の width を いれなおすと 一瞬 まっしろに なる）
+  if (pw === cv.width && ph === cv.height) return;
   cv.style.width = (W * s) + 'px'; cv.style.height = (H * s) + 'px';
-  cv.width = Math.round(W * s * d); cv.height = Math.round(H * s * d);
+  cv.width = pw; cv.height = ph;
   SC = cv.width / W;
+  if (G.step && !G.finished) draw();
 }
 window.addEventListener('resize', () => { if ($('#play').classList.contains('on')) resize(); });
 if (window.ResizeObserver) new ResizeObserver(() => { if ($('#play').classList.contains('on')) resize(); }).observe($('#stageWrap'));
@@ -355,6 +359,8 @@ function up(e) {
   if (P.moved < 16 && G.step && !G.done) tapAt(p.x, p.y);
 }
 cv.addEventListener('pointerup', up);
+for (const ev of ['touchstart', 'touchmove', 'touchend']) cv.addEventListener(ev, e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+document.addEventListener('touchmove', e => { if ($('#play').classList.contains('on') && e.cancelable) e.preventDefault(); }, { passive: false });
 cv.addEventListener('pointercancel', () => { P.down = false; dropRoll(); });
 cv.addEventListener('pointerleave', () => { P.hover = false; });
 
@@ -647,7 +653,7 @@ function update(dt) {
   for (const q of G.pops) q.t += dt; G.pops = G.pops.filter(q => q.t < 1.3);
   if (G.flash) { G.flash.t += dt; if (G.flash.t > 1.2) G.flash = null; }
   if (G.done) { G.doneT += dt; if (G.doneT > 1.25) nextStep(); }
-  $('#barIn').style.width = Math.round(progress() * 100) + '%';
+  const pr = Math.round(progress() * 100) + '%'; if (pr !== G.barW) { G.barW = pr; $('#barIn').style.width = pr; }
 }
 function progress() {
   if (G.done) return 1;

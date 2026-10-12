@@ -21,6 +21,14 @@ function win(x, y, w, h, a) {
   ctx.strokeStyle = '#000'; ctx.lineWidth = 5; ctx.stroke(); ctx.strokeStyle = '#f2f2f8'; ctx.lineWidth = 3; ctx.stroke();
   ctx.strokeStyle = '#7d8be0'; ctx.lineWidth = 1.5; rr(ctx, x + 4, y + 4, w - 8, h - 8, 4); ctx.stroke();
 }
+// にゅうりょくする まど（えらべる もの）は みどり＋きんの ふち
+function winIn(x, y, w, h, hov) {
+  const g = ctx.createLinearGradient(0, y, 0, y + h);
+  g.addColorStop(0, hov ? '#3fb873' : '#2f8f5a'); g.addColorStop(0.55, hov ? '#1f7a48' : '#155c36'); g.addColorStop(1, '#0b3a22');
+  ctx.fillStyle = g; rr(ctx, x, y, w, h, 6); ctx.fill();
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 5; ctx.stroke(); ctx.strokeStyle = hov ? '#fff1a8' : '#ffd75e'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.strokeStyle = '#7fe0a8'; ctx.lineWidth = 1.5; rr(ctx, x + 4, y + 4, w - 8, h - 8, 4); ctx.stroke();
+}
 function label(s, x, y, size, col) { text(ctx, s, x, y, size || 11, col || '#ffffff', 'center', 'rgba(0,0,0,.75)'); }
 function bg(col) { ctx.fillStyle = col; ctx.fillRect(0, TOP, W, H - TOP); }
 function boneTex(x, y, w, h, col, seed) { const R = rng(seed || 3); ctx.fillStyle = col; for (let n = 0; n < w * h / 900; n++) { ctx.beginPath(); ctx.arc(x + R() * w, y + R() * h, 1 + R() * 2.6, 0, Math.PI * 2); ctx.fill(); } }
@@ -551,7 +559,7 @@ function draw() {
     R.lines.forEach((l, i) => text(ctx, l, 28, TOP + 34 + i * 20, 14, '#ffffff', 'left', '#000'));
     for (const r of R.rows) {
       const hov = C.CTRL.used && C.CTRL.cx > r.x && C.CTRL.cx < r.x + r.w && C.CTRL.cy > r.y && C.CTRL.cy < r.y + r.h;
-      win(r.x, r.y, r.w, r.h, hov ? 1 : 0.92);
+      winIn(r.x, r.y, r.w, r.h, hov);
       if (hov) text(ctx, '▶', r.x + 12, r.y + r.h / 2, 13, '#ffd75e', 'left', '#000');
       r.ls.forEach((l, i) => text(ctx, l, r.x + 30, r.y + 19 + i * 20, 14, hov ? '#ffd75e' : '#ffffff', 'left', '#000'));
     }
@@ -560,7 +568,7 @@ function draw() {
     ctx.fillStyle = 'rgba(5,8,28,.55)'; ctx.fillRect(0, TOP, W, H - TOP);
     win(14, TOP + 12, 332, 90); wrap(st.q, 300, 14).forEach((l, i) => text(ctx, l, 28, TOP + 36 + i * 20, 14, '#ffffff', 'left', '#000'));
     for (const c of orderCards()) {
-      const done = E.okSet.includes(c.idx); win(c.x, c.y, c.w, c.h, done ? 0.45 : 0.95);
+      const done = E.okSet.includes(c.idx); if (done) win(c.x, c.y, c.w, c.h, 0.45); else winIn(c.x, c.y, c.w, c.h, C.CTRL.used && C.CTRL.cx > c.x && C.CTRL.cx < c.x + c.w && C.CTRL.cy > c.y && C.CTRL.cy < c.y + c.h);
       if (st.icons) st.icons(c.idx, c.x + 26, c.y + c.h / 2);
       wrap(st.items[c.idx], c.w - (st.icons ? 56 : 20), 13).forEach((l, i, a) => text(ctx, l, c.x + (st.icons ? 50 : c.w / 2), c.y + c.h / 2 + (i - (a.length - 1) / 2) * 18, 13, done ? '#8f9ad6' : '#ffffff', st.icons ? 'left' : 'center', '#000'));
       if (done) label(String(E.okSet.indexOf(c.idx) + 1), c.x + c.w - 14, c.y + 14, 13, '#ffd75e');

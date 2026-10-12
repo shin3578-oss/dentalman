@@ -683,10 +683,11 @@ function startPatient(p) {
   G.p = p; G.si = 0; G.mist = 0; G.finished = false; G.parts = []; G.chips = []; G.pops = []; G.wattes = []; G.grab = null;
   buildArch(p.arch === 'primary6');
   G.ext = { wig: 0, lift: 0, ang: 0, out: false, outT: 0, gauze: false, grip: false };
-  if (p.id === 'p4') G.teeth.find(t => t.side === -1 && t.type === 'A').loose = true;
-  if (p.id === 'p1') G.teeth.find(t => t.side === 1 && t.type === 'E').cavity = true;
-  if (p.id !== 'p2') G.teeth.forEach(t => { t.plaque = 0; t.tartar = []; });  // しこう・しせきは おそうじの こだけ
-  gridInit(p.id === 'p1' ? 'cavity' : 'groove');
+  const bid = p.base || p.id;
+  if (bid === 'p4') G.teeth.find(t => t.side === -1 && t.type === 'A').loose = true;
+  if (bid === 'p1') G.teeth.find(t => t.side === 1 && t.type === 'E').cavity = true;
+  if (bid !== 'p2') G.teeth.forEach(t => { t.plaque = 0; t.tartar = []; });  // しこう・しせきは おそうじの こだけ
+  gridInit(bid === 'p1' ? 'cavity' : 'groove');
   if (p.kind === 'case' && CASE.patient) CASE.patient(p);
   bgmPlay(p.lv - 1);
   show('play'); startStep();
@@ -1126,7 +1127,7 @@ function drawHeart(c, x, y, r, col) {
 // かお（Canva で つくった ドット絵。ひょうじょうは うえに かさねる）
 const PIMG = {};
 function portrait(p) {
-  if (!PIMG[p.id]) { const im = new Image(); im.onload = () => { if (typeof buildSelect === 'function' && $('#select').classList.contains('on')) buildSelect(); }; im.src = p.id + '.png'; PIMG[p.id] = im; }
+  if (!PIMG[p.id]) { const im = new Image(); im.onload = () => { if (typeof buildSelect === 'function' && $('#select').classList.contains('on')) buildSelect(); const ST = window.__hcore && window.__hcore.STORY; if (ST && ST.refresh) ST.refresh(); }; im.src = p.id + '.png'; PIMG[p.id] = im; }
   return PIMG[p.id].complete && PIMG[p.id].naturalWidth ? PIMG[p.id] : null;
 }
 function drawPortrait(c, x, y, size, p, mood, t) {
@@ -1588,6 +1589,8 @@ function drawTool() {
 
 // ---------- ボタン ----------
 let TAB = 'kid';
+// ちりょうの あとに もどる ばしょ（ストーリーが あれば まち／ちず）
+function goMenu() { const ST = window.__hcore && window.__hcore.STORY; if (ST) ST.back(); else { buildSelect(); show('select'); } }
 function buildSelect() {
   const st = loadStars(), list = $('#plist'); list.innerHTML = '';
   bgmPlay(BGM_SELECT);
@@ -1611,12 +1614,12 @@ function buildSelect() {
 }
 setTimeout(() => PATIENTS.forEach(portrait), 0);
 $('#tapStart').addEventListener('click', () => { audioInit(); bgmPlay(BGM_OPEN); $('#tapStart').classList.add('gone'); });
-$('#startBtn').addEventListener('click', () => { audioInit(); SFX.start(); buildSelect(); show('select'); });
+$('#startBtn').addEventListener('click', () => { audioInit(); SFX.start(); const ST = window.__hcore.STORY; if (ST) ST.start(); else { buildSelect(); show('select'); } });
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button'); if (b && b.id !== 'startBtn' && b.id !== 'abtn') { audioInit(); SFX.tap(); } });
-$('#toTitle').addEventListener('click', () => { show('title'); bgmPlay(BGM_OPEN); });
+$('#toTitle').addEventListener('click', () => { const ST = window.__hcore.STORY; if (ST) ST.goMap(); else { show('title'); bgmPlay(BGM_OPEN); } });
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { TAB = b.dataset.tab; buildSelect(); $('#plist').scrollTop = 0; }));
-$('#toSelect').addEventListener('click', () => { buildSelect(); show('select'); });
-$('#quit').addEventListener('click', () => { ctrlUp(); loopsOff(); buildSelect(); show('select'); });
+$('#toSelect').addEventListener('click', goMenu);
+$('#quit').addEventListener('click', () => { ctrlUp(); loopsOff(); goMenu(); });
 $('#mute').addEventListener('click', () => {
   muted = !muted; $('#mute').textContent = muted ? '×' : '♪';
   if (MASTER) MASTER.gain.value = muted ? 0 : 1;
@@ -1628,10 +1631,10 @@ $('#toCert').addEventListener('click', () => {
   show('cert');
 });
 $('#certName').addEventListener('input', e => { $('#certNm').textContent = (e.target.value || '　') + (e.target.value ? ' せんせい' : ''); });
-$('#certBack').addEventListener('click', () => { buildSelect(); show('select'); });
+$('#certBack').addEventListener('click', () => { const ST = window.__hcore.STORY; if (ST) ST.goMap(); else { buildSelect(); show('select'); } });
 
 // cases.js（おとなの しょうれい）へ わたす いりぐち
-window.__hcore = { G, P, CTRL, ctx, W, H, TOP, FONT, text, rr, hint, drawSpark, SFX, stepDone, mistake, pop, star, clamp, lerp, rng, STEPS, PATIENTS, drawPortrait, CASE };
+window.__hcore = { startPatient, buildSelect, bgmPlay, BGM_OPEN, BGM_SELECT, show, G, P, CTRL, ctx, W, H, TOP, FONT, text, rr, hint, drawSpark, SFX, stepDone, mistake, pop, star, clamp, lerp, rng, STEPS, PATIENTS, drawPortrait, CASE };
 // テスト用の入り口（自動プレイで使う）
 window.__haisha = { BGM_OPEN, BGM_SELECT, BGM, TRACKS, CTRL, SD, audio: () => AC && AC.state, G, P, PATIENTS, startPatient, cell, high, zone, gel, dyed, bonded, count, STEPS, TB, N, CS, GUM, SLOTS, XR,
   consts: { DEC, SOFT, HOLE, RES, CUR, DEB, GRV, SEAL, SEALC, EN } };

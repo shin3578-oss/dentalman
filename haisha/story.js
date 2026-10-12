@@ -145,7 +145,6 @@ function talk(npc, lines) {
 function nextTalk() { if (!TALK) return; if (TALK.i >= TALK.lines.length) { TALK = null; $('#talkBox').classList.remove('on'); return; } $('#talkText').textContent = TALK.lines[TALK.i++]; }
 $('#talkBox').addEventListener('click', () => { C.SFX.tap(); nextTalk(); });
 $('#townBack').addEventListener('click', goMap);
-$('#mapList').addEventListener('click', () => { C.buildSelect(); show('select'); });
 window.addEventListener('resize', () => { if ($('#map').classList.contains('on')) drawMap(); });
 
 // ---------- いりぐち ----------

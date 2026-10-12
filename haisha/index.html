@@ -73,6 +73,39 @@ ruby rt{font-size:.5em}
 .tab{flex:1;max-width:170px;font-size:16px;padding:8px 6px;background:linear-gradient(180deg,#1d4a33,#0b2a1a);border:3px solid #4a8a64;border-radius:6px;box-shadow:0 0 0 2px #000;color:#9fd8b4}
 .tab.on{border-color:#ffd75e;color:#ffd75e;background:linear-gradient(180deg,#2f8f5a,#155c36)}
 .tab.on:before{content:"▶ ";color:#ffd75e}
+/* ものがたり・ちず・まち */
+#story{align-items:center;justify-content:center;gap:14px;background:#000;cursor:pointer}
+#storyTitle{color:#ffd75e;letter-spacing:6px;font-size:16px;margin:0}
+.storyWin{position:relative;width:100%;min-height:150px;padding:18px 18px 26px;background:linear-gradient(180deg,#3048b8,#16247a 55%,#0a1250);border:3px solid #f2f2f8;border-radius:8px;box-shadow:0 0 0 2px #000,inset 0 0 0 2px #7d8be0}
+#storyText{margin:0;font-size:18px;line-height:1.8}
+#storyText.fade{animation:fadein .6s}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.more{position:absolute;right:12px;bottom:6px;color:#ffd75e;animation:blink 1s ease-in-out infinite}
+.storyHint{font-size:12px;color:#8f9ad6;margin:0}
+.mapHead{display:flex;justify-content:space-between;align-items:baseline;margin:4px 2px 8px}
+.mapHead .mt{font-size:20px;color:#ffd75e;letter-spacing:3px}
+#mapStat{font-size:12px;color:#c9d0ff}#mapStat b{color:#ffd75e;font-weight:400}
+.mapBox{position:relative;flex:1;min-height:0;border:3px solid #f2f2f8;border-radius:8px;box-shadow:0 0 0 2px #000,inset 0 0 0 2px #7d8be0;overflow:hidden}
+#mapCv{position:absolute;inset:0;display:block}
+#mapLocs{position:absolute;inset:0}
+.loc{position:absolute;transform:translate(-50%,-50%);font-size:12px;padding:5px 8px;white-space:nowrap;background:linear-gradient(180deg,#2f8f5a,#155c36 55%,#0b3a22);border:2px solid #ffd75e;border-radius:6px;box-shadow:0 0 0 2px #000;color:#fff;text-shadow:1px 1px 0 #000}
+.loc.final{background:linear-gradient(180deg,#7a3ab8,#3a1a6a);border-color:#ffb8ff;animation:blink 1.4s ease-in-out infinite}
+.loc .lc{display:block;font-size:10px;color:#ffb0ff}.loc .lok{color:#ffd75e;margin-left:4px}
+.mapLead{font-size:12px;color:#b9c3ff;text-align:center;margin:8px 0 0}
+#town h2{font-size:22px;margin:8px 0 6px;text-align:center;color:#ffd75e;letter-spacing:3px;font-weight:400}
+.townDescWin{padding:10px 14px;background:linear-gradient(180deg,#3048b8,#16247a 55%,#0a1250);border:3px solid #f2f2f8;border-radius:8px;box-shadow:0 0 0 2px #000,inset 0 0 0 2px #7d8be0;margin-bottom:10px}
+#townDesc{margin:0;font-size:14px;line-height:1.6}
+#townActs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.btn.small{font-size:14px;padding:8px 12px 8px 26px;letter-spacing:0}
+#townPts{display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding:4px 4px 8px;flex:1;min-height:0}
+.pcard.curse{border-color:#d38bff;box-shadow:0 0 0 2px #000,inset 0 0 0 2px #b98be0,0 0 14px rgba(211,139,255,.45)}
+.pcard.boss{background:linear-gradient(180deg,#5a2a8a,#2a0c4a 60%,#14062a);border-color:#ffb8ff}
+#talkBox{position:absolute;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));display:none;gap:10px;align-items:flex-start;z-index:10;cursor:pointer}
+#talkBox.on{display:flex}
+#talkFace img,#talkFace .noimg{width:72px;height:72px;border:3px solid #f2f2f8;border-radius:6px;box-shadow:0 0 0 2px #000;background:#0a0f33;display:block}
+#talkFace .noimg{display:flex;align-items:center;justify-content:center;font-size:14px;color:#ffd75e}
+#talkBox .tb{position:relative;flex:1;min-height:96px;padding:8px 12px 20px;background:linear-gradient(180deg,#3048b8,#16247a 55%,#0a1250);border:3px solid #f2f2f8;border-radius:8px;box-shadow:0 0 0 2px #000,inset 0 0 0 2px #7d8be0}
+#talkName{margin:0 0 4px;color:#ffd75e;font-size:13px}#talkText{margin:0;font-size:15px;line-height:1.6}
 .selfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;padding-top:8px}
 
 /* プレイ */
@@ -149,6 +182,28 @@ ruby rt{font-size:.5em}
     <p class="foot">おとが でます（マナーモードを きってね）</p>
   </section>
 
+  <section id="story" class="screen">
+    <p id="storyTitle"></p>
+    <div class="storyWin"><p id="storyText"></p><span class="more">▼</span></div>
+    <p class="storyHint">タップで すすむ</p>
+  </section>
+
+  <section id="map" class="screen">
+    <div class="mapHead"><span class="mt">せかいちず</span><span id="mapStat"></span></div>
+    <div class="mapBox"><canvas id="mapCv"></canvas><div id="mapLocs"></div></div>
+    <p class="mapLead">どこへ いくかは きみ しだい。まちを タップしよう</p>
+    <div class="selfoot"><button class="btn gray" id="mapList">かんじゃ いちらん</button></div>
+  </section>
+
+  <section id="town" class="screen">
+    <h2 id="townName"></h2>
+    <div class="townDescWin"><p id="townDesc"></p></div>
+    <div id="townActs"></div>
+    <div id="townPts"></div>
+    <div class="selfoot"><button class="btn gray" id="townBack">ちずに もどる</button></div>
+    <div id="talkBox"><div id="talkFace"></div><div class="tb"><p id="talkName"></p><p id="talkText"></p><span class="more">▼</span></div></div>
+  </section>
+
   <section id="select" class="screen">
     <h2>どの かんじゃさんを みる？</h2>
     <div class="tabs"><button class="tab on" data-tab="kid" id="tabKid">こども</button><button class="tab" data-tab="adult" id="tabAdult">おとな</button></div>
@@ -201,5 +256,6 @@ ruby rt{font-size:.5em}
 </div>
 <script src="game.js"></script>
 <script src="cases.js"></script>
+<script src="story.js"></script>
 </body>
 </html>

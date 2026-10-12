@@ -379,7 +379,7 @@ const STEPS = {
     say2: 'ますいの ちゅうしゃ。まるの うえで <b>ボタンを おしたまま</b>、うごかさずに まってね',
     tip: '<b>ほんものでは</b> ぬりぐすり（ひょうめんますい）で はぐきを ねむらせてから ちゅうしゃ。ゆっくり いれると いたくないよ。' },
   wattes: { view: 'tooth', tool: 'none', toolName: 'ロールワッテ（わた）', label: 'わた',
-    say: '<b>わた</b>の うえで ボタンを おしたまま はこんで、はの よこの てんせんに おこう（2こ）',
+    say: '<b>ロールワッテ</b>（わた）を、はの <b>ほおがわ</b> と <b>したがわ</b> の はぐきに そって おこう（2こ）',
     tip: '<b>ほんものでは</b> つばや ほっぺ・したが じゃまに ならないように、わたや ゴムの シートで はを まもるよ。' },
   drill: { view: 'tooth', tool: 'turbine', toolName: 'タービン（はやく まわる）', label: 'けずる',
     say: 'くろい <b>むしば</b>を なぞって けずろう。<b>げんきな ところは けずらないで</b>ね！',
@@ -530,8 +530,10 @@ const onTooth = (x, y) => { const k = cellAt(x, y); return k >= 0 && cell[k] !==
 // ますいの ばしょ（はぐき）
 const GUM = { x: 96, y: TB.cy + TB.s * 0.9, r: 22 };
 // わたの おきば
-const SLOTS = [{ x: TB.cx, y: TB.cy - TB.s * 0.9 - 18 }, { x: TB.cx, y: TB.cy + TB.s * 0.9 + 18 }];
-const ROLL = { w: 150, h: 26 };
+// ロールワッテは ほおがわ・したがわの はぐきに そって、はに ぴったり よせて おく
+const SLOTS = [{ x: TB.cx, y: TB.cy - TB.s * 0.84 - 20 }, { x: TB.cx, y: TB.cy + TB.s * 0.84 + 20 }];
+const ROLL = { w: 200, h: 46 };
+const ROLLIMG = new Image(); ROLLIMG.src = 'roll.png';
 
 // ---------- くちの なか全体（はならび） ----------
 // [はばmm, あつみmm]。こどもの はの したあご（まえから A B C D E）、6さいきゅうし
@@ -803,7 +805,7 @@ function startStep() {
     const holes = []; for (let k = 0; k < NN; k++) if (cell[k] === HOLE) holes.push(k);
     for (let n = G.chips.length; n < 24 && holes.length; n++) { const c = cellXY(holes[(Math.random() * holes.length) | 0]); addChip(c.x, c.y); }
   }
-  if (G.key === 'wattes') G.wattes = [{ x: 92, y: 530, slot: null }, { x: 268, y: 530, slot: null }];
+  if (G.key === 'wattes') G.wattes = [{ x: 112, y: 496, slot: null }, { x: 248, y: 538, slot: null }];
   if (G.key === 'seal') cnt.grv0 = Math.max(1, count(GRV));
   if (G.step.view === 'case' && CASE.init) CASE.init(G.step);
   setSay();
@@ -1510,12 +1512,11 @@ function drawRoll(r, ghost) {
   if (ghost) {
     ctx.setLineDash([6, 5]); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2.5;
     rr(ctx, -ROLL.w / 2, -ROLL.h / 2, ROLL.w, ROLL.h, ROLL.h / 2); ctx.stroke(); ctx.setLineDash([]);
+    text(ctx, 'ここに おく', 0, 0, 11, 'rgba(255,255,255,.85)', 'center', 'rgba(60,10,20,.6)');
   } else {
-    ctx.fillStyle = 'rgba(0,0,0,.18)'; rr(ctx, -ROLL.w / 2 + 2, -ROLL.h / 2 + 4, ROLL.w, ROLL.h, ROLL.h / 2); ctx.fill();
-    const g = ctx.createLinearGradient(0, -ROLL.h / 2, 0, ROLL.h / 2); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#e4e8ec');
-    ctx.fillStyle = g; rr(ctx, -ROLL.w / 2, -ROLL.h / 2, ROLL.w, ROLL.h, ROLL.h / 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(180,190,200,.6)'; ctx.lineWidth = 1;
-    for (let x = -ROLL.w / 2 + 14; x < ROLL.w / 2 - 8; x += 12) { ctx.beginPath(); ctx.moveTo(x, -ROLL.h / 2 + 4); ctx.lineTo(x + 4, ROLL.h / 2 - 4); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(80,10,30,.28)'; rr(ctx, -ROLL.w / 2 + 3, -ROLL.h / 2 + 7, ROLL.w, ROLL.h, ROLL.h / 2); ctx.fill();
+    if (ROLLIMG.complete && ROLLIMG.naturalWidth) { ctx.imageSmoothingEnabled = false; ctx.drawImage(ROLLIMG, -ROLL.w / 2, -ROLL.h / 2, ROLL.w, ROLL.h); ctx.imageSmoothingEnabled = true; }
+    else { ctx.fillStyle = '#f4f6f8'; rr(ctx, -ROLL.w / 2, -ROLL.h / 2, ROLL.w, ROLL.h, ROLL.h / 2); ctx.fill(); }
   }
   ctx.restore();
 }

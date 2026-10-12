@@ -7,105 +7,121 @@
 <meta name="description" content="こどもが ゆびで ほんものの はいしゃさんの ちりょうを たいけんできる ゲーム">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
 <style>
+/* スーパーファミコンの RPG ふう：こんいろの そら・あおい まど・しろい ふち・きんの もじ */
 :root{
-  --bg:#e9f7fb; --ink:#2b3a4a; --sub:#5d6f80; --card:#ffffff; --mint:#3cc4b4; --mint-d:#23a395;
-  --pink:#ff7aa2; --sun:#ffc94a; --line:#d6e9ee;
+  --bg:#05081c; --ink:#ffffff; --sub:#b9c3ff; --gold:#ffd75e; --gold-d:#b8860b;
+  --win1:#3048b8; --win2:#16247a; --win3:#0a1250; --edge:#f2f2f8; --edge2:#7d8be0;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
-  font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;font-weight:800;
-  overscroll-behavior:none;-webkit-user-select:none;user-select:none}
-body{display:flex;justify-content:center;position:fixed;inset:0}
+  font-family:"DotGothic16","Hiragino Kaku Gothic ProN","Yu Gothic",monospace;font-weight:400;
+  overscroll-behavior:none;-webkit-user-select:none;user-select:none;text-shadow:1px 1px 0 #000}
+body{display:flex;justify-content:center;position:fixed;inset:0;
+  background:radial-gradient(ellipse at 50% -10%,#24306e 0,#0b1036 45%,#05081c 100%)}
 #app{width:100%;max-width:520px;height:100%;height:100dvh;position:relative;overflow:hidden}
-.screen{position:absolute;inset:0;display:none;flex-direction:column;padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;padding:12px 14px calc(12px + env(safe-area-inset-bottom))}
 .screen.on{display:flex}
-button{font:inherit;cursor:pointer;border:none}
-.btn{background:var(--mint);color:#fff;font-size:20px;padding:14px 24px;border-radius:999px;
-  box-shadow:0 5px 0 var(--mint-d);transition:transform .08s}
-.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--mint-d)}
-.btn.pink{background:var(--pink);box-shadow:0 5px 0 #e0517d}
-.btn.gray{background:#9fb3bf;box-shadow:0 5px 0 #7e95a3;font-size:16px;padding:10px 18px}
-.btn.sun{background:var(--sun);color:#5a3d00;box-shadow:0 5px 0 #e0a51c}
-ruby rt{font-size:.5em;font-weight:500}
+button{font:inherit;cursor:pointer;border:none;color:inherit}
+/* まど */
+.btn,.pcard,.card,#bubble,#toolName,.iconbtn{
+  background:linear-gradient(180deg,var(--win1) 0%,var(--win2) 55%,var(--win3) 100%);
+  border:3px solid var(--edge);border-radius:8px;
+  box-shadow:0 0 0 2px #000,inset 0 0 0 2px var(--edge2),0 6px 14px rgba(0,0,0,.45);color:#fff}
+.btn{font-size:20px;padding:12px 26px 12px 34px;position:relative;letter-spacing:2px}
+.btn:before{content:"▶";position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--gold);opacity:0}
+.btn:hover:before,.btn:active:before,.btn:focus-visible:before,#startBtn:before{opacity:1}
+.btn:active{filter:brightness(1.25)}
+.btn.gray{font-size:16px;padding:9px 18px 9px 30px}
+.btn.sun{color:var(--gold)}
+ruby rt{font-size:.5em}
 
 /* タイトル */
-#title{align-items:center;justify-content:center;text-align:center;gap:14px;
-  background:radial-gradient(circle at 50% 30%,#ffffff 0,#dff4f8 55%,#c9eef3 100%)}
-#title h1{font-size:40px;line-height:1.2;margin:0;color:#1f8f84;text-shadow:0 3px 0 #fff}
-#title .sub{font-size:17px;color:var(--sub);margin:0}
-.bigshin{width:78px;height:180px;image-rendering:pixelated;filter:drop-shadow(0 6px 0 rgba(0,0,0,.08))}
-.tooth-deco{font-size:0}
-.foot{font-size:12px;color:#7d909e;font-weight:500;margin-top:8px}
+#title{align-items:center;justify-content:center;text-align:center;gap:14px}
+#title .emblem{position:relative;padding:22px 12px 18px;width:100%}
+#title .emblem:before,#title .emblem:after{content:"";position:absolute;left:8%;right:8%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+#title .emblem:before{top:0}#title .emblem:after{bottom:0}
+#title h1{font-size:40px;line-height:1.25;margin:0;color:var(--gold);letter-spacing:3px;font-weight:400;
+  text-shadow:2px 2px 0 #5a3d00,-1px -1px 0 #fff3c0,0 0 18px rgba(255,200,80,.45)}
+#title .kicker{font-size:13px;color:var(--sub);letter-spacing:6px;margin:0 0 8px}
+#title .sub{font-size:15px;color:#e6e9ff;margin:0;line-height:1.7}
+.bigshin{width:78px;height:180px;image-rendering:pixelated;filter:drop-shadow(0 0 12px rgba(120,160,255,.45))}
+.foot{font-size:12px;color:#8f9ad6;margin-top:6px}
+.blink{animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{50%{opacity:.45}}
 
 /* かんじゃさん選び */
-#select h2{font-size:24px;margin:6px 0 4px;text-align:center}
-#select .lead{font-size:14px;color:var(--sub);text-align:center;margin:0 0 10px;font-weight:500}
-#plist{display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding-bottom:8px}
-.pcard{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:22px;padding:12px;
-  border:3px solid var(--line);text-align:left;color:var(--ink);box-shadow:0 4px 0 #cfe3e9}
-.pcard:active{transform:translateY(3px);box-shadow:0 1px 0 #cfe3e9}
-.pcard canvas{width:76px;height:76px;flex:none;border-radius:50%;background:#fff4e6}
-.pcard .nm{font-size:19px}
-.pcard .wr{font-size:14px;color:var(--sub);font-weight:500;margin:2px 0}
-.pcard .tt{display:inline-block;font-size:13px;background:#e3f7f4;color:#1f8f84;border-radius:999px;padding:3px 10px}
-.pcard .rank{display:inline-block;font-size:12px;border-radius:999px;padding:2px 9px;margin:3px 0 1px;color:#fff}
-.pcard .rank.r1{background:#7fc8a9}.pcard .rank.r2{background:#f2a541}.pcard .rank.r3{background:#e0517d}.pcard .rank.r4{background:#6b4fbb}
-.pcard .st{font-size:18px;color:var(--sun);letter-spacing:1px;margin-left:6px}
+#select h2{font-size:22px;margin:6px 0 2px;text-align:center;color:var(--gold);letter-spacing:2px;font-weight:400}
+#select .lead{font-size:13px;color:var(--sub);text-align:center;margin:0 0 10px}
+#plist{display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding:4px 4px 8px}
+.pcard{display:flex;align-items:center;gap:12px;padding:10px 12px;text-align:left;position:relative}
+.pcard:active{filter:brightness(1.2)}
+.pcard canvas{width:72px;height:72px;flex:none;border-radius:6px;background:#0a0f33;border:2px solid var(--edge2)}
+.pcard .nm{font-size:18px}
+.pcard .wr{font-size:13px;color:#d6dcff;margin:3px 0}
+.pcard .tt{display:inline-block;font-size:12px;color:var(--gold)}
+.pcard .rank{display:inline-block;font-size:12px;padding:1px 8px;margin:4px 0 1px;border:1px solid currentColor;border-radius:3px;background:rgba(0,0,0,.35)}
+.pcard .rank.r1{color:#8ff0b0}.pcard .rank.r2{color:#ffc35e}.pcard .rank.r3{color:#ff6b7f}.pcard .rank.r4{color:#d38bff;box-shadow:0 0 8px rgba(211,139,255,.6)}
+.pcard .st{font-size:16px;color:var(--gold);letter-spacing:1px;margin-left:6px}
 .selfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;padding-top:8px}
 
 /* プレイ */
 #play{padding:8px 10px calc(8px + env(safe-area-inset-bottom));gap:6px}
 #bubbleRow{display:flex;align-items:flex-end;gap:8px;min-height:96px}
-#bubbleRow img{width:39px;height:90px;image-rendering:pixelated;flex:none}
-#bubble{position:relative;flex:1;background:#fff;border-radius:18px;padding:9px 12px;border:3px solid var(--line)}
-#bubble:before{content:"";position:absolute;left:-12px;bottom:16px;border:8px solid transparent;border-right-color:var(--line)}
-#say{font-size:17px;line-height:1.45}
-#tip{font-size:12.5px;line-height:1.5;color:var(--sub);font-weight:500;margin-top:4px}
-#tip b{color:#e0517d}
+#bubbleRow img{width:39px;height:90px;image-rendering:pixelated;flex:none;filter:drop-shadow(0 0 6px rgba(120,160,255,.5))}
+#bubble{position:relative;flex:1;padding:8px 12px}
+#say{font-size:16px;line-height:1.5}
+#say b{color:var(--gold);font-weight:400}
+#tip{font-size:12px;line-height:1.5;color:#c9d0ff;margin-top:4px}
+#tip b{color:#7fe7ff;font-weight:400}
 #stageWrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
-#cv{touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;border-radius:22px;background:#5c1d2a;display:block}
+#cv{touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;border-radius:8px;background:#05081c;display:block;
+  border:3px solid var(--edge);box-shadow:0 0 0 2px #000,inset 0 0 0 2px var(--edge2)}
 #barRow{display:flex;align-items:center;gap:8px}
-#toolName{font-size:13px;background:#fff;border-radius:999px;padding:6px 12px;border:2px solid var(--line);white-space:nowrap}
-#bar{flex:1;height:18px;background:#fff;border-radius:999px;border:2px solid var(--line);overflow:hidden}
-#barIn{height:100%;width:0;background:linear-gradient(90deg,#7fe0d3,#3cc4b4);border-radius:999px}
-.iconbtn{position:absolute;top:10px;width:38px;height:38px;border-radius:50%;background:#fff;border:2px solid var(--line);
-  font-size:18px;line-height:34px;text-align:center;color:var(--sub);z-index:5}
+#toolName{font-size:13px;padding:5px 10px;white-space:nowrap;color:var(--gold)}
+#bar{flex:1;height:16px;background:#000;border:2px solid var(--edge);border-radius:3px;overflow:hidden;box-shadow:0 0 0 2px #000}
+#barIn{height:100%;width:0;background:linear-gradient(180deg,#b6ffb0 0,#36d36a 50%,#169c45 100%)}
+.iconbtn{position:absolute;top:10px;width:38px;height:38px;font-size:17px;line-height:30px;text-align:center;z-index:5;padding:0}
 #quit{left:10px}#mute{right:10px}
 #pad{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 8px 0}
-#stick{width:118px;height:118px;border-radius:50%;background:radial-gradient(circle,#ffffff 0,#e3f3f6 70%);border:3px solid var(--line);position:relative;touch-action:none;flex:none}
-#knob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:var(--mint);box-shadow:0 4px 0 var(--mint-d);pointer-events:none}
-#abtn{width:104px;height:104px;border-radius:50%;background:var(--pink);color:#fff;font-size:22px;box-shadow:0 6px 0 #e0517d;touch-action:none;flex:none;-webkit-user-select:none;user-select:none}
-#abtn.on{transform:translateY(5px);box-shadow:0 1px 0 #e0517d;background:#ff5f90}
-#padHelp{flex:1;min-width:0;font-size:12px;color:var(--sub);text-align:center;font-weight:500;line-height:1.35;white-space:nowrap}
-@media (max-height:720px){#bubbleRow{min-height:0}#bubbleRow img{width:22px;height:51px}#bubble{padding:6px 10px;border-radius:14px}#say{font-size:14px;line-height:1.35}#tip{font-size:11px;line-height:1.35;margin-top:2px}#play{gap:4px}#toolName{font-size:12px;padding:4px 10px}#stick{width:96px;height:96px}#knob{width:44px;height:44px;margin:-22px 0 0 -22px}#abtn{width:86px;height:86px;font-size:19px}#padHelp{font-size:11px}}
+#stick{width:118px;height:118px;border-radius:50%;position:relative;touch-action:none;flex:none;
+  background:radial-gradient(circle,#1d2a72 0,#0a1046 70%);border:3px solid var(--edge);box-shadow:0 0 0 2px #000,inset 0 0 0 3px var(--edge2),inset 0 0 18px #000}
+#knob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 35% 30%,#fff6c8 0,#ffd75e 35%,#b8860b 100%);border:2px solid #3a2a00;box-shadow:0 4px 0 #3a2a00}
+#abtn{width:104px;height:104px;border-radius:50%;color:#fff;font-size:21px;letter-spacing:1px;touch-action:none;flex:none;-webkit-user-select:none;user-select:none;
+  background:radial-gradient(circle at 35% 30%,#ff9aa6 0,#d7263d 45%,#7a0f20 100%);border:4px solid var(--gold);box-shadow:0 0 0 2px #000,0 6px 0 #3a0710;text-shadow:2px 2px 0 #000}
+#abtn.on{transform:translateY(5px);box-shadow:0 0 0 2px #000,0 1px 0 #3a0710;filter:brightness(1.25)}
+#padHelp{flex:1;min-width:0;font-size:12px;color:var(--sub);text-align:center;line-height:1.4;white-space:nowrap}
+@media (max-height:720px){#bubbleRow{min-height:0}#bubbleRow img{width:22px;height:51px}#bubble{padding:5px 9px}#say{font-size:14px;line-height:1.35}#tip{font-size:11px;line-height:1.35;margin-top:2px}#play{gap:4px}#toolName{font-size:12px;padding:3px 9px}#stick{width:96px;height:96px}#knob{width:44px;height:44px;margin:-22px 0 0 -22px}#abtn{width:86px;height:86px;font-size:18px}#padHelp{font-size:11px}}
 #play #bubbleRow{padding:0 44px 0 40px}
 
 /* けっか */
 #result{align-items:center;text-align:center;overflow-y:auto;gap:8px}
-#result h2{font-size:28px;margin:6px 0 0;color:#1f8f84}
-#rstars{font-size:46px;color:var(--sun);letter-spacing:4px;text-shadow:0 3px 0 #e0a51c}
-#rmsg{font-size:16px;margin:0}
-#rface{width:110px;height:110px}
-.card{background:#fff;border-radius:22px;padding:14px 16px;text-align:left;border:3px solid var(--line);width:100%}
-.card h3{margin:0 0 6px;font-size:18px;color:#e0517d}
-.card ul{margin:0;padding-left:1.2em}
-.card li{font-size:15px;line-height:1.75;font-weight:500;margin-bottom:6px}
-.card li b{font-weight:800;color:#1f8f84}
-.card .order{font-size:13px;line-height:1.7;font-weight:500;color:#5d6f80;margin:8px 0 0;padding-top:8px;border-top:2px dashed var(--line)}
-.card .order b{color:#2b3a4a}
+#result h2{font-size:26px;margin:6px 0 0;color:var(--gold);letter-spacing:3px;font-weight:400;text-shadow:2px 2px 0 #5a3d00,0 0 14px rgba(255,200,80,.5)}
+#rstars{font-size:40px;color:var(--gold);letter-spacing:4px;text-shadow:2px 2px 0 #5a3d00}
+#rmsg{font-size:15px;margin:0;line-height:1.6}
+#rface{width:104px;height:104px;border:3px solid var(--edge);border-radius:8px;background:#0a0f33;box-shadow:0 0 0 2px #000}
+.card{padding:12px 14px;text-align:left;width:100%}
+.card h3{margin:0 0 8px;font-size:16px;color:var(--gold);font-weight:400}
+.card ul{margin:0;padding-left:1.3em}
+.card li{font-size:14px;line-height:1.75;margin-bottom:6px}
+.card li::marker{content:"◆ ";color:var(--gold)}
+.card li b{font-weight:400;color:#7fe7ff}
+.card .order{font-size:12px;line-height:1.7;color:#c9d0ff;margin:8px 0 0;padding-top:8px;border-top:1px dashed var(--edge2)}
+.card .order b{color:var(--gold);font-weight:400}
 .rbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:6px 0 10px}
 
 /* にんていしょう */
 #cert{align-items:center;justify-content:center;gap:12px;overflow-y:auto}
-.certbox{width:100%;background:#fffdf3;border:8px double #e0a51c;border-radius:16px;padding:20px 16px;text-align:center}
-.certbox h2{font-size:30px;margin:0 0 6px;color:#b8860b;letter-spacing:4px}
-.certbox .nm{font-size:24px;margin:12px 0;border-bottom:3px solid #e0c46c;display:inline-block;min-width:60%;padding:0 8px}
-.certbox p{font-size:16px;line-height:1.8;margin:6px 0;font-weight:500}
-.certbox .dt{font-size:14px;color:#7a6a3a}
-.certbox .cl{font-size:13px;color:#7a6a3a;margin-top:10px}
-#certName{font:inherit;font-size:18px;padding:8px 12px;border-radius:12px;border:2px solid var(--line);width:70%;text-align:center}
+.certbox{width:100%;background:linear-gradient(180deg,#2a1d05,#120c02);border:4px double var(--gold);border-radius:6px;padding:20px 16px;text-align:center;box-shadow:0 0 0 2px #000,0 0 24px rgba(255,200,80,.25)}
+.certbox h2{font-size:28px;margin:0 0 6px;color:var(--gold);letter-spacing:6px;font-weight:400}
+.certbox .nm{font-size:22px;margin:12px 0;border-bottom:2px solid var(--gold-d);display:inline-block;min-width:60%;padding:0 8px;color:#fff}
+.certbox p{font-size:15px;line-height:1.8;margin:6px 0;color:#f5e9c8}
+.certbox b{color:var(--gold);font-weight:400}
+.certbox .dt{font-size:13px;color:#c9b27a}
+.certbox .cl{font-size:12px;color:#c9b27a;margin-top:10px}
+#certName{font:inherit;font-size:18px;padding:8px 12px;border-radius:6px;border:3px solid var(--edge);background:#0a1250;color:#fff;width:70%;text-align:center;box-shadow:0 0 0 2px #000}
 </style>
 </head>
 <body>
@@ -113,9 +129,12 @@ ruby rt{font-size:.5em;font-weight:500}
 
   <section id="title" class="screen on">
     <img class="bigshin" src="shin.png" alt="しんちゃまくん">
-    <h1>はいしゃさんに<br>なろう！</h1>
-    <p class="sub">ほんものの ちりょうを<br>ゆびで やってみよう</p>
-    <button class="btn" id="startBtn">はじめる</button>
+    <div class="emblem">
+      <p class="kicker">― DENTAL QUEST ―</p>
+      <h1>はいしゃさんに<br>なろう！</h1>
+    </div>
+    <p class="sub">4にんの かんじゃが まっている<br>ほんものの ちりょうに いどめ！</p>
+    <button class="btn" id="startBtn"><span class="blink">はじめる</span></button>
     <p class="foot">おとが でます（マナーモードを きってね）</p>
   </section>
 

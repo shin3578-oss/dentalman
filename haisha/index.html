@@ -64,6 +64,10 @@ ruby rt{font-size:.5em}
 .pcard .rank{display:inline-block;font-size:12px;padding:1px 8px;margin:4px 0 1px;border:1px solid currentColor;border-radius:3px;background:rgba(0,0,0,.35)}
 .pcard .rank.r1{color:#8ff0b0}.pcard .rank.r2{color:#ffc35e}.pcard .rank.r3{color:#ff6b7f}.pcard .rank.r4{color:#d38bff;box-shadow:0 0 8px rgba(211,139,255,.6)}
 .pcard .st{font-size:16px;color:var(--gold);letter-spacing:1px;margin-left:6px}
+.tabs{display:flex;gap:10px;justify-content:center;margin:2px 0 10px}
+.tab{flex:1;max-width:170px;font-size:16px;padding:8px 6px;background:linear-gradient(180deg,#24306e,#0e1650);border:3px solid #7d8be0;border-radius:6px;box-shadow:0 0 0 2px #000;color:#b9c3ff}
+.tab.on{border-color:#f2f2f8;color:#ffd75e;background:linear-gradient(180deg,#3048b8,#16247a)}
+.tab.on:before{content:"▶ ";color:#ffd75e}
 .selfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;padding-top:8px}
 
 /* プレイ */
@@ -133,14 +137,14 @@ ruby rt{font-size:.5em}
       <p class="kicker">― DENTAL QUEST ―</p>
       <h1>はいしゃさんに<br>なろう！</h1>
     </div>
-    <p class="sub">4にんの かんじゃが まっている<br>ほんものの ちりょうに いどめ！</p>
+    <p class="sub">17にんの かんじゃが まっている<br>ほんものの ちりょうに いどめ！</p>
     <button class="btn" id="startBtn"><span class="blink">はじめる</span></button>
     <p class="foot">おとが でます（マナーモードを きってね）</p>
   </section>
 
   <section id="select" class="screen">
-    <h2>どの こを みてあげる？</h2>
-    <p class="lead">かんじゃさんを タップしてね</p>
+    <h2>どの かんじゃさんを みる？</h2>
+    <div class="tabs"><button class="tab on" data-tab="kid" id="tabKid">こども</button><button class="tab" data-tab="adult" id="tabAdult">おとな</button></div>
     <div id="plist"></div>
     <div class="selfoot">
       <button class="btn gray" id="toTitle">もどる</button>
@@ -171,7 +175,7 @@ ruby rt{font-size:.5em}
     <p id="rmsg"></p>
     <div class="card" id="rcard"></div>
     <div class="rbtns">
-      <button class="btn" id="toSelect">ほかの こを みる</button>
+      <button class="btn" id="toSelect">ほかの かんじゃさんを みる</button>
     </div>
   </section>
 
@@ -189,5 +193,6 @@ ruby rt{font-size:.5em}
 
 </div>
 <script src="game.js"></script>
+<script src="cases.js"></script>
 </body>
 </html>

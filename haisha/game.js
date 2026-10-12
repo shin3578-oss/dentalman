@@ -24,7 +24,7 @@ function resize() {
   cv.style.width = (W * s) + 'px'; cv.style.height = (H * s) + 'px';
   cv.width = pw; cv.height = ph;
   SC = cv.width / W;
-  if (G.step && !G.finished) draw();
+  if (G.step && G.running && !G.finished && G.toolX != null) draw();
 }
 window.addEventListener('resize', () => { if ($('#play').classList.contains('on')) resize(); });
 if (window.ResizeObserver) new ResizeObserver(() => { if ($('#play').classList.contains('on')) resize(); }).observe($('#stageWrap'));
@@ -223,7 +223,7 @@ const STEPS = {
 // ---------- ゲームの じょうたい ----------
 const G = { p: null, si: 0, step: null, key: '', t: 0, mist: 0, done: false, doneT: 0, phase: 0,
   ouchT: 0, fade: 0, flash: null, pops: [], parts: [], chips: [], teeth: [], arch: null,
-  holdT: 0, shine: 0, hintT: 0, running: false, finished: false, wattes: [], grab: null, badT: 0 };
+  holdT: 0, shine: 0, hintT: 0, running: false, finished: false, wattes: [], grab: null, badT: 0, toolX: 300, toolY: 470 };
 
 // ---------- 1本を おおきく みる（マス目） ----------
 const N = 48, TB = { cx: 180, cy: 318, s: 128 };

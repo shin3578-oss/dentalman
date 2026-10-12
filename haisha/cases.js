@@ -1168,5 +1168,20 @@ for (const cs of CASES) {
   cs.steps = cs.steps.map((sd, i) => { const key = cs.id + '_' + i; STEPS[key] = Object.assign({ view: 'case', toolName: '', tip: '', label: '' }, sd, { view: 'case' }); if (!STEPS[key].tool) STEPS[key].tool = 'cursor'; if (!STEPS[key].toolName) STEPS[key].toolName = { choice: 'コマンド', order: 'じゅんばん', tap: 'さがす', breath: 'しんこきゅう' }[sd.type] || 'ちりょう'; return key; });
   PATIENTS.push(cs);
 }
-Object.assign(C.CASE, { patient: startCasePatient, init, update, draw, tap, progress, isTap, drawTool, state: () => ({ S, E }), dbg: { choiceRows, orderCards } });
+function demo(h) {
+  const st = ST(), { pTap, pRub, pHold, pDrag, zig, W8 } = h;
+  switch (st.type) {
+    case 'tap': { const t = st.targets(S).find(t => t.ok); return t ? pRub([[180, 260], [t.x, t.y]]).slice(0, 1).concat(pTap(t.x, t.y)) : null; }
+    case 'choice': { const R = choiceRows(); return R.rows.map(r => W8(r.x + 34, r.y + r.h / 2, false, 0.7)); }
+    case 'order': return orderCards().map(cd => W8(cd.x + cd.w / 2, cd.y + cd.h / 2, false, 0.6));
+    case 'paint': { const cs = E.cells; if (!cs.length) return null; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const q of cs) { x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); } return pRub(zig((x0 + x1) / 2, (y0 + y1) / 2, Math.max(10, (x1 - x0) / 2), Math.max(6, (y1 - y0) / 2))); }
+    case 'erase': return pRub(E.marks.filter(m => m.hp > 0).slice(0, 4).map(m => [m.x, m.y]));
+    case 'hold': { const a = st.area || { x: 180, y: 320 }; return pHold(a.x, a.y, 1.8); }
+    case 'drag': { const it = E.items.find(i => !i.placed), sl = it && (it.slot || E.slots.find(q => !q.used)); return it && sl ? pDrag([it.x, it.y], [sl.x, sl.y]) : null; }
+    case 'trace': return pRub(E.pts.slice(0, 4));
+    case 'depth': case 'breath': return pHold(180, 320, 1.8);
+  }
+  return null;
+}
+Object.assign(C.CASE, { demo, patient: startCasePatient, init, update, draw, tap, progress, isTap, drawTool, state: () => ({ S, E }), dbg: { choiceRows, orderCards } });
 })();

@@ -685,7 +685,8 @@ function finish() {
   $('#rcard').innerHTML = '<h3>おぼえた こと：' + c.h + '</h3><ul>' + c.li.map(x => '<li>' + x + '</li>').join('') + '</ul>' +
     '<p class="order"><b>きょうの ちりょうの じゅんばん</b><br>' + order + '</p>';
   const rf = $('#rface'), rc = rf.getContext('2d'); rc.clearRect(0, 0, 220, 220);
-  drawFace(rc, 110, 115, 92, G.p, 'happy');
+  const drawR = () => { rc.clearRect(0, 0, 220, 220); drawPortrait(rc, 0, 0, 220, G.p, 'happy', 1.2); };
+  drawR(); if (!portrait(G.p)) setTimeout(drawR, 400);
   setTimeout(() => show('result'), 400);
 }
 function mistake(text) {
@@ -1045,7 +1046,7 @@ function drawHeader() {
   const scary = (G.key === 'drill' || G.key === 'excavate' || G.key === 'extract' || (G.key === 'masui' && G.phase === 1)) && P.down;
   const mood = G.ouchT > 0 ? 'ouch' : G.done && G.si === G.p.steps.length - 1 ? 'happy' : scary ? 'nervous' : G.key === 'xray' ? 'smile' : 'open';
   ctx.save(); rr(ctx, 12, 9, 68, 68, 6); ctx.fillStyle = '#0a0f33'; ctx.fill(); ctx.strokeStyle = '#7d8be0'; ctx.lineWidth = 2; ctx.stroke(); ctx.clip();
-  drawFace(ctx, 46, 48, 32, G.p, mood); ctx.restore();
+  drawPortrait(ctx, 12, 9, 68, G.p, mood, G.t); ctx.restore();
   text(ctx, G.p.name + G.p.hon + '（' + G.p.age + 'さい）', 92, 22, 16, '#ffffff', 'left', '#000');
   const n = G.p.steps.length, gap = Math.min(24, 168 / (n - 1)), rad = Math.min(8, gap * 0.36);
   ctx.fillStyle = '#3a4a8a'; ctx.fillRect(100, 46.5, gap * (n - 1), 3);
@@ -1066,7 +1067,26 @@ function drawHeart(c, x, y, r, col) {
   c.fillStyle = col; c.fill();
 }
 
-// かお
+// かお（Canva で つくった ドット絵。ひょうじょうは うえに かさねる）
+const PIMG = {};
+function portrait(p) {
+  if (!PIMG[p.id]) { const im = new Image(); im.onload = () => { if (typeof buildSelect === 'function' && $('#select').classList.contains('on')) buildSelect(); }; im.src = p.id + '.png'; PIMG[p.id] = im; }
+  return PIMG[p.id].complete && PIMG[p.id].naturalWidth ? PIMG[p.id] : null;
+}
+function drawPortrait(c, x, y, size, p, mood, t) {
+  const im = portrait(p);
+  if (!im) { drawFace(c, x + size / 2, y + size / 2 + size * 0.04, size * 0.42, p, mood); return; }
+  c.save();
+  const sh = mood === 'ouch' ? Math.sin((t || 0) * 60) * size * 0.04 : 0;
+  c.imageSmoothingEnabled = true; c.drawImage(im, x + sh, y, size, size);
+  if (mood === 'ouch') { c.fillStyle = 'rgba(255,40,60,.35)'; c.fillRect(x, y, size, size); }
+  if (mood === 'nervous') { c.fillStyle = '#9fe0ff'; c.strokeStyle = '#1a3a6a'; c.lineWidth = Math.max(1, size * 0.02);
+    c.beginPath(); c.moveTo(x + size * 0.82, y + size * 0.16); c.quadraticCurveTo(x + size * 0.9, y + size * 0.3, x + size * 0.82, y + size * 0.33);
+    c.quadraticCurveTo(x + size * 0.74, y + size * 0.3, x + size * 0.82, y + size * 0.16); c.fill(); c.stroke(); }
+  if (mood === 'happy') { const tt = t || 0; for (let i = 0; i < 3; i++) { const a = (Math.sin(tt * 3 + i * 2) + 1) / 2; c.globalAlpha = a;
+    drawSpark(c, x + size * [0.15, 0.85, 0.75][i], y + size * [0.2, 0.25, 0.8][i], size * 0.08, '#ffe9a0'); } c.globalAlpha = 1; }
+  c.restore();
+}
 function drawFace(c, x, y, r, p, mood) {
   c.save();
   if (p.style === 'girl') { c.fillStyle = p.hair; for (const s of [-1, 1]) { c.beginPath(); c.arc(x + s * r * 1.02, y + r * 0.05, r * 0.38, 0, Math.PI * 2); c.fill(); } }
@@ -1516,7 +1536,7 @@ function buildSelect() {
   PATIENTS.slice().sort((a, b) => a.lv - b.lv).forEach(p => {
     const b = document.createElement('button'); b.className = 'pcard';
     const c = document.createElement('canvas'); c.width = 152; c.height = 152;
-    const cc = c.getContext('2d'); drawFace(cc, 76, 82, 54, p, st[p.id] ? 'happy' : 'nervous');
+    const cc = c.getContext('2d'); drawPortrait(cc, 0, 0, 152, p, st[p.id] ? 'happy' : '', 1.2);
     const s = st[p.id] || 0;
     const info = document.createElement('div');
     info.innerHTML = '<div class="nm">' + p.name + p.hon + '（' + p.age + 'さい）' + (s ? '<span class="st">' + '★'.repeat(s) + '☆'.repeat(3 - s) + '</span>' : '') + '</div>' +
@@ -1528,6 +1548,7 @@ function buildSelect() {
   });
   $('#toCert').style.display = PATIENTS.every(p => st[p.id]) ? '' : 'none';
 }
+PATIENTS.forEach(portrait);
 $('#startBtn').addEventListener('click', () => { audioInit(); SFX.start(); bgmStart(); buildSelect(); show('select'); });
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button'); if (b && b.id !== 'startBtn' && b.id !== 'abtn') { audioInit(); bgmStart(); SFX.tap(); } });
 $('#toTitle').addEventListener('click', () => show('title'));

@@ -71,6 +71,13 @@ ruby rt{font-size:.5em;font-weight:500}
 .iconbtn{position:absolute;top:10px;width:38px;height:38px;border-radius:50%;background:#fff;border:2px solid var(--line);
   font-size:18px;line-height:34px;text-align:center;color:var(--sub);z-index:5}
 #quit{left:10px}#mute{right:10px}
+#pad{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 8px 0}
+#stick{width:118px;height:118px;border-radius:50%;background:radial-gradient(circle,#ffffff 0,#e3f3f6 70%);border:3px solid var(--line);position:relative;touch-action:none;flex:none}
+#knob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:var(--mint);box-shadow:0 4px 0 var(--mint-d);pointer-events:none}
+#abtn{width:104px;height:104px;border-radius:50%;background:var(--pink);color:#fff;font-size:22px;box-shadow:0 6px 0 #e0517d;touch-action:none;flex:none;-webkit-user-select:none;user-select:none}
+#abtn.on{transform:translateY(5px);box-shadow:0 1px 0 #e0517d;background:#ff5f90}
+#padHelp{flex:1;min-width:0;font-size:12px;color:var(--sub);text-align:center;font-weight:500;line-height:1.35;white-space:nowrap}
+@media (max-height:720px){#bubbleRow{min-height:0}#bubbleRow img{width:22px;height:51px}#bubble{padding:6px 10px;border-radius:14px}#say{font-size:14px;line-height:1.35}#tip{font-size:11px;line-height:1.35;margin-top:2px}#play{gap:4px}#toolName{font-size:12px;padding:4px 10px}#stick{width:96px;height:96px}#knob{width:44px;height:44px;margin:-22px 0 0 -22px}#abtn{width:86px;height:86px;font-size:19px}#padHelp{font-size:11px}}
 #play #bubbleRow{padding:0 44px 0 40px}
 
 /* けっか */
@@ -107,7 +114,7 @@ ruby rt{font-size:.5em;font-weight:500}
     <h1>はいしゃさんに<br>なろう！</h1>
     <p class="sub">ほんものの ちりょうを<br>ゆびで やってみよう</p>
     <button class="btn" id="startBtn">はじめる</button>
-    <p class="foot">おとが でます</p>
+    <p class="foot">おとが でます（マナーモードを きってね）</p>
   </section>
 
   <section id="select" class="screen">
@@ -129,6 +136,11 @@ ruby rt{font-size:.5em;font-weight:500}
     </div>
     <div id="stageWrap"><canvas id="cv"></canvas></div>
     <div id="barRow"><div id="toolName"></div><div id="bar"><div id="barIn"></div></div></div>
+    <div id="pad">
+      <div id="stick" aria-label="スティック"><div id="knob"></div></div>
+      <div id="padHelp">← スティックで<br>うごかす<br><br>ボタンで<br>つかう →</div>
+      <button id="abtn">つかう</button>
+    </div>
   </section>
 
   <section id="result" class="screen">

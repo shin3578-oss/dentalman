@@ -113,6 +113,7 @@ function drawMolarScene() {
   // ほね
   ctx.fillStyle = xr ? 'rgba(115,123,131,.6)' : '#efd2bd'; ctx.beginPath(); ctx.moveTo(20, H); ctx.lineTo(20, boneY + 8); ctx.quadraticCurveTo(cx - 100, boneY - 4, cx - 80, boneY); ctx.lineTo(cx + 80, boneY); ctx.quadraticCurveTo(cx + 100, boneY - 4, 340, boneY + 8); ctx.lineTo(340, H); ctx.closePath(); ctx.fill();
   boneTex(24, boneY + 10, 312, H - boneY, xr ? 'rgba(20,24,28,.35)' : 'rgba(200,150,130,.35)', 7);
+  if (m.defect) { ctx.fillStyle = m.regen ? '#f6e6a0' : m.defectClean ? '#3a1a1a' : '#9a3a3a'; ctx.beginPath(); ctx.moveTo(cx - MO.w / 2 + 2, boneY - 2); ctx.lineTo(cx - MO.w / 2 - 34, boneY - 2); ctx.lineTo(cx - MO.w / 2 + 2, boneY + 58); ctx.closePath(); ctx.fill(); }
   if (m.lesion) { const g = ctx.createRadialGradient(0, 0, 2, 0, 0, 26); for (const sx of [-1, 1]) { ctx.save(); ctx.translate(cx + sx * MO.w * 0.55, apex + 2); ctx.fillStyle = xr ? 'rgba(5,6,8,.9)' : 'rgba(120,40,40,.75)'; ctx.beginPath(); ctx.ellipse(0, 0, 22, 18, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); } }
   // は
   const prep = m.crown === 'prep' || m.crown === 'temp' || m.crown === 'final';
@@ -153,6 +154,7 @@ function drawMolarScene() {
     ctx.fillStyle = m.gumRed ? '#d8506a' : '#ee98a4';
     ctx.beginPath(); ctx.moveTo(20, boneY + 24); ctx.lineTo(20, gumY + 4); ctx.quadraticCurveTo(cx - 100, gumY - 8, cx - MO.w / 2 - 2, gumY); ctx.lineTo(cx - MO.w / 2 + 4, boneY + 6); ctx.lineTo(20, boneY + 24); ctx.closePath(); ctx.fill();
     ctx.beginPath(); ctx.moveTo(340, boneY + 24); ctx.lineTo(340, gumY + 4); ctx.quadraticCurveTo(cx + 100, gumY - 8, cx + MO.w / 2 + 2, gumY); ctx.lineTo(cx + MO.w / 2 - 4, boneY + 6); ctx.lineTo(340, boneY + 24); ctx.closePath(); ctx.fill();
+    if (m.flap) { ctx.fillStyle = '#4a1622'; ctx.beginPath(); ctx.moveTo(cx - MO.w / 2 - 34, gumY - 10); ctx.lineTo(cx - MO.w / 2 + 2, gumY - 10); ctx.lineTo(cx - MO.w / 2 + 2, boneY + 4); ctx.lineTo(cx - MO.w / 2 - 34, boneY + 4); ctx.closePath(); ctx.fill(); }
     if (m.pocket) { ctx.strokeStyle = '#5a1222'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx - MO.w / 2 - 1, gumY + 2); ctx.lineTo(cx - MO.w / 2 + 3, gumY + m.pocket * 12.7); ctx.stroke(); }
     if (m.cord) { ctx.strokeStyle = '#3a7bff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx - MO.w / 2, gumY + 2); ctx.lineTo(cx + MO.w / 2, gumY + 2); ctx.stroke(); }
   }
@@ -277,8 +279,14 @@ function drawFrontScene() {
   ctx.fillStyle = '#2a0c14'; ctx.beginPath(); ctx.ellipse(180, 392, 150, 92, 0, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#ee98a4'; ctx.beginPath(); ctx.moveTo(30, 330); ctx.quadraticCurveTo(180, 300, 330, 330); ctx.lineTo(330, 355); ctx.quadraticCurveTo(180, 335, 30, 355); ctx.closePath(); ctx.fill();
   const T = frontTeeth();
-  for (const t of T) { ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.r); const g = ctx.createLinearGradient(0, -t.h, 0, 0); g.addColorStop(0, '#f3ead6'); g.addColorStop(1, '#fffdf7'); ctx.fillStyle = g; ctx.strokeStyle = '#cbbd9e'; ctx.lineWidth = 1.4; rr(ctx, -t.w / 2, -t.h, t.w, t.h, Math.min(8, t.w * 0.3)); ctx.fill(); ctx.stroke(); ctx.restore(); }
+  const yl = S.shade || 0, miss = S.missing || [];
+  if (S.gumGel) { ctx.fillStyle = 'rgba(80,140,255,.55)'; ctx.fillRect(34, 342, 292, 12); }
+  for (const t of T) { if (miss.includes(t.i)) { ctx.fillStyle = '#a3243a'; ctx.beginPath(); ctx.ellipse(t.x, FR.y - 46, t.w * 0.35, 6, 0, 0, Math.PI * 2); ctx.fill(); continue; }
+    ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.r); const g = ctx.createLinearGradient(0, -t.h, 0, 0); g.addColorStop(0, mixc('#f3ead6', '#d9bf7a', yl)); g.addColorStop(1, mixc('#fffdf7', '#eedc9e', yl)); ctx.fillStyle = g; ctx.strokeStyle = '#cbbd9e'; ctx.lineWidth = 1.4; rr(ctx, -t.w / 2, -t.h, t.w, t.h, Math.min(8, t.w * 0.3)); ctx.fill(); ctx.stroke(); ctx.restore(); }
   if (S.brackets) for (const t of T) drawItem('bracket', bracketPos(t).x, bracketPos(t).y, 0, 1, true);
+  if (S.attach) for (const t of T) if (!miss.includes(t.i)) { ctx.fillStyle = '#f6f2e6'; ctx.strokeStyle = '#cbbd9e'; rr(ctx, t.x - 4, t.y - t.h * 0.55, 8, 6, 2); ctx.fill(); ctx.stroke(); }
+  if (S.splint) { ctx.strokeStyle = '#c9d2dc'; ctx.lineWidth = 3; ctx.beginPath(); T.slice(2, 8).forEach((t, i) => { const y = t.y - t.h * 0.45; i ? ctx.lineTo(t.x, y) : ctx.moveTo(t.x, y); }); ctx.stroke(); }
+  if (S.aligner) { ctx.fillStyle = 'rgba(200,235,255,.35)'; ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2; rr(ctx, T[0].x - T[0].w / 2 - 4, FR.y - 52, T[9].x - T[0].x + T[0].w + 8, 58, 10); ctx.fill(); ctx.stroke(); }
   if (S.wire) { ctx.strokeStyle = '#d8dde6'; ctx.lineWidth = 2.5; ctx.beginPath(); T.forEach((t, i) => { const b = bracketPos(t); i ? ctx.lineTo(b.x, b.y) : ctx.moveTo(b.x - 10, b.y); }); ctx.stroke(); }
   ctx.fillStyle = '#e07a8a'; ctx.beginPath(); ctx.ellipse(180, 470, 140, 30, 0, 0, Math.PI); ctx.fill();
   label('まえばの しょうめん', 290, TOP + 20, 11, '#ffd5dc');
@@ -301,6 +309,7 @@ function drawFaceScene() {
   if (op > 4) { ctx.fillStyle = '#fffaf0'; ctx.fillRect(160, 344, 40, 7); ctx.fillRect(162, 344 + mh - 7, 36, 7); }
   if (S.splint && op > 4) { ctx.fillStyle = 'rgba(150,210,255,.6)'; ctx.fillRect(156, 342, 48, 11); }
   if (op > 0) { ctx.strokeStyle = '#ffd75e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(230, 344); ctx.lineTo(230, 344 + mh); ctx.stroke(); label(Math.round(op) + 'mm', 262, 344 + mh / 2, 13, '#ffd75e'); }
+  ctx.fillStyle = '#e8b892'; ctx.fillRect(140, 405, 80, 90); ctx.fillStyle = '#2a3a72'; ctx.fillRect(90, 480, 180, 80);
   label('かお（しょうめん）', 290, TOP + 20, 11, '#b9c3ff');
 }
 
@@ -342,10 +351,23 @@ function drawDentureScene() {
   for (let i = 0; i < 14; i++) { const a = Math.PI * (1.02 + i * 0.96 / 13), x = 180 + Math.cos(a) * 122, y = 312 + Math.sin(a) * 150; ctx.fillStyle = '#fffaf0'; ctx.strokeStyle = '#cbbd9e'; ctx.beginPath(); ctx.ellipse(x, y, 12, 9, a, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
   label('いれば（うらがわ）', 290, TOP + 20, 11, '#b9c3ff');
 }
+function drawTongueScene() {
+  bg('#2a0c14');
+  ctx.fillStyle = '#c8556a'; ctx.beginPath(); ctx.ellipse(180, 330, 168, 190, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#3a0e18'; ctx.beginPath(); ctx.ellipse(180, 330, 146, 168, 0, 0, Math.PI * 2); ctx.fill();
+  for (let i = 0; i < 8; i++) { ctx.fillStyle = '#fffaf0'; rr(ctx, 70 + i * 28, 168, 24, 26, 6); ctx.fill(); rr(ctx, 74 + i * 27, 468, 22, 22, 6); ctx.fill(); }
+  const g = ctx.createRadialGradient(180, 330, 10, 180, 330, 120); g.addColorStop(0, '#f08a98'); g.addColorStop(1, '#d4606f');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(180, 340, 96, 120, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(150,40,60,.4)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(180, 240); ctx.lineTo(180, 430); ctx.stroke();
+  if (!S.found) { ctx.fillStyle = 'rgba(255,255,245,.92)'; ctx.beginPath(); ctx.moveTo(258, 318); ctx.quadraticCurveTo(276, 330, 268, 360); ctx.quadraticCurveTo(256, 372, 250, 352); ctx.quadraticCurveTo(246, 332, 258, 318); ctx.fill(); }
+  else { ctx.strokeStyle = '#ffd75e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(260, 342, 22, 32, 0, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,245,.92)'; ctx.beginPath(); ctx.ellipse(260, 342, 9, 18, 0, 0, Math.PI * 2); ctx.fill(); }
+  label('くちの なか（したの よこを みる）', 180, TOP + 20, 11, '#ffd5dc');
+}
 const SCENES = { archU: () => drawArchAdult('U'), archL: () => drawArchAdult('L'), molar: drawMolarScene, implant: drawImplantScene, wisdom: drawWisdomScene,
-  pano: drawPanoScene, skull: drawSkullScene, front: drawFrontScene, face: drawFaceScene, room: drawRoomScene, chair: drawChairScene, denture: drawDentureScene };
+  pano: drawPanoScene, skull: drawSkullScene, tongue: drawTongueScene, front: drawFrontScene, face: drawFaceScene, room: drawRoomScene, chair: drawChairScene, denture: drawDentureScene };
 
 // ---------- はこぶ もの ----------
+function mixc(a, b, t) { const pa = [1, 3, 5].map(i => parseInt(a.substr(i, 2), 16)), pb = [1, 3, 5].map(i => parseInt(b.substr(i, 2), 16)); return 'rgb(' + pa.map((v, i) => Math.round(lerp(v, pb[i], clamp(t, 0, 1)))).join(',') + ')'; }
 function drawItem(kind, x, y, ang, sc, placed) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(ang || 0); ctx.scale(sc || 1, sc || 1);
   if (kind === 'implant') { ctx.fillStyle = '#c2ccd8'; rr(ctx, -9, 0, 18, 120, 5); ctx.fill(); ctx.strokeStyle = '#7d8896'; ctx.lineWidth = 1.5; for (let yy = 8; yy < 114; yy += 8) { ctx.beginPath(); ctx.moveTo(-10, yy); ctx.lineTo(10, yy + 3); ctx.stroke(); } }
@@ -355,6 +377,13 @@ function drawItem(kind, x, y, ang, sc, placed) {
   else if (kind === 'crownT' || kind === 'crownF' || kind === 'crownI') { const g = ctx.createLinearGradient(-60, -50, 60, 40); g.addColorStop(0, kind === 'crownT' ? '#f6f0e4' : '#ffffff'); g.addColorStop(1, kind === 'crownT' ? '#e2d6c0' : '#d6dcea'); molarPath(ctx, 0, -46, 44, 400, kind === 'crownI' ? 100 : 150, true); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = '#9aa6c4'; ctx.lineWidth = 2; ctx.stroke(); }
   else if (kind === 'bracket') { ctx.fillStyle = '#c9d2dc'; rr(ctx, -6, -6, 12, 12, 2); ctx.fill(); ctx.fillStyle = '#7d8896'; ctx.fillRect(-6, -1.5, 12, 3); }
   else if (kind === 'splint') { ctx.fillStyle = 'rgba(150,210,255,.75)'; rr(ctx, -40, -10, 80, 20, 8); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke(); }
+  else if (kind === 'aligner') { ctx.fillStyle = 'rgba(200,235,255,.45)'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; rr(ctx, -150, -28, 300, 56, 12); ctx.fill(); ctx.stroke(); }
+  else if (kind === 'itooth') { ctx.fillStyle = '#fffdf7'; ctx.strokeStyle = '#cbbd9e'; ctx.lineWidth = 1.5; rr(ctx, -14, -24, 28, 48, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#f1e3c4'; ctx.beginPath(); ctx.moveTo(-10, 22); ctx.lineTo(0, 60); ctx.lineTo(10, 22); ctx.closePath(); ctx.fill(); }
+  else if (kind === 'dentureU' || kind === 'trialU') {
+    const AR = adultArch('U'); ctx.translate(-180, -252);
+    ctx.strokeStyle = kind === 'trialU' ? '#e8a0a8' : '#e57f94'; ctx.lineWidth = 16 * AR.k; ctx.lineCap = 'round'; ctx.beginPath(); ctx.ellipse(AR.A.cx, AR.A.cy, AR.A.rx, AR.A.ry, 0, AR.thMin, AR.thMax); ctx.stroke();
+    for (const t of AR.teeth) { ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.ang); ctx.fillStyle = '#fffaf0'; ctx.strokeStyle = '#cbbd9e'; ctx.lineWidth = 1.2; rr(ctx, -t.w / 2, -t.d / 2, t.w, t.d, 5); ctx.fill(); ctx.stroke(); ctx.restore(); }
+  }
   else if (kind === 'piece1' || kind === 'piece2') { ctx.fillStyle = kind === 'piece1' ? '#fffaf0' : '#f1e3c4'; rr(ctx, -34, -30, 68, 60, 14); ctx.fill(); ctx.strokeStyle = '#cbbd9e'; ctx.lineWidth = 2; ctx.stroke(); }
   ctx.restore();
 }
@@ -983,11 +1012,159 @@ const CASES = [
       'うわあごには <b>じょうがくどう</b>（くうきの へや）が あり、ほねが うすく なりやすい。',
       'CT での ていねいな けいかくと <b>たかい ぎじゅつ</b>が ひつよう。',
       'ほねを ふやす しゅじゅつを さけられる ことが ある。'] } },
+
+  // ===== マウスピース矯正 =====
+  { id: 'a_aligner', lv: 2, rank: 'ボス', field: '矯正', name: 'ななみ', age: 26, skin: '#f7d8bd', hair: '#4a2a1a', style: 'girl',
+    worry: '「まえばの でこぼこが きになる。めだたない ほうほうが いい」', title: 'マウスピース きょうせい', thanks: 'めだたずに きれいに なった！',
+    scene0: { align: 0 },
+    steps: [
+      { type: 'choice', scene: 'front', label: 'けんさ', say: 'マウスピースで できるか しらべよう', tip: '<b>ほんものでは</b> しゃしん・レントゲン・スキャンで、マウスピースで なおせるか みるよ。',
+        q: 'さいしょに することは？', opts: [{ t: 'しゃしん・レントゲン・はの かたちを しらべる', ok: true, why: 'むいて いるか しらべてから' }, { t: 'すぐに マウスピースを わたす', why: 'けいかくが ないと うごかせない' }] },
+      { type: 'paint', scene: 'front', label: 'スキャン', tool: 'scanner', toolName: 'こうないスキャナー', snd: 'hum', r: 18, color: 'rgba(80,255,160,.45)', say: 'スキャナーで はならびを <b>3D</b>で よみとろう',
+        tip: '<b>ほんものでは</b> はならびの データから コンピューターで うごきを けいかくするよ。', region: { x: 40, y: 330, w: 280, h: 66 } },
+      { type: 'hold', scene: 'front', label: 'けいかく', tool: 'none', toolName: 'シミュレーション', sec: 3, timeText: 'コンピューターで うごきを けいかく', hint: 'ボタンを おしたまま みよう',
+        say: 'ボタンを おしたまま、<b>はが うごく けいかく</b>を みてみよう', tip: '<b>ほんものでは</b> さいごの はならびまでを えいぞうで いっしょに みるよ。', anim: (s, t) => { s.align = t < 1 ? Math.sin(t * Math.PI) : 0; } },
+      { type: 'paint', scene: 'front', label: 'アタッチメント', tool: 'resin', toolName: 'アタッチメント（ちいさな でっぱり）', r: 10, color: 'rgba(255,250,235,.85)',
+        say: 'はに ちいさな <b>でっぱり</b>（アタッチメント）を つけよう', tip: '<b>ほんものでは</b> マウスピースが はを つかみやすく なる ように、はの いろの ちいさな でっぱりを つけるよ。',
+        region: () => frontTeeth().map(t => ({ x: t.x, y: t.y - t.h * 0.52, r: 7 })), after: s => { s.attach = true; } },
+      { type: 'drag', scene: 'front', label: 'つける', tool: 'tweezer', toolName: 'マウスピース', say: '<b>マウスピース</b>を はに はめよう', tip: '<b>ほんものでは</b> とうめいなので つけていても めだちにくいよ。', snap: 50,
+        items: [{ kind: 'aligner', x: 180, y: 505, w: 300, h: 56, trayScale: 0.7, slot: { x: 180, y: FR.y - 24 } }], after: s => { s.aligner = true; } },
+      { type: 'choice', scene: 'front', label: 'つける じかん', say: '1にちに どれくらい つける？', tip: '<b>ほんものでは</b> たべる ときと はみがきの とき いがいは つけておくよ。',
+        q: '1にちに どれくらい つける？', opts: [{ t: 'たべる ときと はみがき いがい（1にち 20〜22じかん）', ok: true, why: 'ながく つけるほど けいかくどおりに うごく' }, { t: 'ねる ときだけ', why: 'みじかいと はが うごかない' }] },
+      { type: 'hold', scene: 'front', label: 'つきひ', tool: 'none', toolName: 'じかんが たつ', sec: 3, timeText: '…まいしゅう あたらしい マウスピースに…', hint: 'ボタンを おしたまま まとう',
+        say: 'ボタンを おしたまま まとう（<b>すこしずつ</b> そろって いくよ）', tip: '<b>ほんものでは</b> マウスピースを じゅんばんに とりかえて、すこしずつ うごかすよ。', before: s => { s.align = 0; }, anim: (s, t) => { s.align = t; } },
+      { type: 'choice', scene: 'front', label: 'ほてい', say: 'きれいに そろったよ', tip: '<b>ほんものでは</b> ならんだ あとは リテーナーで もどらない ように するよ。',
+        q: 'そろった あとは？', opts: [{ t: 'リテーナー（ほてい そうち）で もどらない ように する', ok: true, why: 'はは もとに もどろうと するから' }, { t: 'もう なにも しない', why: 'もどって しまう ことが ある' }] }],
+    card: { h: 'マウスピース きょうせい', li: [
+      '<b>とうめいな マウスピース</b>を じゅんばんに とりかえて、すこしずつ はを うごかす。めだちにくい。',
+      'スキャンした データで、<b>コンピューター</b>が うごきを けいかくする。',
+      '<b>1にち 20〜22じかん</b> つける のが めやす。たべる ときと はみがきの ときは はずす。',
+      'はに ちいさな <b>アタッチメント</b>を つける ことが ある。おわったら <b>リテーナー</b>。'] } },
+
+  // ===== ホワイトニング =====
+  { id: 'a_white', lv: 1, rank: 'ふつう', field: 'ホワイトニング', name: 'かおり', age: 30, skin: '#f7d8bd', hair: '#2a1a10', style: 'girl',
+    worry: '「はの いろが きいろっぽくて きになる」', title: 'ホワイトニング', thanks: 'わらうのが たのしく なった！',
+    scene0: { shade: 1, align: 1 },
+    steps: [
+      { type: 'choice', scene: 'front', label: 'チェック', say: 'はじめる まえに', tip: '<b>ほんものでは</b> むしばや はぐきの びょうきが あれば さきに なおすよ。',
+        q: 'ホワイトニングの まえに することは？', opts: [{ t: 'むしば・はぐきを チェックして、いまの いろを はかる', ok: true, why: 'あんぜんに、くらべられる ように' }, { t: 'すぐ くすりを ぬる', why: 'むしばが あると しみる ことが ある' }] },
+      { type: 'paint', scene: 'front', label: 'まもる', tool: 'swab', toolName: 'はぐきを まもる ゲル', r: 12, color: 'rgba(80,140,255,.6)', say: 'はぐきに <b>まもる ゲル</b>を ぬろう',
+        tip: '<b>ほんものでは</b> くすりが はぐきに つかない ように まもるよ。', region: { x: 40, y: 338, w: 280, h: 18 }, after: s => { s.gumGel = true; } },
+      { type: 'paint', scene: 'front', label: 'くすり', tool: 'swab', toolName: 'ホワイトニング ざい', r: 14, color: 'rgba(255,255,255,.55)', say: 'はの ひょうめんに <b>しろくする くすり</b>を ぬろう',
+        tip: '<b>ほんものでは</b> はを けずらずに、くすりの ちからで しろく するよ。', region: () => frontTeeth().map(t => ({ x: t.x, y: t.y - t.h * 0.5, r: Math.min(t.w, t.h) * 0.5 })) },
+      { type: 'hold', scene: 'front', label: 'ひかり', tool: 'light', toolName: 'ひかりの きかい', snd: 'hum', sec: 3, glow: 'rgba(160,190,255,.7)', area: { x: 180, y: 370, r: 70 },
+        say: 'ボタンを おしたまま <b>ひかり</b>を あてよう', tip: '<b>ほんものでは</b> くすりの しゅるいに よって ひかりを あてて はたらきを たすけるよ。', anim: (s, t) => { s.shade = 1 - 0.85 * t; } },
+      { type: 'choice', scene: 'front', label: 'ちゅうい', say: 'おわった あとは', tip: '<b>ほんものでは</b> いちじてきに しみる ことも あるよ。',
+        q: 'しばらく きを つけることは？', opts: [{ t: 'コーヒー・カレー など いろの こい ものを ひかえる', ok: true, why: 'いろが つきやすい じきだから' }, { t: 'すぐ ワインを たくさん のむ', why: 'いろが もどりやすい' }], after: s => { s.gumGel = false; } }],
+    card: { h: 'ホワイトニング', li: [
+      'はを <b>けずらずに</b>、くすりの ちからで しろく する。',
+      'はいしゃさんで する「<b>オフィス</b>」と、おうちで する「<b>ホーム</b>」が ある。',
+      'いちじてきに <b>しみる</b> ことが ある。かぶせもの・つめものは しろく ならない。',
+      'しばらくは <b>いろの こい たべもの・のみもの</b>を ひかえる。'] } },
+
+  // ===== 入れ歯を新しく作る =====
+  { id: 'a_denture', lv: 2, rank: 'ボス', field: '補綴', name: 'まさお', age: 78, skin: '#e8b892', hair: '#d8d8d8', style: 'boy',
+    worry: '「いればが あわない。あたらしく つくりたい」', title: 'いればを あたらしく つくる', thanks: 'ぴったり！ なんでも かめる！',
+    scene0: { flags: { R1: ['missing'], R2: ['missing'], R3: ['missing'], R4: ['missing'], R5: ['missing'], R6: ['missing'], R7: ['missing'], L1: ['missing'], L2: ['missing'], L3: ['missing'], L4: ['missing'], L5: ['missing'], L6: ['missing'], L7: ['missing'] } },
+    steps: [
+      { type: 'paint', scene: 'archU', label: 'かたどり', tool: 'swab', toolName: 'かたどりの ざいりょう', r: 16, color: 'rgba(255,160,180,.7)', say: 'はぐきの かたちを とろう（ざいりょうを ぬる）',
+        tip: '<b>ほんものでは</b> おおまかな かたどりの あと、その人 せんようの トレーで <b>せいみつに</b> かたを とるよ。', region: () => adultArch('U').teeth.map(t => ({ x: t.x, y: t.y, r: 14 })) },
+      { type: 'choice', scene: 'archU', label: 'かみあわせ', say: 'かむ たかさを きめよう', tip: '<b>ほんものでは</b> ろうの ていで かむ たかさと あごの いちを きめるよ（こうごう さいとく）。',
+        q: 'かみあわせの たかさは どう きめる？', opts: [{ t: 'かおの バランスと、らくに かめる いちで きめる', ok: true, why: 'たかすぎても ひくすぎても かみにくい' }, { t: 'できるだけ たかく する', why: 'あごが つかれて しまう' }] },
+      { type: 'drag', scene: 'archU', label: 'ためし', tool: 'tweezer', toolName: 'ためしの いれば（ろう）', say: '<b>ためしの いれば</b>を いれて みよう', tip: '<b>ほんものでは</b> はが ろうで ならべて あるので、ここで なおせるよ。', snap: 60,
+        items: [{ kind: 'trialU', x: 180, y: 420, w: 120, h: 80, trayScale: 0.45, slot: { x: 180, y: 252 } }] },
+      { type: 'choice', scene: 'archU', label: 'たしかめる', say: 'ためしの いれば で みる こと', tip: '<b>ほんものでは</b> かがみを みながら いっしょに たしかめるよ。',
+        q: 'ためしの いれば で たしかめるのは？', opts: [{ t: 'かみあわせ・みため・はなしやすさ', ok: true, why: 'かんせい まえに なおせる' }, { t: 'なにも みない', why: 'あとから なおすのが たいへん' }] },
+      { type: 'drag', scene: 'archU', label: 'かんせい', tool: 'tweezer', toolName: 'あたらしい いれば', say: 'できあがった <b>いれば</b>を いれよう', tip: '<b>ほんものでは</b> ぎこうしさんが ろうの ぶぶんを ピンクの じゅしに かえて しあげるよ。', snap: 60,
+        items: [{ kind: 'dentureU', x: 180, y: 420, w: 120, h: 80, trayScale: 0.45, slot: { x: 180, y: 252 } }], after: s => { s.flags = {}; } },
+      { type: 'erase', scene: 'denture', label: 'ちょうせい', tool: 'engine', toolName: 'けずる きかい', snd: 'engine', rate: 2.5, r: 14, color: '#e2245a', say: 'あたって いたい ところ（あか）を けずろう',
+        tip: '<b>ほんものでは</b> できあがった あとも なんかいか ちょうせいして なじませるよ。', marks: dots([[118, 312], [242, 300]], 9, '#e2245a') },
+      { type: 'choice', scene: 'denture', label: 'ておくれ', say: 'いればの ておくれ', tip: '<b>ほんものでは</b> ていきてきに あわせを みるよ。',
+        q: 'まいにちの ておくれは？', opts: [{ t: 'はずして ブラシで あらい、せんようの くすりに つける', ok: true, why: 'ばいきんと においを ふせぐ' }, { t: 'おゆで にる', why: 'へんけい して しまう' }] }],
+    card: { h: 'いればを つくる', li: [
+      'いればは <b>なんかいか かよって</b> つくる：かたどり → かみあわせ → ためしの いれば → かんせい → ちょうせい。',
+      '<b>ためしの いれば</b>で、かみあわせ・みため・はなしやすさを たしかめる。',
+      'できあがった あとも <b>ちょうせい</b>で なじませる。',
+      'まいにち はずして <b>あらう</b>。おゆで にると へんけい する。'] } },
+
+  // ===== 歯周外科 =====
+  { id: 'a_perio2', lv: 3, rank: 'だいボス', field: '歯周病', name: 'ごろう', age: 56, skin: '#e8b892', hair: '#3a3a3a', style: 'boy',
+    worry: '「おそうじしても ふかい ポケットが のこった」', title: 'はぐきの しゅじゅつ（ししゅう げか）', thanks: 'ほねが もどって きた！',
+    scene0: { m: { boneY: 345, gumY: 262, pocket: 7, defect: true, gumRed: true } },
+    steps: [
+      masui(92, 276),
+      { type: 'trace', scene: 'molar', label: 'きる', tool: 'scalpel', toolName: 'メス', scary: true, color: '#ff5a6e', say: 'はと はぐきの さかいめを <b>メス</b>で なぞろう',
+        tip: '<b>ほんものでは</b> はぐきを ひらいて、ねっこと ほねを ちょくせつ みるよ（フラップ しゅじゅつ）。', pts: [[104, 262], [104, 285], [104, 310], [104, 335]], after: s => { s.m.flap = true; s.m.pocket = 0; } },
+      { type: 'erase', scene: 'molar', label: 'とる', tool: 'scaler', toolName: 'スケーラー', snd: 'scrape', rub: true, rate: 0.03, r: 14,
+        say: 'ねっこの <b>しせき</b>と ほねの へこみの <b>わるい くみしき</b>（あか）を とろう', tip: '<b>ほんものでは</b> みながら とれるので、おくの しせきまで きれいに できるよ。',
+        marks: () => dots([[110, 280], [110, 300], [110, 320], [94, 352], [98, 372], [104, 390]], 6, '#7a2a2a').map((m, i) => Object.assign(m, { c: i < 3 ? '#3a2e14' : '#c0404a' })), after: s => { s.m.defectClean = true; } },
+      { type: 'paint', scene: 'molar', label: 'そだてる', tool: 'syringe', toolName: 'ほねを そだてる ざいりょう', r: 12, color: 'rgba(246,230,160,.9)', say: 'ほねの へこみに <b>ほねを そだてる ざいりょう</b>を いれよう',
+        tip: '<b>ほんものでは</b> しゅうしゅう（さいせい）を たすける くすりや ざいりょうを つかうよ（ししゅう そしき さいせい りょうほう）。',
+        region: () => [{ x: 96, y: 352, r: 10 }, { x: 100, y: 370, r: 10 }, { x: 104, y: 388, r: 9 }, { x: 88, y: 346, r: 8 }], after: s => { s.m.regen = true; } },
+      { type: 'trace', scene: 'molar', label: 'ぬう', tool: 'needle', toolName: 'はりと いと', color: '#3a3a9a', tol: 16, say: 'はぐきを もとに もどして <b>ぬいあわせよう</b>',
+        tip: '<b>ほんものでは</b> 1〜2しゅうかんで いとを とるよ。', pts: [[80, 262], [96, 276], [80, 290], [96, 304], [80, 318]], after: s => { s.m.flap = false; } },
+      { type: 'hold', scene: 'molar', label: 'まつ', tool: 'none', toolName: 'じかんが たつ', sec: 2, timeText: '…すうかげつご…', hint: 'ボタンを おしたまま まとう',
+        say: 'ボタンを おしたまま まとう（<b>ほねが そだつ</b>まで）', tip: '<b>ほんものでは</b> しばらく たってから レントゲンや けんさで たしかめるよ。', anim: (s, t) => { s.m.gumRed = t < 0.5; if (t >= 1) { s.m.defect = false; s.m.boneY = 318; } } },
+      { type: 'depth', scene: 'molar', label: 'さいけんさ', tool: 'cursor', toolName: 'プローブ', stopAt: 3, green: [2.8, 3.2], max: 10, speed: 3, okMsg: '3mm！ よくなった！',
+        say: 'もういちど ポケットを はかろう', tip: '<b>ほんものでは</b> しゅじゅつの あとも ていきてきな おそうじが だいじ。',
+        drawInst: (s, d) => { ctx.strokeStyle = '#c7d0d8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(107, 210); ctx.lineTo(107, 262 + d * 12.7); ctx.stroke(); } }],
+    card: { h: 'ししゅう げか', li: [
+      'SRP で とりきれない ふかい ところは、<b>はぐきを ひらいて</b> みながら きれいに する（フラップ しゅじゅつ）。',
+      'ほねの へこみには <b>ほねを そだてる ざいりょう</b>を つかう ことが ある（さいせい りょうほう）。',
+      'しゅじゅつの あとも <b>まいにちの はみがき</b>と <b>ていきてきな メンテナンス</b>が いちばん だいじ。'] } },
+
+  // ===== 子どもの歯のけが =====
+  { id: 'k_trauma', cat: 'kid', lv: 3, rank: 'だいボス', field: '外傷', name: 'ゆうき', hon: 'くん', age: 8, skin: '#f7cfa8', hair: '#2a1a10', style: 'boy2',
+    worry: '「ころんで まえばが ぬけちゃった！」', title: 'ぬけた まえばを もどす', thanks: 'まえばが もどった！ ありがとう！',
+    scene0: { align: 1, missing: [4] },
+    steps: [
+      { type: 'choice', scene: 'front', label: 'ほぞん', say: 'ぬけた おとなの まえば。どうする？', tip: '<b>ほんものでは</b> できるだけ はやく（30ぷん いない が めやす）はいしゃさんへ。',
+        q: 'ぬけた はは どうする？', opts: [
+          { t: 'ねっこを さわらず、ぎゅうにゅう か ほぞんえきに いれて すぐ はいしゃさんへ', ok: true, why: 'ねっこの さいぼうを いかしたまま はこぶ' },
+          { t: 'ティッシュに つつむ', why: 'かわくと ねっこの さいぼうが しんでしまう' },
+          { t: 'みずで ごしごし あらう', why: 'ねっこの だいじな さいぼうが とれてしまう' }] },
+      { type: 'tap', scene: 'front', label: 'みる', tool: 'cursor', toolName: 'さがす', say: 'はが ぬけた <b>あな</b>を さがそう', tip: '<b>ほんものでは</b> レントゲンで ほねが おれて いないかも しらべるよ。',
+        targets: () => { const t = frontTeeth()[4]; return [{ id: 'h', x: t.x, y: FR.y - 46, r: 18, ok: true, msg: 'ここに もどすよ' }]; } },
+      masui(130, 330),
+      { type: 'drag', scene: 'front', label: 'もどす', tool: 'tweezer', toolName: 'ぬけた は', say: 'ぬけた はを <b>もとの あな</b>に そっと もどそう', tip: '<b>ほんものでは</b> ねっこを さわらない ように して もとの いちに もどすよ（さいしょく）。',
+        items: () => { const t = frontTeeth()[4]; return [{ kind: 'itooth', x: 250, y: 500, w: 30, h: 60, slot: { x: t.x, y: FR.y - 24 } }]; }, after: s => { s.missing = []; } },
+      { type: 'trace', scene: 'front', label: 'こてい', tool: 'tweezer', toolName: 'こていの ワイヤー', color: '#c9d2dc', tol: 16, say: 'となりの はと <b>ワイヤー</b>で つないで こていしよう',
+        tip: '<b>ほんものでは</b> うごかない ように しばらく となりの はと つないでおくよ。', pts: () => frontTeeth().slice(2, 8).map(t => [t.x, t.y - t.h * 0.45]), after: s => { s.splint = true; } },
+      { type: 'hold', scene: 'front', label: 'かためる', tool: 'light', toolName: 'ひかりの きかい', snd: 'hum', sec: 2, glow: 'rgba(120,170,255,.7)', area: { x: 180, y: 360, r: 60 },
+        say: 'ボタンを おしたまま <b>ひかり</b>で かためよう', tip: '<b>ほんものでは</b> せっちゃくざいを ひかりで かためて ワイヤーを とめるよ。' },
+      { type: 'choice', scene: 'front', label: 'このあと', say: 'このあと だいじな こと', tip: '<b>ほんものでは</b> しんけいが いきているか、しばらく つづけて しらべるよ。',
+        q: 'このあと だいじな ことは？', opts: [{ t: 'やわらかい ものを たべて、ていきてきに みてもらう', ok: true, why: 'しんけいや ねっこの ようすを みていく' }, { t: 'すぐ かたい ものを かむ', why: 'こていが はずれて しまう' }] }],
+    card: { h: 'はの けが', li: [
+      'おとなの はが ぬけたら、<b>ねっこを さわらず</b> <b>ぎゅうにゅう</b>か <b>ほぞんえき</b>に いれて、すぐ はいしゃさんへ。',
+      '<b>かわかさない・ごしごし あらわない</b>。はやいほど もどせる かのうせいが たかい。',
+      'もどした はは となりの はと <b>こてい</b>する。',
+      'しんけいの ようすを <b>しばらく つづけて</b> みる。スポーツでは マウスガードで まもろう。'] } },
+
+  // ===== 口腔がん検診 =====
+  { id: 'a_cancer', lv: 2, rank: 'ボス', field: '口腔外科', name: 'いさむ', age: 64, skin: '#e8b892', hair: '#5a5a5a', style: 'boy',
+    worry: '「したの よこに しろい ところが ある」', title: 'こうくうがん けんしん', thanks: 'はやく みつけて もらえて よかった',
+    scene0: {},
+    steps: [
+      { type: 'choice', scene: 'tongue', label: 'もんしん', say: 'まず はなしを きこう', tip: '<b>ほんものでは</b> たばこ・おさけ・いつからか などを くわしく きくよ。',
+        q: 'まず きく ことは？', opts: [{ t: 'いつから あるか・いたいか・たばこや おさけ', ok: true, why: 'しんだんの だいじな てがかり' }, { t: 'なにも きかずに すぐ きる', why: 'まずは よく しらべて から' }] },
+      { type: 'tap', scene: 'tongue', label: 'みる', tool: 'mirror', toolName: 'ミラー', say: 'したの よこを よく みて、<b>しろい ところ</b>を さがそう', tip: '<b>ほんものでは</b> したの よこ・うら、ほっぺの うちがわ、はぐきも すべて みるよ。',
+        wrong: 'したの よこを みてみよう', targets: () => [{ id: 'l', x: 260, y: 342, r: 26, ok: true, msg: 'しろい ところ！' }], after: s => { s.found = true; } },
+      { type: 'tap', scene: 'face', label: 'さわる', tool: 'cursor', toolName: 'ゆびで さわる', say: '<b>くびの リンパせつ</b>が はれて いないか さわろう', tip: '<b>ほんものでは</b> くびや あごの したの しこりも ゆびで たしかめるよ。',
+        wrong: 'くびの よこを さわってみよう', before: s => { s.open = 0; }, targets: () => [{ id: 'n1', x: 150, y: 440, r: 24, ok: true, msg: 'はれは ない' }, { id: 'n2', x: 210, y: 440, r: 24, ok: true, msg: 'はれは ない' }] },
+      { type: 'choice', scene: 'tongue', label: 'はんだん', say: '2しゅうかん いじょう なおらない しろい ところ', tip: '<b>ほんものでは</b> ひつようなら おおきな びょういんで さいぼう・そしきの けんさを するよ。',
+        q: '2しゅうかん いじょう なおらない しろい・あかい ところは？', opts: [{ t: 'おおきな びょういんで くわしく しらべて もらう', ok: true, why: 'はやく みつければ なおりやすい' }, { t: 'そのうち なおるので ほうっておく', why: 'がんの ことも ある。はやめに しらべる' }] },
+      { type: 'choice', scene: 'tongue', label: 'よぼう', say: 'こうくうがんを ふせぐには', tip: '<b>ほんものでは</b> ていきけんしんの ときに くちの なか ぜんたいを みるよ。',
+        q: 'ふせぐために できることは？', opts: [{ t: 'たばこを やめる・おさけを ひかえる・ていきてきに みてもらう', ok: true, why: 'たばこと おさけは だいきな げんいん' }, { t: 'なにも しない', why: 'じぶんで できる よぼうが ある' }] }],
+    card: { h: 'こうくうがん けんしん', li: [
+      'こうくうがんは <b>したの よこ</b>に できやすい。ほっぺの うちがわ・はぐき にも できる。',
+      '<b>2しゅうかん いじょう なおらない</b> こうないえん・しこり・しろい／あかい ところは ちゅうい。',
+      'はやく みつければ <b>なおりやすい</b>。はいしゃさんの <b>ていきけんしん</b>で くちの なか ぜんたいを みてもらおう。',
+      '<b>たばこ</b>と <b>おさけ</b>は だいきな げんいん。'] } },
 ];
 
 // ---------- とうろく ----------
 for (const cs of CASES) {
-  cs.kind = 'case'; cs.cat = 'adult'; cs.hon = cs.hon || 'さん'; cs.cardObj = cs.card; cs.card = null;
+  cs.kind = 'case'; cs.cat = cs.cat || 'adult'; cs.hon = cs.hon || 'さん'; cs.cardObj = cs.card; cs.card = null;
   cs.steps = cs.steps.map((sd, i) => { const key = cs.id + '_' + i; STEPS[key] = Object.assign({ view: 'case', toolName: '', tip: '', label: '' }, sd, { view: 'case' }); if (!STEPS[key].tool) STEPS[key].tool = 'cursor'; if (!STEPS[key].toolName) STEPS[key].toolName = { choice: 'コマンド', order: 'じゅんばん', tap: 'さがす', breath: 'しんこきゅう' }[sd.type] || 'ちりょう'; return key; });
   PATIENTS.push(cs);
 }

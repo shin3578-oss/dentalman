@@ -385,6 +385,7 @@ function startStep() {
   $('#toolName').textContent = G.step.toolName;
   resize();
   P.x = P.fx = 180; P.y = P.fy = 318;
+  if (G.toolX == null) { G.toolX = 300; G.toolY = 470; }
 }
 function stepDone() {
   if (G.done) return; G.done = true; G.doneT = 0; SFX.ding();
@@ -831,7 +832,7 @@ function drawArchTooth(t) {
     ctx.strokeStyle = 'rgba(160,230,255,' + 0.9 * t.fluor + ')'; ctx.lineWidth = 2.5;
     rr(ctx, -w / 2 + 1, -d / 2 + 1, w - 2, d - 2, rad); ctx.stroke();
   }
-  if ((t.fluor >= 1 || t.gloss >= 1) && Math.sin(G.t * 3 + t.x) > 0.85) drawSpark(ctx, w * 0.2, -d * 0.2, 6, '#ffffff');
+  if (t.fluor >= 1 || t.gloss >= 1) { const v = Math.sin(G.t * 1.2 + t.x * 0.7); if (v > 0.4) { ctx.globalAlpha = (v - 0.4) / 0.6; drawSpark(ctx, w * 0.2, -d * 0.2, 6, '#ffffff'); ctx.globalAlpha = 1; } }
   ctx.restore();
 }
 function drawSpark(c, x, y, r, col) {
@@ -976,8 +977,9 @@ function drawCloseup() {
   }
   if (G.key === 'polish' || (G.p.steps.includes('polish') && G.si > G.p.steps.indexOf('polish'))) {
     const sh = G.key === 'polish' ? G.shine : 1;
-    for (let k = 0; k < NN; k += 7) if (cell[k] === CUR && hash[k] < 0.25 * sh && Math.sin(G.t * 4 + hash[k] * 40) > 0.6) {
-      const c = cellXY(k); drawSpark(ctx, c.x, c.y, 5, 'rgba(255,255,255,.95)');
+    for (let k = 0; k < NN; k += 7) if (cell[k] === CUR && hash[k] < 0.25 * sh) {
+      const v = Math.sin(G.t * 1.5 + hash[k] * 40); if (v < 0.3) continue;
+      const c = cellXY(k); ctx.globalAlpha = (v - 0.3) / 0.7; drawSpark(ctx, c.x, c.y, 5, '#ffffff'); ctx.globalAlpha = 1;
     }
   }
   // ますいの まる（はぐき）
@@ -998,7 +1000,7 @@ function drawCloseup() {
     lg.addColorStop(0, 'rgba(120,170,255,.75)'); lg.addColorStop(1, 'rgba(80,120,255,0)');
     ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(P.x, P.y, 110, 0, Math.PI * 2); ctx.fill();
   }
-  if (G.key === 'dry' && P.down && !G.done) for (let n = 0; n < 4; n++) { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.beginPath(); const a = Math.random() * 6.3, r0 = 10 + Math.random() * 30; ctx.arc(P.x, P.y, r0, a, a + 0.7); ctx.stroke(); }
+  if (G.key === 'dry' && P.down && !G.done) for (let n = 0; n < 4; n++) { ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); const a = G.t * 2.5 + n * Math.PI / 2, r0 = 14 + n * 7; ctx.arc(P.x, P.y, r0, a, a + 0.8); ctx.stroke(); }
   if (G.done) return;
   const need = G.key === 'cure' ? 3 : G.key === 'dry' ? 2.5 : (G.key === 'bond' && G.phase === 1) ? 2 : 0;
   if (need) hint(P.down ? 'あと ' + Math.max(1, Math.ceil(need - G.holdT)) + ' びょう' : 'ゆびを はに おいてね');
@@ -1029,7 +1031,8 @@ function drawTool() {
   if (G.key === 'bite' && G.phase === 1) tool = 'turbine';
   if (tool === 'none') return;
   const active = P.down || P.hover;
-  const x = active ? P.x : 300, y = active ? P.y : 470;
+  if (active) { G.toolX = P.x; G.toolY = P.y; }
+  const x = G.toolX, y = G.toolY;
   ctx.save(); ctx.lineCap = 'round';
   const handle = (col, w, ex, ey) => { ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = w + 3; ctx.beginPath(); ctx.moveTo(x + 90, y + 125); ctx.lineTo(x + ex, y + ey); ctx.stroke(); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(); };
   if (tool === 'turbine' || tool === 'polisher' || tool === 'engine') {
@@ -1037,7 +1040,7 @@ function drawTool() {
     ctx.fillStyle = '#9aa7b2'; ctx.beginPath(); ctx.arc(x + 12, y + 15, 10, 0, Math.PI * 2); ctx.fill();
     if (tool === 'polisher') { ctx.fillStyle = '#5fc98f'; ctx.beginPath(); ctx.arc(x + 2, y + 2, 7, 0, Math.PI * 2); ctx.fill(); }
     else { ctx.strokeStyle = '#d9b34a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + 9, y + 11); ctx.lineTo(x, y); ctx.stroke(); if (tool === 'engine') { ctx.fillStyle = '#d9b34a'; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill(); } }
-    if (P.down && tool === 'turbine') for (let i = 0; i < 3; i++) { ctx.fillStyle = 'rgba(190,230,255,.8)'; ctx.beginPath(); ctx.arc(x + (Math.random() - 0.5) * 20, y + (Math.random() - 0.5) * 20, 2, 0, Math.PI * 2); ctx.fill(); }
+    if (P.down && tool === 'turbine') { ctx.fillStyle = 'rgba(190,230,255,.6)'; for (let i = 0; i < 6; i++) { const a = G.t * 3 + i * Math.PI / 3; ctx.beginPath(); ctx.arc(x + Math.cos(a) * 11, y + Math.sin(a) * 11, 2, 0, Math.PI * 2); ctx.fill(); } }
   } else if (tool === 'mirror') {
     ctx.strokeStyle = '#c7d0d8'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(x + 85, y + 120); ctx.lineTo(x + 14, y + 20); ctx.stroke();
     const mg = ctx.createLinearGradient(x - 14, y - 14, x + 14, y + 14); mg.addColorStop(0, '#eaf6ff'); mg.addColorStop(1, '#8fb3cc');

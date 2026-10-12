@@ -341,22 +341,29 @@ const XR = { D: { x: 116, w: 86 }, E: { x: 236, w: 112 }, top: 205, cej: 292, ap
   cav: { x: 236 + 24, y: 240, rx: 15, ry: 24 } };
 
 // ---------- ポインタ ----------
-const P = { x: 180, y: 318, down: false, justDown: false, sx: 0, sy: 0, moved: 0, fx: 180, fy: 318, hover: false };
+// ゆびで さわるときは、どうぐの さきを ゆびの すこし うえに だす（ゆびで かくれずに みながら ちりょうできる）
+const TOUCH_OFF = 56;
+const P = { x: 180, y: 318, down: false, justDown: false, sx: 0, sy: 0, moved: 0, fx: 180, fy: 318, hover: false,
+  off: 0, rx: 180, ry: 318, rsx: 0, rsy: 0 };
 function toLocal(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
 cv.addEventListener('pointerdown', e => {
   e.preventDefault(); audioInit();
   try { cv.setPointerCapture(e.pointerId); } catch (_) {}
-  const p = toLocal(e); P.down = true; P.justDown = true; P.x = P.sx = P.fx = p.x; P.y = P.sy = P.fy = p.y; P.moved = 0;
+  const p = toLocal(e);
+  P.off = e.pointerType === 'mouse' ? 0 : TOUCH_OFF;
+  P.down = true; P.justDown = true; P.moved = 0;
+  P.rx = P.rsx = p.x; P.ry = P.rsy = p.y;
+  P.x = P.sx = P.fx = p.x; P.y = P.sy = P.fy = p.y - P.off;
 });
 cv.addEventListener('pointermove', e => {
-  const p = toLocal(e); if (P.down) P.moved += Math.hypot(p.x - P.x, p.y - P.y);
-  P.x = p.x; P.y = p.y; P.hover = e.pointerType === 'mouse';
+  const p = toLocal(e); if (P.down) P.moved += Math.hypot(p.x - P.rx, p.y - P.ry);
+  P.rx = p.x; P.ry = p.y; P.x = p.x; P.y = p.y - (P.down ? P.off : 0); P.hover = e.pointerType === 'mouse';
 });
 function up(e) {
   if (!P.down) return; P.down = false;
   const p = toLocal(e);
   dropRoll();
-  if (P.moved < 16 && G.step && !G.done) tapAt(p.x, p.y);
+  if (P.moved < 16 && G.step && !G.done) tapAt(p.x, p.y);   // タップは ゆびの ばしょ そのもの
 }
 cv.addEventListener('pointerup', up);
 for (const ev of ['touchstart', 'touchmove', 'touchend']) cv.addEventListener(ev, e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
@@ -528,8 +535,8 @@ function update(dt) {
       }
     }
     if (k === 'wattes') {
-      if (jd) { const r = rollAt(P.sx, P.sy); if (r) { G.grab = r; r.slot = null; r.ox = r.x - P.sx; r.oy = r.y - P.sy; } }
-      if (G.grab && P.down) { G.grab.x = P.x + G.grab.ox; G.grab.y = P.y + G.grab.oy; }
+      if (jd) { const r = rollAt(P.rsx, P.rsy); if (r) { G.grab = r; r.slot = null; r.ox = r.x - P.rsx; r.oy = r.y - P.rsy; } }
+      if (G.grab && P.down) { G.grab.x = P.rx + G.grab.ox; G.grab.y = P.ry + G.grab.oy; }
     }
     if (k === 'drill' && P.down && onTooth(P.x, P.y)) {
       L.drill = 0.05; L.vac = 0.04;
@@ -702,6 +709,10 @@ function draw() {
   drawParts();
   ctx.restore();
   drawHeader();
+  if (P.down && P.off && !G.done && !['search', 'find6', 'xray', 'wattes'].includes(G.key)) {
+    ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(P.x, P.y, 15, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  }
   drawTool();
   for (const q of G.pops) { const a = 1 - Math.max(0, q.t - 0.8) / 0.5; ctx.globalAlpha = a; text(ctx, q.text, clamp(q.x, 100, W - 100), q.y - q.t * 24, 16, q.c, 'center', 'rgba(40,20,30,.85)'); ctx.globalAlpha = 1; }
   if (G.flash) {

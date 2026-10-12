@@ -822,7 +822,7 @@ const CASES = [
         q: 'どんな しせいが いい？', opts: [
           { t: 'からだを おこして、あごを すこし ひく', ok: true, why: 'のみこみやすく むせにくい' },
           { t: 'あおむけで あごを あげる', why: 'むせやすく きけん' }], after: s => { s.bedUp = 1; } },
-      { type: 'erase', scene: 'denture', label: 'いれば', tool: 'engine', toolName: 'けずる きかい', snd: 'engine', rate: 2.5, r: 14, color: '#e2245a',
+      { type: 'erase', scene: 'denture', label: 'いれば', tool: 'straight', toolName: 'ストレート ハンドピース', snd: 'engine', rate: 2.5, r: 14, color: '#e2245a',
         say: 'いればの あかい ところ（<b>あたって いたい ところ</b>）を けずろう', tip: '<b>ほんものでは</b> とくべつな ペーストで あたる ところを しらべて けずるよ。',
         marks: dots([[110, 300], [250, 296], [180, 205]], 9, '#e2245a') },
       { type: 'erase', scene: 'archL', label: 'こうくうケア', tool: 'brush', toolName: 'スポンジブラシ', snd: 'brush', rub: true, rate: 0.04, r: 18, color: '#fff2c0',
@@ -1077,7 +1077,7 @@ const CASES = [
         q: 'ためしの いれば で たしかめるのは？', opts: [{ t: 'かみあわせ・みため・はなしやすさ', ok: true, why: 'かんせい まえに なおせる' }, { t: 'なにも みない', why: 'あとから なおすのが たいへん' }] },
       { type: 'drag', scene: 'archU', label: 'かんせい', tool: 'tweezer', toolName: 'あたらしい いれば', say: 'できあがった <b>いれば</b>を いれよう', tip: '<b>ほんものでは</b> ぎこうしさんが ろうの ぶぶんを ピンクの じゅしに かえて しあげるよ。', snap: 60,
         items: [{ kind: 'dentureU', x: 180, y: 420, w: 120, h: 80, trayScale: 0.45, slot: { x: 180, y: 252 } }], after: s => { s.flags = {}; } },
-      { type: 'erase', scene: 'denture', label: 'ちょうせい', tool: 'engine', toolName: 'けずる きかい', snd: 'engine', rate: 2.5, r: 14, color: '#e2245a', say: 'あたって いたい ところ（あか）を けずろう',
+      { type: 'erase', scene: 'denture', label: 'ちょうせい', tool: 'straight', toolName: 'ストレート ハンドピース', snd: 'engine', rate: 2.5, r: 14, color: '#e2245a', say: 'あたって いたい ところ（あか）を けずろう',
         tip: '<b>ほんものでは</b> できあがった あとも なんかいか ちょうせいして なじませるよ。', marks: dots([[118, 312], [242, 300]], 9, '#e2245a') },
       { type: 'choice', scene: 'denture', label: 'ておくれ', say: 'いればの ておくれ', tip: '<b>ほんものでは</b> ていきてきに あわせを みるよ。',
         q: 'まいにちの ておくれは？', opts: [{ t: 'はずして ブラシで あらい、せんようの くすりに つける', ok: true, why: 'ばいきんと においを ふせぐ' }, { t: 'おゆで にる', why: 'へんけい して しまう' }] }],

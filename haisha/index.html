@@ -46,7 +46,7 @@ ruby rt{font-size:.5em}
   text-shadow:2px 2px 0 #5a3d00,-1px -1px 0 #fff3c0,0 0 18px rgba(255,200,80,.45)}
 #title .kicker{font-size:13px;color:var(--sub);letter-spacing:6px;margin:0 0 8px}
 #title .sub{font-size:15px;color:#e6e9ff;margin:0;line-height:1.7}
-.bigshin{width:78px;height:180px;image-rendering:pixelated;filter:drop-shadow(0 0 12px rgba(120,160,255,.45))}
+.bigshin{width:auto;height:min(30vh,240px);image-rendering:pixelated;filter:drop-shadow(0 0 12px rgba(120,160,255,.45))}
 .foot{font-size:12px;color:#8f9ad6;margin-top:6px}
 .blink{animation:blink 1.4s ease-in-out infinite}
 @keyframes blink{50%{opacity:.45}}
@@ -69,7 +69,7 @@ ruby rt{font-size:.5em}
 /* プレイ */
 #play{padding:8px 10px calc(8px + env(safe-area-inset-bottom));gap:6px}
 #bubbleRow{display:flex;align-items:flex-end;gap:8px;min-height:96px}
-#bubbleRow img{width:39px;height:90px;image-rendering:pixelated;flex:none;filter:drop-shadow(0 0 6px rgba(120,160,255,.5))}
+#bubbleRow img{width:auto;height:92px;image-rendering:pixelated;flex:none;filter:drop-shadow(0 0 6px rgba(120,160,255,.5))}
 #bubble{position:relative;flex:1;padding:8px 12px}
 #say{font-size:16px;line-height:1.5}
 #say b{color:var(--gold);font-weight:400}
@@ -93,7 +93,7 @@ ruby rt{font-size:.5em}
   background:radial-gradient(circle at 35% 30%,#ff9aa6 0,#d7263d 45%,#7a0f20 100%);border:4px solid var(--gold);box-shadow:0 0 0 2px #000,0 6px 0 #3a0710;text-shadow:2px 2px 0 #000}
 #abtn.on{transform:translateY(5px);box-shadow:0 0 0 2px #000,0 1px 0 #3a0710;filter:brightness(1.25)}
 #padHelp{flex:1;min-width:0;font-size:12px;color:var(--sub);text-align:center;line-height:1.4;white-space:nowrap}
-@media (max-height:720px){#bubbleRow{min-height:0}#bubbleRow img{width:22px;height:51px}#bubble{padding:5px 9px}#say{font-size:14px;line-height:1.35}#tip{font-size:11px;line-height:1.35;margin-top:2px}#play{gap:4px}#toolName{font-size:12px;padding:3px 9px}#stick{width:96px;height:96px}#knob{width:44px;height:44px;margin:-22px 0 0 -22px}#abtn{width:86px;height:86px;font-size:18px}#padHelp{font-size:11px}}
+@media (max-height:720px){#bubbleRow{min-height:0}#bubbleRow img{width:auto;height:56px}#bubble{padding:5px 9px}#say{font-size:14px;line-height:1.35}#tip{font-size:11px;line-height:1.35;margin-top:2px}#play{gap:4px}#toolName{font-size:12px;padding:3px 9px}#stick{width:96px;height:96px}#knob{width:44px;height:44px;margin:-22px 0 0 -22px}#abtn{width:86px;height:86px;font-size:18px}#padHelp{font-size:11px}}
 #play #bubbleRow{padding:0 44px 0 40px}
 
 /* けっか */
@@ -128,7 +128,7 @@ ruby rt{font-size:.5em}
 <div id="app">
 
   <section id="title" class="screen on">
-    <img class="bigshin" src="shin.png" alt="しんちゃまくん">
+    <img class="bigshin" src="doctor.png" alt="はいしゃさん">
     <div class="emblem">
       <p class="kicker">― DENTAL QUEST ―</p>
       <h1>はいしゃさんに<br>なろう！</h1>
@@ -152,7 +152,7 @@ ruby rt{font-size:.5em}
     <button class="iconbtn" id="quit" aria-label="やめる">✕</button>
     <button class="iconbtn" id="mute" aria-label="おと">♪</button>
     <div id="bubbleRow">
-      <img src="shin.png" alt="">
+      <img src="doctor.png" alt="">
       <div id="bubble"><div id="say"></div><div id="tip"></div></div>
     </div>
     <div id="stageWrap"><canvas id="cv"></canvas></div>

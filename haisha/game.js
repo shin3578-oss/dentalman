@@ -134,60 +134,151 @@ function loop(kind, level) {
 }
 function loopsOff() { for (const k in LOOPS) loop(k, 0); }
 
-const BGM_MEL = [76, 79, 81, 79, 76, 0, 74, 0, 72, 74, 76, 0, 81, 0, 79, 0, 77, 76, 74, 72, 74, 0, 69, 0, 71, 72, 74, 0, 79, 0, 0, 0,
-  76, 79, 84, 0, 83, 81, 79, 0, 81, 79, 76, 0, 72, 0, 76, 0, 77, 0, 81, 0, 79, 77, 76, 74, 74, 0, 71, 0, 72, 0, 0, 0];
-const BGM_CH = [[48, 64, 67, 72], [45, 64, 69, 72], [41, 65, 69, 72], [43, 62, 67, 71], [48, 64, 67, 72], [45, 64, 69, 72], [41, 65, 69, 72], [43, 62, 67, 71]];
-const EIGHTH = 60 / 100 / 2;
-const BGM = { on: false, next: 0, i: 0, timer: null, duck: false };
+// BGM：スピード感のある たたかいふうの オリジナル曲 4きょく（つうじょう／ボス／だいボス／ラスボス）
+// コードは [ねおと, わおん3つ]。メロディは [しょうせつ, 16ぶんの いち, おと, ながさ]
+function mkMel(src) { const a = new Array(256).fill(null); for (const [b, st, m, l] of src) a[b * 16 + st] = [m, l]; return a; }
+const TRACKS = [
+  { name: 'つうじょう', lv: 1, bpm: 168,   // Aマイナー：Am F G Am | Am F G E | Dm G C F | Dm F E E
+    ch: [[45, 69, 72, 76], [41, 69, 72, 77], [43, 67, 71, 74], [45, 69, 72, 76], [45, 69, 72, 76], [41, 69, 72, 77], [43, 67, 71, 74], [40, 68, 71, 76],
+      [38, 69, 74, 77], [43, 67, 71, 74], [48, 67, 72, 76], [41, 69, 72, 77], [38, 69, 74, 77], [41, 69, 72, 77], [40, 68, 71, 76], [40, 68, 71, 74]],
+    mel: mkMel([
+      [0, 0, 76, 6], [0, 6, 74, 2], [0, 8, 72, 4], [0, 12, 71, 2], [0, 14, 72, 2], [1, 0, 69, 6], [1, 6, 72, 2], [1, 8, 77, 6], [1, 14, 76, 2],
+      [2, 0, 74, 6], [2, 6, 71, 2], [2, 8, 67, 4], [2, 12, 71, 2], [2, 14, 74, 2], [3, 0, 76, 12], [3, 12, 69, 1], [3, 13, 71, 1], [3, 14, 72, 1], [3, 15, 74, 1],
+      [4, 0, 76, 4], [4, 4, 81, 4], [4, 8, 79, 2], [4, 10, 77, 2], [4, 12, 76, 4], [5, 0, 77, 4], [5, 4, 76, 2], [5, 6, 74, 2], [5, 8, 72, 6], [5, 14, 74, 2],
+      [6, 0, 71, 4], [6, 4, 74, 4], [6, 8, 79, 4], [6, 12, 77, 2], [6, 14, 74, 2], [7, 0, 76, 8], [7, 8, 80, 4], [7, 12, 83, 4],
+      [8, 0, 81, 6], [8, 6, 77, 2], [8, 8, 74, 4], [8, 12, 77, 2], [8, 14, 81, 2], [9, 0, 79, 6], [9, 6, 74, 2], [9, 8, 71, 4], [9, 12, 74, 2], [9, 14, 79, 2],
+      [10, 0, 76, 6], [10, 6, 72, 2], [10, 8, 79, 4], [10, 12, 76, 2], [10, 14, 72, 2], [11, 0, 77, 8], [11, 8, 81, 4], [11, 12, 84, 4],
+      [12, 0, 86, 4], [12, 4, 84, 2], [12, 6, 81, 2], [12, 8, 77, 4], [12, 12, 81, 4], [13, 0, 84, 4], [13, 4, 81, 2], [13, 6, 77, 2], [13, 8, 72, 4], [13, 12, 77, 4],
+      [14, 0, 76, 4], [14, 4, 80, 4], [14, 8, 83, 4], [14, 12, 88, 4], [15, 0, 88, 8], [15, 8, 86, 2], [15, 10, 84, 2], [15, 12, 83, 2], [15, 14, 80, 2]]) },
+  { name: 'ボス', lv: 2, bpm: 172,   // Eマイナー：Em C D Em | Em C D B | Am D G C | Am C B B
+    ch: [[40, 64, 67, 71], [36, 64, 67, 72], [38, 66, 69, 74], [40, 64, 67, 71], [40, 64, 67, 71], [36, 64, 67, 72], [38, 66, 69, 74], [35, 66, 71, 75],
+      [45, 64, 69, 72], [38, 66, 69, 74], [43, 67, 71, 74], [36, 64, 67, 72], [45, 64, 69, 72], [36, 64, 67, 72], [35, 66, 71, 75], [35, 66, 71, 75]],
+    mel: mkMel([
+      [0, 0, 76, 2], [0, 2, 76, 2], [0, 4, 79, 2], [0, 6, 76, 2], [0, 8, 83, 4], [0, 12, 81, 2], [0, 14, 79, 2], [1, 0, 79, 4], [1, 4, 76, 4], [1, 8, 72, 6], [1, 14, 74, 2],
+      [2, 0, 74, 2], [2, 2, 74, 2], [2, 4, 78, 2], [2, 6, 74, 2], [2, 8, 81, 4], [2, 12, 79, 2], [2, 14, 78, 2], [3, 0, 76, 12], [3, 12, 71, 2], [3, 14, 74, 2],
+      [4, 0, 76, 2], [4, 2, 76, 2], [4, 4, 79, 2], [4, 6, 83, 2], [4, 8, 88, 4], [4, 12, 86, 2], [4, 14, 83, 2], [5, 0, 84, 4], [5, 4, 83, 2], [5, 6, 79, 2], [5, 8, 76, 6], [5, 14, 79, 2],
+      [6, 0, 78, 4], [6, 4, 81, 4], [6, 8, 86, 4], [6, 12, 84, 2], [6, 14, 81, 2], [7, 0, 78, 4], [7, 4, 83, 4], [7, 8, 87, 8],
+      [8, 0, 81, 6], [8, 6, 76, 2], [8, 8, 72, 4], [8, 12, 76, 2], [8, 14, 81, 2], [9, 0, 78, 6], [9, 6, 74, 2], [9, 8, 81, 4], [9, 12, 78, 2], [9, 14, 74, 2],
+      [10, 0, 79, 6], [10, 6, 74, 2], [10, 8, 71, 4], [10, 12, 74, 2], [10, 14, 79, 2], [11, 0, 84, 8], [11, 8, 83, 4], [11, 12, 79, 4],
+      [12, 0, 81, 4], [12, 4, 84, 4], [12, 8, 88, 4], [12, 12, 84, 4], [13, 0, 79, 4], [13, 4, 84, 4], [13, 8, 88, 4], [13, 12, 91, 4],
+      [14, 0, 87, 8], [14, 8, 83, 4], [14, 12, 78, 4], [15, 0, 75, 4], [15, 4, 78, 4], [15, 8, 83, 4], [15, 12, 87, 4]]) },
+  { name: 'だいボス', lv: 3, bpm: 176,   // Cマイナー：Cm Bb Ab G | Cm Bb Ab G | Fm Bb Eb Ab | Fm G Cm G
+    ch: [[36, 63, 67, 72], [34, 62, 65, 70], [44, 63, 68, 72], [43, 62, 67, 71], [36, 63, 67, 72], [34, 62, 65, 70], [44, 63, 68, 72], [43, 62, 67, 71],
+      [41, 65, 68, 72], [34, 62, 65, 70], [39, 63, 67, 70], [44, 63, 68, 72], [41, 65, 68, 72], [43, 62, 67, 71], [36, 63, 67, 72], [43, 62, 67, 71]],
+    mel: mkMel([
+      [0, 0, 72, 4], [0, 4, 75, 4], [0, 8, 79, 6], [0, 14, 77, 2], [1, 0, 77, 4], [1, 4, 74, 4], [1, 8, 70, 6], [1, 14, 72, 2],
+      [2, 0, 72, 4], [2, 4, 75, 2], [2, 6, 77, 2], [2, 8, 80, 6], [2, 14, 79, 2], [3, 0, 79, 8], [3, 8, 74, 4], [3, 12, 71, 4],
+      [4, 0, 84, 4], [4, 4, 82, 2], [4, 6, 79, 2], [4, 8, 84, 4], [4, 12, 87, 4], [5, 0, 86, 4], [5, 4, 82, 2], [5, 6, 77, 2], [5, 8, 82, 4], [5, 12, 86, 4],
+      [6, 0, 84, 4], [6, 4, 80, 2], [6, 6, 75, 2], [6, 8, 80, 4], [6, 12, 84, 4], [7, 0, 83, 8], [7, 8, 86, 4], [7, 12, 83, 4],
+      [8, 0, 80, 6], [8, 6, 77, 2], [8, 8, 72, 4], [8, 12, 77, 2], [8, 14, 80, 2], [9, 0, 82, 6], [9, 6, 77, 2], [9, 8, 74, 4], [9, 12, 77, 2], [9, 14, 82, 2],
+      [10, 0, 79, 6], [10, 6, 75, 2], [10, 8, 70, 4], [10, 12, 75, 2], [10, 14, 79, 2], [11, 0, 80, 8], [11, 8, 84, 4], [11, 12, 87, 4],
+      [12, 0, 89, 4], [12, 4, 87, 2], [12, 6, 84, 2], [12, 8, 80, 4], [12, 12, 84, 4], [13, 0, 86, 4], [13, 4, 83, 2], [13, 6, 79, 2], [13, 8, 74, 4], [13, 12, 79, 4],
+      [14, 0, 84, 12], [14, 12, 79, 2], [14, 14, 75, 2], [15, 0, 74, 4], [15, 4, 79, 4], [15, 8, 83, 4], [15, 12, 86, 4]]) },
+  { name: 'ラスボス', lv: 4, bpm: 184,   // Bマイナー：Bm G A F# | Bm G Em F# | G A Bm Bm | Em F# Bm F#
+    ch: [[35, 62, 66, 71], [43, 62, 67, 71], [45, 61, 64, 69], [42, 61, 66, 70], [35, 62, 66, 71], [43, 62, 67, 71], [40, 64, 67, 71], [42, 61, 66, 70],
+      [43, 62, 67, 71], [45, 61, 64, 69], [35, 62, 66, 71], [35, 62, 66, 71], [40, 64, 67, 71], [42, 61, 66, 70], [35, 62, 66, 71], [42, 61, 66, 70]],
+    mel: mkMel([
+      [0, 0, 71, 4], [0, 4, 74, 4], [0, 8, 78, 4], [0, 12, 83, 4], [1, 0, 83, 6], [1, 6, 81, 2], [1, 8, 79, 4], [1, 12, 74, 4],
+      [2, 0, 76, 4], [2, 4, 81, 4], [2, 8, 85, 4], [2, 12, 88, 4], [3, 0, 85, 8], [3, 8, 82, 4], [3, 12, 78, 4],
+      [4, 0, 83, 2], [4, 2, 83, 2], [4, 4, 86, 2], [4, 6, 83, 2], [4, 8, 90, 4], [4, 12, 88, 2], [4, 14, 86, 2], [5, 0, 86, 4], [5, 4, 83, 4], [5, 8, 79, 6], [5, 14, 81, 2],
+      [6, 0, 83, 4], [6, 4, 79, 4], [6, 8, 76, 4], [6, 12, 79, 2], [6, 14, 83, 2], [7, 0, 82, 4], [7, 4, 85, 4], [7, 8, 90, 8],
+      [8, 0, 91, 6], [8, 6, 90, 2], [8, 8, 86, 4], [8, 12, 83, 4], [9, 0, 88, 6], [9, 6, 86, 2], [9, 8, 85, 4], [9, 12, 81, 4],
+      [10, 0, 86, 4], [10, 4, 83, 4], [10, 8, 78, 4], [10, 12, 74, 4], [11, 0, 71, 4], [11, 4, 74, 4], [11, 8, 78, 4], [11, 12, 81, 2], [11, 14, 83, 2],
+      [12, 0, 83, 4], [12, 4, 88, 4], [12, 8, 91, 4], [12, 12, 88, 4], [13, 0, 90, 4], [13, 4, 85, 4], [13, 8, 82, 4], [13, 12, 78, 4],
+      [14, 0, 83, 8], [14, 8, 86, 4], [14, 12, 90, 4], [15, 0, 94, 8], [15, 8, 90, 2], [15, 10, 88, 2], [15, 12, 85, 2], [15, 14, 82, 2]]) },
+];
+const BGM = { on: false, next: 0, i: 0, timer: null, duck: false, tr: 0 };
 const mf = m => 440 * Math.pow(2, (m - 69) / 12);
-function bnote(m, t, dur, type, vol) {
-  const o = AC.createOscillator(), g = AC.createGain();
-  o.type = type; o.frequency.value = mf(m);
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g); g.connect(BGMBUS); o.start(t); o.stop(t + dur + 0.05);
+function bsyn(m, t, dur, type, vol, cut, q, det) {
+  const o = AC.createOscillator(), g = AC.createGain(), f = AC.createBiquadFilter();
+  o.type = type; o.frequency.value = mf(m); if (det) o.detune.value = det;
+  f.type = 'lowpass'; f.frequency.value = cut; f.Q.value = q || 0.7;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+  g.gain.setValueAtTime(vol * 0.8, t + Math.max(0.01, dur - 0.03)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.04);
+  o.connect(f); f.connect(g); g.connect(BGMBUS); o.start(t); o.stop(t + dur + 0.08);
 }
+function bnoise(t, dur, type, freq, vol, q) {
+  const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+  s.buffer = NOISE; f.type = type; f.frequency.value = freq; f.Q.value = q || 0.7;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(BGMBUS); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.02);
+}
+function kick(t) {
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+  g.gain.setValueAtTime(0.55, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+  o.connect(g); g.connect(BGMBUS); o.start(t); o.stop(t + 0.18);
+}
+function snare(t, v) {
+  bnoise(t, 0.13, 'bandpass', 1900, 0.32 * (v || 1), 0.6);
+  const o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(200, t);
+  g.gain.setValueAtTime(0.14 * (v || 1), t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+  o.connect(g); g.connect(BGMBUS); o.start(t); o.stop(t + 0.09);
+}
+const KICKS = { 1: [0, 8, 10], 2: [0, 6, 8, 14], 3: [0, 3, 8, 11], 4: [0, 2, 8, 10] };
+const STABS = { 1: [6, 14], 2: [3, 6, 11, 14], 3: [3, 6, 10, 14], 4: [6, 14] };
 function bgmStep(i, t) {
-  const bar = i >> 3, e = i & 7, ch = (bar === 7 && e >= 4) ? BGM_CH[0] : BGM_CH[bar];
-  const m = BGM_MEL[i];
-  if (m) { let n = 1; while (n < 4 && BGM_MEL[(i + n) % 64] === 0 && ((i + n) & 7) !== 0) n++; const d = EIGHTH * n * 0.95 + 0.15;
-    bnote(m, t, d, 'sine', 0.16); bnote(m + 12, t, d * 0.6, 'sine', 0.04); }
-  if (e === 0 || e === 4 || (bar === 7 && e === 4)) bnote(e === 0 ? ch[0] : ch[0] + 7, t, EIGHTH * 3.5, 'triangle', 0.2);
-  if (e === 0 || (bar === 7 && e === 4)) for (const c of ch.slice(1)) bnote(c - 12, t, EIGHTH * 7.5, 'sine', 0.035);
-  if (e % 2 === 1) { const s2 = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
-    s2.buffer = NOISE; f.type = 'highpass'; f.frequency.value = 7000; g.gain.setValueAtTime(0.025, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
-    s2.connect(f); f.connect(g); g.connect(BGMBUS); s2.start(t, Math.random()); s2.stop(t + 0.06); }
+  const T = TRACKS[BGM.tr], S = 60 / T.bpm / 4, lv = T.lv, bar = i >> 4, st = i & 15, ch = T.ch[bar];
+  // メロディ（ブラスふう）
+  const n = T.mel[i];
+  if (n) {
+    const d = n[1] * S * 0.92;
+    bsyn(n[0], t, d, 'square', 0.07, 3400); bsyn(n[0], t, d, 'sawtooth', 0.06, 2600, 0.7, 7);
+    if (lv >= 3) bsyn(n[0] - 12, t, d, 'sawtooth', 0.035, 1800, 0.7, -6);
+  }
+  // ベース：1きょくめは 8ぶんで オクターブ、2きょくめ からは 16ぶんで きざむ
+  if (lv === 1) { if (st % 2 === 0) bsyn(ch[0] + ((st / 2) % 2 ? 12 : 0), t, S * 1.6, 'sawtooth', 0.16, 1200, 3); }
+  else bsyn(ch[0] + ([0, 0, 12, 0][st % 4]), t, S * 0.85, 'sawtooth', 0.13, 1100 + lv * 100, 3);
+  // わおん：うらはくの「パッ」、3きょくめ からは オルガンふうに のばす
+  if (STABS[lv].includes(st)) for (const c of ch.slice(1)) bsyn(c - 12, t, S * 1.4, 'sawtooth', 0.033, 1900);
+  if (lv >= 3 && st === 0) for (const c of ch.slice(1)) bsyn(c, t, S * 15, 'square', 0.014, 1300);
+  // ラスボス：はやい ぶんさんわおん
+  if (lv === 4) { const ar = [ch[1], ch[2], ch[3], ch[1] + 12]; bsyn(ar[st % 4] + 12, t, S * 0.8, 'triangle', 0.04, 5000); }
+  // ドラム
+  if (KICKS[lv].includes(st)) kick(t);
+  const fill = (bar === 7 || bar === 15) && st >= (lv >= 2 ? 8 : 12);
+  if (st === 4 || st === 12 || (lv >= 3 && st === 15) || fill) snare(t, fill && st !== 12 ? 0.5 + (st - 8) * 0.07 : 1);
+  if (lv >= 3 && st === 0 && (bar === 0 || bar === 8)) bnoise(t, 0.9, 'highpass', 5000, 0.12);   // シンバル
+  if (!fill) { if (lv >= 3) bnoise(t, 0.03, 'highpass', 8000, st % 2 ? 0.035 : 0.06); else if (st % 2 === 0) bnoise(t, 0.035, 'highpass', 8000, st % 4 === 2 ? 0.07 : 0.04); }
 }
 function bgmTick() {
   if (!AC || AC.state !== 'running') return;
   if (BGM.next < AC.currentTime - 0.05) BGM.next = AC.currentTime + 0.05;
-  while (BGM.next < AC.currentTime + 0.3) { bgmStep(BGM.i, BGM.next); BGM.next += EIGHTH; BGM.i = (BGM.i + 1) % 64; }
+  const S = 60 / TRACKS[BGM.tr].bpm / 4;
+  while (BGM.next < AC.currentTime + 0.25) { bgmStep(BGM.i, BGM.next); BGM.next += S; BGM.i = (BGM.i + 1) % 256; }
 }
 function bgmStart() {
   if (!AC || BGM.on) return;
   BGM.on = true; BGM.next = AC.currentTime + 0.1;
-  BGMBUS.gain.setTargetAtTime(0.32, AC.currentTime, 0.4);
-  BGM.timer = setInterval(bgmTick, 50);
+  BGMBUS.gain.setTargetAtTime(0.3, AC.currentTime, 0.3);
+  BGM.timer = setInterval(bgmTick, 25);
+}
+function bgmPlay(n) {   // きょくを きりかえる（あたまから）
+  if (!AC) return;
+  if (!BGM.on) { BGM.tr = n; bgmStart(); return; }
+  if (BGM.tr === n) return;
+  BGM.tr = n; BGM.i = 0; BGM.next = AC.currentTime + 0.12;
 }
 function bgmDuck(on) {   // けずる おとなどが なっている あいだは BGM を さげる
   if (!AC || !BGM.on || BGM.duck === on) return;
-  BGM.duck = on; BGMBUS.gain.setTargetAtTime(on ? 0.12 : 0.32, AC.currentTime, 0.15);
+  BGM.duck = on; BGMBUS.gain.setTargetAtTime(on ? 0.11 : 0.3, AC.currentTime, 0.15);
 }
 
 // ---------- かんじゃさん ----------
 const PATIENTS = [
-  { id: 'p1', name: 'はると', hon: 'くん', age: 5, skin: '#ffd9b8', hair: '#3a2a20', style: 'boy',
+  { id: 'p1', lv: 4, rank: 'ラスボス', name: 'はると', hon: 'くん', age: 5, skin: '#ffd9b8', hair: '#3a2a20', style: 'boy',
     worry: '「おくばが しみて いたいよ…」', title: 'むしばの ちりょう（つめもの）', arch: 'primary',
     steps: ['search', 'xray', 'masui', 'wattes', 'drill', 'detect', 'excavate', 'rinse', 'bond', 'fill', 'cure', 'bite', 'polish'], card: 'c1',
     thanks: 'もう しみないよ！ ありがとう、せんせい！' },
-  { id: 'p2', name: 'みお', hon: 'ちゃん', age: 4, skin: '#ffe0c4', hair: '#6b3b1f', style: 'girl',
+  { id: 'p2', lv: 1, rank: 'ふつう', name: 'みお', hon: 'ちゃん', age: 4, skin: '#ffe0c4', hair: '#6b3b1f', style: 'girl',
     worry: '「はいしゃさんで おそうじ してほしいな」', title: 'はの おそうじ と フッそ', arch: 'primary',
     steps: ['dye', 'brush', 'scale', 'pmtc', 'fluor'], card: 'c2',
     thanks: 'はが つるつる！ 30ぷん まってから おやつに するね！' },
-  { id: 'p3', name: 'そうた', hon: 'くん', age: 6, skin: '#f7cfa8', hair: '#1f1f2a', style: 'boy2',
+  { id: 'p3', lv: 3, rank: 'だいボス', name: 'そうた', hon: 'くん', age: 6, skin: '#f7cfa8', hair: '#1f1f2a', style: 'boy2',
     worry: '「おくに おおきい はが はえてきたよ」', title: '6さいきゅうしの シーラント', arch: 'primary6',
     steps: ['find6', 'clean', 'wattes', 'etch', 'wash', 'dry', 'seal', 'cure', 'bite'], card: 'c3',
     thanks: 'おおきな はを だいじに するね！' },
-  { id: 'p4', name: 'ゆい', hon: 'ちゃん', age: 6, skin: '#ffdcc0', hair: '#4a2a1a', style: 'girl',
+  { id: 'p4', lv: 2, rank: 'ボス', name: 'ゆい', hon: 'ちゃん', age: 6, skin: '#ffdcc0', hair: '#4a2a1a', style: 'girl',
     worry: '「まえばが ぐらぐら。うしろから あたらしい はが はえてきた」', title: 'ぐらぐらの こどもの はを ぬく', arch: 'primary',
     steps: ['find4', 'xray4', 'topical', 'extract', 'gauze'], card: 'c4',
     thanks: 'ぬけた はは おうちに もってかえるね！' },
@@ -546,6 +637,7 @@ function startPatient(p) {
   if (p.id === 'p1') G.teeth.find(t => t.side === 1 && t.type === 'E').cavity = true;
   if (p.id !== 'p2') G.teeth.forEach(t => { t.plaque = 0; t.tartar = []; });  // しこう・しせきは おそうじの こだけ
   gridInit(p.id === 'p1' ? 'cavity' : 'groove');
+  bgmPlay(p.lv - 1);
   show('play'); startStep();
   if (!G.running) { G.running = true; last = performance.now(); requestAnimationFrame(frame); }
 }
@@ -1419,13 +1511,15 @@ function drawTool() {
 // ---------- ボタン ----------
 function buildSelect() {
   const st = loadStars(), list = $('#plist'); list.innerHTML = '';
-  PATIENTS.forEach(p => {
+  bgmPlay(0);
+  PATIENTS.slice().sort((a, b) => a.lv - b.lv).forEach(p => {
     const b = document.createElement('button'); b.className = 'pcard';
     const c = document.createElement('canvas'); c.width = 152; c.height = 152;
     const cc = c.getContext('2d'); drawFace(cc, 76, 82, 54, p, st[p.id] ? 'happy' : 'nervous');
     const s = st[p.id] || 0;
     const info = document.createElement('div');
     info.innerHTML = '<div class="nm">' + p.name + p.hon + '（' + p.age + 'さい）' + (s ? '<span class="st">' + '★'.repeat(s) + '☆'.repeat(3 - s) + '</span>' : '') + '</div>' +
+      '<span class="rank r' + p.lv + '">' + '★'.repeat(p.lv) + ' ' + p.rank + '</span>' +
       '<div class="wr">' + p.worry + '</div><span class="tt">' + p.title + '・' + p.steps.length + 'ステップ</span>';
     b.appendChild(c); b.appendChild(info);
     b.addEventListener('click', () => { audioInit(); startPatient(p); });
@@ -1452,7 +1546,7 @@ $('#certName').addEventListener('input', e => { $('#certNm').textContent = (e.ta
 $('#certBack').addEventListener('click', () => { buildSelect(); show('select'); });
 
 // テスト用の入り口（自動プレイで使う）
-window.__haisha = { CTRL, SD, audio: () => AC && AC.state, G, P, PATIENTS, startPatient, cell, high, zone, gel, dyed, bonded, count, STEPS, TB, N, CS, GUM, SLOTS, XR,
+window.__haisha = { BGM, TRACKS, CTRL, SD, audio: () => AC && AC.state, G, P, PATIENTS, startPatient, cell, high, zone, gel, dyed, bonded, count, STEPS, TB, N, CS, GUM, SLOTS, XR,
   consts: { DEC, SOFT, HOLE, RES, CUR, DEB, GRV, SEAL, SEALC, EN } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if ($('#select').classList.contains('on')) buildSelect(); });
 })();

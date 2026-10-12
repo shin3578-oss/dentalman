@@ -1519,7 +1519,27 @@ function drawParts() {
   ctx.globalAlpha = 1;
 }
 
-// どうぐ
+// どうぐ（Canva の ドット絵。tools.png の なかの ばしょ と さきの いち）
+const TOOLSHEET = new Image(); TOOLSHEET.src = 'tools.png';
+const TOOLSPR = {"turbine": {"x": 0, "y": 0, "tx": 7, "ty": 37}, "engine": {"x": 200, "y": 0, "tx": 4, "ty": 40}, "straight": {"x": 400, "y": 0, "tx": 10, "ty": 9}, "polisher": {"x": 600, "y": 0, "tx": 19, "ty": 32}, "mirror": {"x": 800, "y": 0, "tx": 27, "ty": 13}, "vacuum": {"x": 1000, "y": 0, "tx": 28, "ty": 8}, "threeway": {"x": 0, "y": 200, "tx": 8, "ty": 20}, "syringe": {"x": 200, "y": 200, "tx": 8, "ty": 9}, "resin": {"x": 400, "y": 200, "tx": 11, "ty": 17}, "light": {"x": 600, "y": 200, "tx": 9, "ty": 25}, "brush": {"x": 800, "y": 200, "tx": 24, "ty": 13}, "scaler": {"x": 1000, "y": 200, "tx": 15, "ty": 12}, "probe": {"x": 0, "y": 400, "tx": 10, "ty": 11}, "forceps": {"x": 200, "y": 400, "tx": 27, "ty": 9}, "scalpel": {"x": 400, "y": 400, "tx": 10, "ty": 12}, "needle": {"x": 600, "y": 400, "tx": 18, "ty": 10}, "file": {"x": 800, "y": 400, "tx": 11, "ty": 11}, "implantdrill": {"x": 1000, "y": 400, "tx": 7, "ty": 5}, "scanner": {"x": 0, "y": 600, "tx": 18, "ty": 24}, "tweezer": {"x": 200, "y": 600, "tx": 16, "ty": 20}, "micro": {"x": 400, "y": 600, "tx": 12, "ty": 7}, "gauze": {"x": 600, "y": 600, "tx": 100, "ty": 100}, "paper": {"x": 800, "y": 600, "tx": 9, "ty": 15}};
+const TOOLMAP = { turbine: 'turbine', engine: 'engine', straight: 'straight', polisher: 'polisher', mirror: 'mirror', vacuum: 'vacuum', water: 'threeway', air: 'threeway',
+  syringe: 'syringe', resin: 'resin', sealant: 'resin', light: 'light', brush: 'brush', scaler: 'scaler', probe: 'probe', forceps: 'forceps', scalpel: 'scalpel',
+  needle: 'needle', file: 'file', implantdrill: 'implantdrill', scanner: 'scanner', tweezer: 'tweezer', swab: 'micro', fluor: 'micro', detector: 'micro',
+  bondbrush: 'micro', etch: 'micro', gauze: 'gauze', paper: 'paper' };
+const TIPCOL = { swab: '#ffe9a8', fluor: '#a6e3ff', detector: '#e8285a', bondbrush: '#f4f0d0', etch: '#3f7dff', resin: '#efe3c2', sealant: '#fff1b8' };
+function drawToolSprite(tool, x, y) {
+  const k = TOOLMAP[tool], m = k && TOOLSPR[k];
+  if (!m || !TOOLSHEET.complete || !TOOLSHEET.naturalWidth) return false;
+  const sc = k === 'gauze' ? 0.32 : 0.62;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(TOOLSHEET, m.x, m.y, 200, 200, x - m.tx * sc, y - m.ty * sc, 200 * sc, 200 * sc);
+  ctx.imageSmoothingEnabled = true;
+  if (TIPCOL[tool] && !(tool === 'swab' && G.key !== 'dye' && G.key !== 'masui' && G.key !== 'topical')) { ctx.fillStyle = tool === 'swab' && G.key === 'dye' ? '#e2316a' : TIPCOL[tool]; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+  if (P.down && tool === 'turbine') { ctx.fillStyle = 'rgba(190,230,255,.6)'; for (let i = 0; i < 6; i++) { const a = G.t * 3 + i * Math.PI / 3; ctx.beginPath(); ctx.arc(x + Math.cos(a) * 11, y + Math.sin(a) * 11, 2, 0, Math.PI * 2); ctx.fill(); } }
+  if (P.down && tool === 'light') { const need = G.key === 'cure' ? 3 : 2; ctx.fillStyle = 'rgba(120,170,255,.5)'; ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, 26, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * clamp(G.holdT / need, 0, 1)); ctx.stroke(); }
+  if (P.down && tool === 'fluor') drawSpark(ctx, x - 10, y - 12, 6, '#ffffff');
+  return true;
+}
 function drawTool() {
   if (!G.step || G.done) return;
   let tool = G.step.tool;
@@ -1531,6 +1551,8 @@ function drawTool() {
   if (active) { G.toolX = P.x; G.toolY = P.y; }
   const x = G.toolX, y = G.toolY;
   ctx.save(); ctx.lineCap = 'round';
+  if (tool === 'gauze' && P.down) { ctx.restore(); return; }
+  if (drawToolSprite(tool, x, y)) { ctx.restore(); return; }
   if (CASE.drawTool && CASE.drawTool(tool, x, y)) { ctx.restore(); return; }
   const handle = (col, w, ex, ey) => { ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = w + 3; ctx.beginPath(); ctx.moveTo(x + 90, y + 125); ctx.lineTo(x + ex, y + ey); ctx.stroke(); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(); };
   if (tool === 'turbine' || tool === 'polisher' || tool === 'engine') {

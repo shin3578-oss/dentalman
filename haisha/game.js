@@ -219,6 +219,7 @@ const KICKS = { 1: [0, 8, 10], 2: [0, 6, 8, 14], 3: [0, 3, 8, 11], 4: [0, 2, 8, 
 const STABS = { 1: [6, 14], 2: [3, 6, 11, 14], 3: [3, 6, 10, 14], 4: [6, 14] };
 function bgmStep(i, t) {
   const T = TRACKS[BGM.tr], S = 60 / T.bpm / 4, lv = T.lv, bar = i >> 4, st = i & 15, ch = T.ch[bar];
+  if (T.style) return bgmStepStyle(T, i, t);
   // メロディ（ブラスふう）
   const n = T.mel[i];
   if (n) {
@@ -240,6 +241,52 @@ function bgmStep(i, t) {
   if (st === 4 || st === 12 || (lv >= 3 && st === 15) || fill) snare(t, fill && st !== 12 ? 0.5 + (st - 8) * 0.07 : 1);
   if (lv >= 3 && st === 0 && (bar === 0 || bar === 8)) bnoise(t, 0.9, 'highpass', 5000, 0.12);   // シンバル
   if (!fill) { if (lv >= 3) bnoise(t, 0.03, 'highpass', 8000, st % 2 ? 0.035 : 0.06); else if (st % 2 === 0) bnoise(t, 0.035, 'highpass', 8000, st % 4 === 2 ? 0.07 : 0.04); }
+}
+
+// オープニング（4ばん）と セレクト（5ばん）の きょく
+TRACKS.push(
+  { name: 'オープニング', style: 'open', lv: 0, bpm: 84,   // ニ長調：D Bm G A | D F#m G A | Bb C D D | G A Bm A
+    ch: [[38, 62, 66, 69], [35, 62, 66, 71], [43, 62, 67, 71], [45, 61, 64, 69], [38, 62, 66, 69], [42, 61, 66, 69], [43, 62, 67, 71], [45, 61, 64, 69],
+      [46, 62, 65, 70], [48, 64, 67, 72], [38, 62, 66, 69], [38, 62, 66, 69], [43, 62, 67, 71], [45, 61, 64, 69], [47, 62, 66, 71], [45, 61, 64, 69]],
+    mel: mkMel([[0, 0, 74, 8], [0, 8, 76, 4], [0, 12, 78, 4], [1, 0, 78, 6], [1, 6, 76, 2], [1, 8, 74, 8], [2, 0, 71, 4], [2, 4, 74, 4], [2, 8, 79, 8],
+      [3, 0, 76, 12], [3, 12, 73, 2], [3, 14, 76, 2], [4, 0, 81, 8], [4, 8, 78, 4], [4, 12, 81, 4], [5, 0, 85, 6], [5, 6, 83, 2], [5, 8, 81, 8],
+      [6, 0, 79, 4], [6, 4, 83, 4], [6, 8, 86, 8], [7, 0, 85, 16], [8, 0, 86, 8], [8, 8, 82, 4], [8, 12, 77, 4], [9, 0, 84, 8], [9, 8, 79, 4], [9, 12, 76, 4],
+      [10, 0, 78, 8], [10, 8, 81, 8], [11, 0, 86, 16], [12, 0, 83, 6], [12, 6, 81, 2], [12, 8, 79, 8], [13, 0, 81, 6], [13, 6, 79, 2], [13, 8, 76, 8],
+      [14, 0, 78, 4], [14, 4, 79, 4], [14, 8, 83, 8], [15, 0, 81, 12], [15, 12, 76, 2], [15, 14, 73, 2]]) },
+  { name: 'セレクト', style: 'select', lv: 0, bpm: 116,   // ヘ長調：F Dm Bb C | F Am Bb C | Dm Bb F C | Dm Bb Gm C
+    ch: [[41, 65, 69, 72], [38, 62, 65, 69], [46, 62, 65, 70], [48, 64, 67, 72], [41, 65, 69, 72], [45, 64, 69, 72], [46, 62, 65, 70], [48, 64, 67, 72],
+      [38, 62, 65, 69], [46, 62, 65, 70], [41, 65, 69, 72], [48, 64, 67, 72], [38, 62, 65, 69], [46, 62, 65, 70], [43, 62, 67, 70], [48, 64, 67, 72]],
+    mel: mkMel([[0, 0, 72, 2], [0, 2, 77, 2], [0, 4, 76, 2], [0, 6, 77, 2], [0, 8, 81, 4], [0, 12, 79, 4], [1, 0, 77, 4], [1, 4, 74, 2], [1, 6, 77, 2], [1, 8, 74, 8],
+      [2, 0, 70, 2], [2, 2, 74, 2], [2, 4, 77, 2], [2, 6, 74, 2], [2, 8, 82, 4], [2, 12, 81, 4], [3, 0, 79, 8], [3, 8, 76, 4], [3, 12, 72, 4],
+      [4, 0, 72, 2], [4, 2, 77, 2], [4, 4, 76, 2], [4, 6, 77, 2], [4, 8, 84, 4], [4, 12, 81, 4], [5, 0, 81, 4], [5, 4, 79, 2], [5, 6, 76, 2], [5, 8, 72, 8],
+      [6, 0, 74, 2], [6, 2, 77, 2], [6, 4, 82, 2], [6, 6, 81, 2], [6, 8, 79, 4], [6, 12, 77, 4], [7, 0, 79, 12], [7, 12, 76, 2], [7, 14, 79, 2],
+      [8, 0, 81, 6], [8, 6, 77, 2], [8, 8, 74, 4], [8, 12, 77, 4], [9, 0, 82, 6], [9, 6, 77, 2], [9, 8, 74, 4], [9, 12, 70, 4],
+      [10, 0, 72, 4], [10, 4, 77, 4], [10, 8, 81, 4], [10, 12, 84, 4], [11, 0, 84, 8], [11, 8, 79, 4], [11, 12, 76, 4],
+      [12, 0, 77, 4], [12, 4, 81, 4], [12, 8, 86, 4], [12, 12, 84, 4], [13, 0, 82, 4], [13, 4, 77, 4], [13, 8, 74, 4], [13, 12, 77, 4],
+      [14, 0, 79, 4], [14, 4, 74, 4], [14, 8, 70, 4], [14, 12, 74, 4], [15, 0, 76, 8], [15, 8, 79, 4], [15, 12, 72, 4]]) });
+const BGM_OPEN = 4, BGM_SELECT = 5;
+function timpani(t, v) {
+  const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.4);
+  g.gain.setValueAtTime(0.45 * (v || 1), t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6); o.connect(g); g.connect(BGMBUS); o.start(t); o.stop(t + 0.65);
+}
+function bgmStepStyle(T, i, t) {
+  const S = 60 / T.bpm / 4, bar = i >> 4, st = i & 15, ch = T.ch[bar], n = T.mel[i];
+  if (T.style === 'open') {
+    // ゆっくり おおきく：げんがくの わおん・ブラスの メロディ・ティンパニ・ハープ
+    if (n) { const d = n[1] * S * 0.98; bsyn(n[0], t, d, 'sawtooth', 0.05, 2200, 0.7, 6); bsyn(n[0], t, d, 'square', 0.04, 1800); bsyn(n[0] - 12, t, d, 'sawtooth', 0.03, 1400, 0.7, -5); }
+    if (st === 0) { for (const c of ch.slice(1)) { bsyn(c - 12, t, S * 16, 'sawtooth', 0.016, 1100, 0.7, 4); bsyn(c, t, S * 16, 'triangle', 0.02, 3000); } bsyn(ch[0], t, S * 16, 'sawtooth', 0.07, 600, 1); }
+    if (st % 2 === 0) { const ar = [ch[1], ch[2], ch[3], ch[1] + 12, ch[2] + 12, ch[3] + 12, ch[2] + 12, ch[3]]; bsyn(ar[(st / 2) % 8] + 12, t, S * 3, 'triangle', 0.035, 5000); }
+    if (st === 0 || (bar % 4 === 3 && st >= 12)) timpani(t, st === 0 ? 1 : 0.5 + (st - 12) * 0.12);
+    if (st === 0 && (bar === 0 || bar === 8)) bnoise(t, 1.6, 'highpass', 4500, 0.1);
+    return;
+  }
+  // セレクト：かるく はねる ベース・ベルの メロディ・かるい リズム
+  if (n) { const d = n[1] * S * 0.85; bsyn(n[0], t, d, 'triangle', 0.09, 6000); bsyn(n[0] + 12, t, Math.min(d, 0.25), 'sine', 0.035, 8000); }
+  if (st % 4 === 0) bsyn(ch[0] + (st === 8 ? 7 : 0), t, S * 1.4, 'triangle', 0.16, 1500);
+  if (st === 0) for (const c of ch.slice(1)) bsyn(c, t, S * 15, 'sine', 0.018, 3000);
+  if (st % 2 === 0) bnoise(t, 0.03, 'highpass', 8000, st % 4 === 2 ? 0.05 : 0.025);
+  if (st === 4 || st === 12) bnoise(t, 0.05, 'bandpass', 3000, 0.08, 2);
+  if (st === 0 || st === 10) kick(t);
 }
 function bgmTick() {
   if (!AC || AC.state !== 'running') return;
@@ -547,7 +594,7 @@ function toLocal(e) { const r = cv.getBoundingClientRect(); return { x: (e.clien
 const TAP_STEPS = ['search', 'find6', 'xray', 'find4', 'xray4'];
 function isTapStep() { if (G.step && G.step.view === 'case') return !!(CASE.isTap && CASE.isTap()); return TAP_STEPS.includes(G.key) || (G.key === 'bite' && G.phase === 0); }
 cv.addEventListener('pointerdown', e => {
-  e.preventDefault(); audioInit(); bgmStart();
+  e.preventDefault(); audioInit();
   try { cv.setPointerCapture(e.pointerId); } catch (_) {}
   const p = toLocal(e);
   if (e.pointerType !== 'mouse') { CTRL.used = true; CTRL.cx = p.x; CTRL.cy = clamp(p.y, TOP + 6, H - 6); CTRL.touch = true; CTRL.tsx = p.x; CTRL.tsy = p.y; CTRL.tmoved = 0; return; }
@@ -580,19 +627,21 @@ cv.addEventListener('pointerleave', () => { P.hover = false; });
 const CTRL = { vx: 0, vy: 0, a: false, cx: 180, cy: 318, used: false, touch: false, keys: {} };
 (function setupPad() {
   const stick = $('#stick'), knob = $('#knob'), ab = $('#abtn');
-  let sid = null;
-  const setStick = e => {
-    const r = stick.getBoundingClientRect(), R = r.width / 2 - 18;
-    let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
-    const l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; }
-    knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
-    CTRL.vx = dx / R; CTRL.vy = dy / R; CTRL.used = true;
+  // タッチパッド：なぞった ぶんだけ カーソルが うごく（ゆびを とめれば とまる）
+  let sid = null, lx = 0, ly = 0;
+  const knobAt = e => { const r = stick.getBoundingClientRect(); knob.style.transform = 'translate(' + clamp(e.clientX - r.left - r.width / 2, -r.width / 2 + 14, r.width / 2 - 14) + 'px,' + clamp(e.clientY - r.top - r.height / 2, -r.height / 2 + 14, r.height / 2 - 14) + 'px)'; };
+  const startPad = e => { e.preventDefault(); audioInit(); sid = e.pointerId; try { stick.setPointerCapture(sid); } catch (_) {} lx = e.clientX; ly = e.clientY; CTRL.used = true; knobAt(e); stick.classList.add('on'); };
+  const movePad = e => {
+    if (e.pointerId !== sid) return;
+    const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY;
+    const k = (W / Math.max(1, cv.clientWidth)) * 1.6 * (Math.hypot(dx, dy) > 8 ? 1.35 : 1);
+    CTRL.cx = clamp(CTRL.cx + dx * k, 8, W - 8); CTRL.cy = clamp(CTRL.cy + dy * k, TOP + 6, H - 6); knobAt(e);
   };
-  const endStick = () => { sid = null; CTRL.vx = CTRL.vy = 0; knob.style.transform = ''; };
-  stick.addEventListener('pointerdown', e => { e.preventDefault(); audioInit(); sid = e.pointerId; try { stick.setPointerCapture(sid); } catch (_) {} setStick(e); });
-  stick.addEventListener('pointermove', e => { if (e.pointerId === sid) setStick(e); });
+  const endStick = () => { sid = null; knob.style.transform = ''; stick.classList.remove('on'); };
+  stick.addEventListener('pointerdown', startPad);
+  stick.addEventListener('pointermove', movePad);
   stick.addEventListener('pointerup', endStick); stick.addEventListener('pointercancel', endStick);
-  ab.addEventListener('pointerdown', e => { e.preventDefault(); audioInit(); bgmStart(); try { ab.setPointerCapture(e.pointerId); } catch (_) {} ctrlDown(); });
+  ab.addEventListener('pointerdown', e => { e.preventDefault(); audioInit(); try { ab.setPointerCapture(e.pointerId); } catch (_) {} ctrlDown(); });
   ab.addEventListener('pointerup', ctrlUp); ab.addEventListener('pointercancel', ctrlUp);
   for (const el of [stick, ab]) for (const ev of ['touchstart', 'touchmove', 'touchend']) el.addEventListener(ev, e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
   // パソコン：やじるしキー と スペース
@@ -620,7 +669,7 @@ function ctrlUp() {
 }
 function ctrlTick(dt) {
   if (!CTRL.used) return;
-  let vx = CTRL.vx, vy = CTRL.vy;
+  let vx = 0, vy = 0;   // キーボードの ときだけ はやさで うごかす
   const k = CTRL.keys; if (k.ArrowLeft) vx = -1; if (k.ArrowRight) vx = 1; if (k.ArrowUp) vy = -1; if (k.ArrowDown) vy = 1;
   const m = Math.min(1, Math.hypot(vx, vy));
   if (m > 0.08) { const sp = 240 * Math.pow(m, 1.5) / Math.max(m, 0.001); CTRL.cx += vx * sp * dt; CTRL.cy += vy * sp * dt; }
@@ -691,6 +740,7 @@ function finish() {
   const drawR = () => { rc.clearRect(0, 0, 220, 220); drawPortrait(rc, 0, 0, 220, G.p, 'happy', 1.2); };
   drawR(); if (!portrait(G.p)) setTimeout(drawR, 400);
   setTimeout(() => show('result'), 400);
+  setTimeout(() => { if ($('#result').classList.contains('on')) bgmPlay(BGM_SELECT); }, 2600);
 }
 function mistake(text) {
   G.mist++; G.ouchT = 0.9; SFX.ouch();
@@ -1540,7 +1590,7 @@ function drawTool() {
 let TAB = 'kid';
 function buildSelect() {
   const st = loadStars(), list = $('#plist'); list.innerHTML = '';
-  bgmPlay(0);
+  bgmPlay(BGM_SELECT);
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === TAB));
   const cleared = c => PATIENTS.filter(p => p.cat === c && st[p.id]).length, all = c => PATIENTS.filter(p => p.cat === c).length;
   $('#tabKid').textContent = 'こども ' + cleared('kid') + '/' + all('kid'); $('#tabAdult').textContent = 'おとな ' + cleared('adult') + '/' + all('adult');
@@ -1560,9 +1610,10 @@ function buildSelect() {
   $('#toCert').style.display = PATIENTS.filter(p => st[p.id]).length >= 4 ? '' : 'none';
 }
 setTimeout(() => PATIENTS.forEach(portrait), 0);
-$('#startBtn').addEventListener('click', () => { audioInit(); SFX.start(); bgmStart(); buildSelect(); show('select'); });
-document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button'); if (b && b.id !== 'startBtn' && b.id !== 'abtn') { audioInit(); bgmStart(); SFX.tap(); } });
-$('#toTitle').addEventListener('click', () => show('title'));
+$('#tapStart').addEventListener('click', () => { audioInit(); bgmPlay(BGM_OPEN); $('#tapStart').classList.add('gone'); });
+$('#startBtn').addEventListener('click', () => { audioInit(); SFX.start(); buildSelect(); show('select'); });
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button'); if (b && b.id !== 'startBtn' && b.id !== 'abtn') { audioInit(); SFX.tap(); } });
+$('#toTitle').addEventListener('click', () => { show('title'); bgmPlay(BGM_OPEN); });
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { TAB = b.dataset.tab; buildSelect(); $('#plist').scrollTop = 0; }));
 $('#toSelect').addEventListener('click', () => { buildSelect(); show('select'); });
 $('#quit').addEventListener('click', () => { ctrlUp(); loopsOff(); buildSelect(); show('select'); });
@@ -1582,7 +1633,7 @@ $('#certBack').addEventListener('click', () => { buildSelect(); show('select'); 
 // cases.js（おとなの しょうれい）へ わたす いりぐち
 window.__hcore = { G, P, CTRL, ctx, W, H, TOP, FONT, text, rr, hint, drawSpark, SFX, stepDone, mistake, pop, star, clamp, lerp, rng, STEPS, PATIENTS, drawPortrait, CASE };
 // テスト用の入り口（自動プレイで使う）
-window.__haisha = { BGM, TRACKS, CTRL, SD, audio: () => AC && AC.state, G, P, PATIENTS, startPatient, cell, high, zone, gel, dyed, bonded, count, STEPS, TB, N, CS, GUM, SLOTS, XR,
+window.__haisha = { BGM_OPEN, BGM_SELECT, BGM, TRACKS, CTRL, SD, audio: () => AC && AC.state, G, P, PATIENTS, startPatient, cell, high, zone, gel, dyed, bonded, count, STEPS, TB, N, CS, GUM, SLOTS, XR,
   consts: { DEC, SOFT, HOLE, RES, CUR, DEB, GRV, SEAL, SEALC, EN } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if ($('#select').classList.contains('on')) buildSelect(); });
 })();

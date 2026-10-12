@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>はいしゃさんに なろう！</title>
+<meta name="description" content="こどもが ゆびで ほんものの はいしゃさんの ちりょうを たいけんできる ゲーム">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e9f7fb; --ink:#2b3a4a; --sub:#5d6f80; --card:#ffffff; --mint:#3cc4b4; --mint-d:#23a395;
+  --pink:#ff7aa2; --sun:#ffc94a; --line:#d6e9ee;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;font-weight:800;
+  overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+body{display:flex;justify-content:center}
+#app{width:100%;max-width:520px;height:100%;height:100dvh;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+.screen.on{display:flex}
+button{font:inherit;cursor:pointer;border:none}
+.btn{background:var(--mint);color:#fff;font-size:20px;padding:14px 24px;border-radius:999px;
+  box-shadow:0 5px 0 var(--mint-d);transition:transform .08s}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--mint-d)}
+.btn.pink{background:var(--pink);box-shadow:0 5px 0 #e0517d}
+.btn.gray{background:#9fb3bf;box-shadow:0 5px 0 #7e95a3;font-size:16px;padding:10px 18px}
+.btn.sun{background:var(--sun);color:#5a3d00;box-shadow:0 5px 0 #e0a51c}
+ruby rt{font-size:.5em;font-weight:500}
+
+/* タイトル */
+#title{align-items:center;justify-content:center;text-align:center;gap:14px;
+  background:radial-gradient(circle at 50% 30%,#ffffff 0,#dff4f8 55%,#c9eef3 100%)}
+#title h1{font-size:40px;line-height:1.2;margin:0;color:#1f8f84;text-shadow:0 3px 0 #fff}
+#title .sub{font-size:17px;color:var(--sub);margin:0}
+.bigshin{width:78px;height:180px;image-rendering:pixelated;filter:drop-shadow(0 6px 0 rgba(0,0,0,.08))}
+.tooth-deco{font-size:0}
+.foot{font-size:12px;color:#7d909e;font-weight:500;margin-top:8px}
+
+/* かんじゃさん選び */
+#select h2{font-size:24px;margin:6px 0 4px;text-align:center}
+#select .lead{font-size:14px;color:var(--sub);text-align:center;margin:0 0 10px;font-weight:500}
+#plist{display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding-bottom:8px}
+.pcard{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:22px;padding:12px;
+  border:3px solid var(--line);text-align:left;color:var(--ink);box-shadow:0 4px 0 #cfe3e9}
+.pcard:active{transform:translateY(3px);box-shadow:0 1px 0 #cfe3e9}
+.pcard canvas{width:76px;height:76px;flex:none;border-radius:50%;background:#fff4e6}
+.pcard .nm{font-size:19px}
+.pcard .wr{font-size:14px;color:var(--sub);font-weight:500;margin:2px 0}
+.pcard .tt{display:inline-block;font-size:13px;background:#e3f7f4;color:#1f8f84;border-radius:999px;padding:3px 10px}
+.pcard .st{font-size:18px;color:var(--sun);letter-spacing:1px;margin-left:6px}
+.selfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;padding-top:8px}
+
+/* プレイ */
+#play{padding:8px 10px calc(8px + env(safe-area-inset-bottom));gap:6px}
+#bubbleRow{display:flex;align-items:flex-end;gap:8px;min-height:96px}
+#bubbleRow img{width:39px;height:90px;image-rendering:pixelated;flex:none}
+#bubble{position:relative;flex:1;background:#fff;border-radius:18px;padding:9px 12px;border:3px solid var(--line)}
+#bubble:before{content:"";position:absolute;left:-12px;bottom:16px;border:8px solid transparent;border-right-color:var(--line)}
+#say{font-size:17px;line-height:1.45}
+#tip{font-size:12.5px;line-height:1.5;color:var(--sub);font-weight:500;margin-top:4px}
+#tip b{color:#e0517d}
+#stageWrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+#cv{touch-action:none;border-radius:22px;background:#5c1d2a;display:block}
+#barRow{display:flex;align-items:center;gap:8px}
+#toolName{font-size:13px;background:#fff;border-radius:999px;padding:6px 12px;border:2px solid var(--line);white-space:nowrap}
+#bar{flex:1;height:18px;background:#fff;border-radius:999px;border:2px solid var(--line);overflow:hidden}
+#barIn{height:100%;width:0;background:linear-gradient(90deg,#7fe0d3,#3cc4b4);border-radius:999px;transition:width .15s}
+.iconbtn{position:absolute;top:10px;width:38px;height:38px;border-radius:50%;background:#fff;border:2px solid var(--line);
+  font-size:18px;line-height:34px;text-align:center;color:var(--sub);z-index:5}
+#quit{left:10px}#mute{right:10px}
+#play #bubbleRow{padding:0 44px 0 40px}
+
+/* けっか */
+#result{align-items:center;text-align:center;overflow-y:auto;gap:8px}
+#result h2{font-size:28px;margin:6px 0 0;color:#1f8f84}
+#rstars{font-size:46px;color:var(--sun);letter-spacing:4px;text-shadow:0 3px 0 #e0a51c}
+#rmsg{font-size:16px;margin:0}
+#rface{width:110px;height:110px}
+.card{background:#fff;border-radius:22px;padding:14px 16px;text-align:left;border:3px solid var(--line);width:100%}
+.card h3{margin:0 0 6px;font-size:18px;color:#e0517d}
+.card ul{margin:0;padding-left:1.2em}
+.card li{font-size:15px;line-height:1.75;font-weight:500;margin-bottom:6px}
+.card li b{font-weight:800;color:#1f8f84}
+.card .order{font-size:13px;line-height:1.7;font-weight:500;color:#5d6f80;margin:8px 0 0;padding-top:8px;border-top:2px dashed var(--line)}
+.card .order b{color:#2b3a4a}
+.rbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:6px 0 10px}
+
+/* にんていしょう */
+#cert{align-items:center;justify-content:center;gap:12px;overflow-y:auto}
+.certbox{width:100%;background:#fffdf3;border:8px double #e0a51c;border-radius:16px;padding:20px 16px;text-align:center}
+.certbox h2{font-size:30px;margin:0 0 6px;color:#b8860b;letter-spacing:4px}
+.certbox .nm{font-size:24px;margin:12px 0;border-bottom:3px solid #e0c46c;display:inline-block;min-width:60%;padding:0 8px}
+.certbox p{font-size:16px;line-height:1.8;margin:6px 0;font-weight:500}
+.certbox .dt{font-size:14px;color:#7a6a3a}
+.certbox .cl{font-size:13px;color:#7a6a3a;margin-top:10px}
+#certName{font:inherit;font-size:18px;padding:8px 12px;border-radius:12px;border:2px solid var(--line);width:70%;text-align:center}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section id="title" class="screen on">
+    <img class="bigshin" src="shin.png" alt="しんちゃまくん">
+    <h1>はいしゃさんに<br>なろう！</h1>
+    <p class="sub">ほんものの ちりょうを<br>ゆびで やってみよう</p>
+    <button class="btn" id="startBtn">はじめる</button>
+    <p class="foot">おとが でます</p>
+  </section>
+
+  <section id="select" class="screen">
+    <h2>どの こを みてあげる？</h2>
+    <p class="lead">かんじゃさんを タップしてね</p>
+    <div id="plist"></div>
+    <div class="selfoot">
+      <button class="btn gray" id="toTitle">もどる</button>
+      <button class="btn sun" id="toCert" style="display:none">にんていしょう</button>
+    </div>
+  </section>
+
+  <section id="play" class="screen">
+    <button class="iconbtn" id="quit" aria-label="やめる">✕</button>
+    <button class="iconbtn" id="mute" aria-label="おと">♪</button>
+    <div id="bubbleRow">
+      <img src="shin.png" alt="">
+      <div id="bubble"><div id="say"></div><div id="tip"></div></div>
+    </div>
+    <div id="stageWrap"><canvas id="cv"></canvas></div>
+    <div id="barRow"><div id="toolName"></div><div id="bar"><div id="barIn"></div></div></div>
+  </section>
+
+  <section id="result" class="screen">
+    <h2>ちりょう かんりょう！</h2>
+    <div id="rstars"></div>
+    <canvas id="rface" width="220" height="220"></canvas>
+    <p id="rmsg"></p>
+    <div class="card" id="rcard"></div>
+    <div class="rbtns">
+      <button class="btn" id="toSelect">ほかの こを みる</button>
+    </div>
+  </section>
+
+  <section id="cert" class="screen">
+    <div class="certbox">
+      <h2>にんていしょう</h2>
+      <div class="nm" id="certNm">　</div>
+      <p>あなたは 3にんの かんじゃさんを<br>やさしく ちりょう しました。<br>りっぱな <b>はいしゃさん</b> です！</p>
+      <p class="dt" id="certDate"></p>
+      <p class="cl">大崎オーバルコート歯科・矯正歯科室</p>
+    </div>
+    <input id="certName" maxlength="12" placeholder="なまえを いれてね">
+    <button class="btn gray" id="certBack">もどる</button>
+  </section>
+
+</div>
+<script src="game.js"></script>
+</body>
+</html>

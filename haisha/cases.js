@@ -548,7 +548,8 @@ function draw() {
   }
   if (st.type === 'erase') for (const m of E.marks) if (m.hp > 0) { ctx.globalAlpha = clamp(m.hp * 1.4, 0.15, 1); ctx.fillStyle = m.c || st.color || '#d9b44a'; ctx.beginPath(); ctx.arc(m.x, m.y, m.r || 6, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
   if (st.type === 'hold' && !G.done) {
-    const a = st.area; if (a) { ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(a.x, a.y, a.r || 30, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    const a = st.area; if (a) { ctx.save(); ctx.fillStyle = 'rgba(255,255,255,' + (0.12 + 0.1 * pulse()) + ')'; ctx.beginPath(); ctx.arc(a.x, a.y, a.r || 30, 0, Math.PI * 2); ctx.fill(); ctx.setLineDash([5, 4]); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(a.x, a.y, a.r || 30, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+      if (st.areaLabel) label(st.areaLabel, a.x, a.y + (a.r || 30) + 16, 12, '#ffffff');
       ctx.strokeStyle = '#ffd75e'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(a.x, a.y, (a.r || 30) + 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * clamp(E.prog, 0, 1)); ctx.stroke(); }
     if (st.glow && P.down) { const g = ctx.createRadialGradient(P.x, P.y, 5, P.x, P.y, 100); g.addColorStop(0, st.glow); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(P.x, P.y, 100, 0, Math.PI * 2); ctx.fill(); }
     if (st.timeText) { win(60, 200, 240, 60); label(st.timeText, 180, 222, 15, '#ffd75e'); ctx.fillStyle = '#000'; ctx.fillRect(80, 238, 200, 10); ctx.fillStyle = '#6fd3ff'; ctx.fillRect(80, 238, 200 * clamp(E.prog, 0, 1), 10); }
@@ -608,7 +609,7 @@ function draw() {
 
 // ---------- しょうれいの データ ----------
 // ことばの きまり：say＝なにを するか、tip＝ほんものでは どうするか
-const masui = (x, y) => ({ type: 'hold', label: 'ますい', tool: 'syringe', toolName: 'ますい', area: { x, y, r: 26 }, sec: 3, still: true, scary: true,
+const masui = (x, y, scene) => ({ type: 'hold', scene, areaLabel: 'はぐき', label: 'ますい', tool: 'syringe', toolName: 'ますい', area: { x, y, r: 26 }, sec: 3, still: true, scary: true,
   say: 'はぐきの <b>まる</b>の うえで ボタンを おしたまま、うごかさずに まってね（ますい）',
   tip: '<b>ほんものでは</b> ぬりぐすりの ますいの あとに、ゆっくり ちゅうしゃを して いたくないように するよ。', hint: 'まるの うえで ボタンを おしたまま' });
 const grid = (x0, y0, x1, y1, step, fn) => { const o = []; for (let y = y0; y <= y1; y += step) for (let x = x0; x <= x1; x += step) if (!fn || fn(x, y)) o.push({ x, y }); return o; };
@@ -630,7 +631,7 @@ const CASES = [
           { t: 'けずって かたを とり、つめもの（インレー）を つくる', ok: true, why: 'おおきめの あなは つくった つめもので じょうぶに' },
           { t: 'なにも しない', why: 'むしばは しぜんには なおらないよ' },
           { t: 'はを ぬく', why: 'けずって なおせる はは ぬかないよ' }] },
-      masui(92, 276),
+      masui(92, 276, 'molar'),
       { type: 'erase', scene: 'molar', label: 'けずる', tool: 'turbine', toolName: 'タービン', snd: 'drill', scary: true, rate: 4, r: 14, color: '#3b2414',
         say: 'くろい <b>むしば</b>を けずって、はこの かたちに ととのえよう', tip: '<b>ほんものでは</b> つめものが はずれないように、あなの かたちを ととのえるよ。',
         marks: () => grid(156, 172, 204, 206, 8).map(p => ({ x: p.x, y: p.y, r: 6, c: '#4a2c18' })), before: s => { s.m.decay = 0; s.m.box = true; } },
@@ -752,7 +753,7 @@ const CASES = [
     worry: '「つめものが とれて はが かけた」', title: 'かぶせもの（クラウン）', thanks: 'じぶんの はみたいに きれい！',
     scene0: { m: { decay: 1 } },
     steps: [
-      masui(92, 276),
+      masui(92, 276, 'molar'),
       { type: 'erase', scene: 'molar', label: 'けずる', tool: 'turbine', toolName: 'タービン', snd: 'drill', scary: true, rate: 3.5, r: 14, color: '#fffaf0',
         say: 'かぶせものが のる ぶん、はの まわりを <b>うすく</b> けずろう', tip: '<b>ほんものでは</b> かぶせものの あつみの ぶんだけ、はを ぐるりと けずるよ（しだいし けいせい）。',
         marks: () => [].concat(dots([[110, 230], [112, 205], [125, 182], [150, 172], [180, 176], [210, 170], [235, 182], [248, 205], [250, 230]], 9, '#f6efe0')), after: s => { s.m.crown = 'prep'; s.m.decay = 0; } },
@@ -874,7 +875,7 @@ const CASES = [
       { type: 'tap', scene: 'molar', xray: true, label: 'レントゲン', tool: 'cursor', toolName: 'レントゲン', say: 'レントゲンで ねっこの さきの <b>くろい かげ</b>（うみ）を さがそう',
         tip: '<b>ほんものでは</b> ばいきんが ねっこの さきまで いくと、ほねが とけて くろく うつるよ。', wrong: 'ねっこの さきを みてみよう',
         targets: () => [{ id: 'a', x: MO.cx - MO.w * 0.55, y: MO.apex + 2, r: 26, ok: true, msg: 'うみの かげ！' }, { id: 'b', x: MO.cx + MO.w * 0.55, y: MO.apex + 2, r: 26, ok: true, msg: 'うみの かげ！' }, { id: 'p', x: MO.cx, y: 230, r: 24, ok: false, msg: 'しんけいの へや（しずい）' }] },
-      masui(92, 276),
+      masui(92, 276, 'molar'),
       { type: 'drag', scene: 'molar', label: 'ラバーダム', tool: 'tweezer', toolName: 'ラバーダム（ゴムの シート）', say: '<b>ゴムの シート</b>を かけて、つばが はいらないように しよう',
         tip: '<b>ほんものでは</b> つばの ばいきんが ねっこに はいらないように「<b>ラバーダム</b>」を つかうよ。', items: [{ kind: 'dam', x: 180, y: 500, w: 220, h: 80, trayScale: 0.6, slot: { x: 180, y: 262 } }], after: s => { s.m.dam = true; } },
       { type: 'erase', scene: 'molar', label: 'あける', tool: 'turbine', toolName: 'タービン', snd: 'drill', scary: true, rate: 4, r: 14, color: '#3b2414',
@@ -906,7 +907,7 @@ const CASES = [
       { type: 'tap', scene: 'wisdom', xray: true, label: 'レントゲン', tool: 'cursor', toolName: 'レントゲン', need: 2, say: '<b>おやしらず</b>と <b>しんけいの くだ</b>を さがそう（2つ）',
         tip: '<b>ほんものでは</b> レントゲンや CT で、おやしらずと しんけいの きょりを たしかめるよ。',
         targets: () => [{ id: 'w', x: 255, y: 345, rx: 60, ry: 42, ok: true, msg: 'よこむきの おやしらず！' }, { id: 'n', x: 180, y: 456, rx: 170, ry: 14, ok: true, msg: 'しんけいの くだ。きずつけない！' }] },
-      masui(70, 282),
+      masui(66, 284, 'wisdom'),
       { type: 'trace', scene: 'wisdom', label: 'きる', tool: 'scalpel', toolName: 'メス', color: '#ff5a6e', say: 'はぐきを <b>メス</b>で きろう（なぞる）', scary: true,
         tip: '<b>ほんものでは</b> ほねと はが みえるように はぐきを ひらくよ。', pts: [[176, 286], [210, 286], [250, 286], [290, 286], [330, 286]], after: s => { s.w.flap = true; } },
       { type: 'erase', scene: 'wisdom', label: 'ほね', tool: 'turbine', toolName: 'けずる きかい', snd: 'drill', scary: true, rate: 3.5, r: 14, color: '#efd2bd',
@@ -919,7 +920,7 @@ const CASES = [
         items: [{ kind: 'piece1', x: 225, y: 345, w: 64, h: 70, slot: { x: 260, y: 160 } }, { kind: 'piece2', x: 290, y: 345, w: 64, h: 70, slot: { x: 320, y: 160 } }], after: s => { s.w.out = true; } },
       { type: 'trace', scene: 'wisdom', label: 'ぬう', tool: 'needle', toolName: 'はりと いと', color: '#3a3a9a', tol: 16, say: 'はぐきを <b>ぬいあわせよう</b>（ジグザグに なぞる）',
         tip: '<b>ほんものでは</b> 1しゅうかんくらいで いとを とるよ。', pts: [[190, 272], [205, 290], [220, 272], [235, 290], [250, 272], [265, 290], [280, 272], [295, 290], [310, 272]], after: s => { s.w.sutured = true; } },
-      { type: 'hold', scene: 'wisdom', label: 'ガーゼ', tool: 'gauze', toolName: 'ガーゼ', sec: 3, area: { x: 255, y: 285, r: 40 },
+      { type: 'hold', scene: 'wisdom', areaLabel: 'ぬいた ところ', label: 'ガーゼ', tool: 'gauze', toolName: 'ガーゼ', sec: 3, area: { x: 255, y: 285, r: 40 },
         say: 'ガーゼを かんで もらって <b>ちを とめよう</b>（ボタンを おしたまま）', tip: '<b>ほんものでは</b> ぬいた あと つよい うがいを しない ように つたえるよ（ちの かたまりを まもる）。' }],
     card: { h: 'おやしらず', li: [
       '<b>おやしらず</b>（だい3だいきゅうし）は 20さい まえごに はえる、いちばん おくの は。',
@@ -937,7 +938,7 @@ const CASES = [
       { type: 'choice', scene: 'implant', xray: true, label: 'ながさ', say: 'インプラントの ながさを きめよう', tip: '<b>ほんものでは</b> しんけいまで 2mm いじょう よゆうを のこすのが めやす。',
         q: 'ほねの たかさは 12.5mm。しんけいまで よゆうを のこすと、インプラントの ながさは？', opts: [
           { t: '10mm', ok: true, why: 'しんけいまで 2mm いじょう よゆうが ある' }, { t: '13mm', why: 'しんけいに とどいて しまう！' }, { t: '6mm', why: 'みじかすぎて ささえが よわい' }] },
-      masui(110, 270),
+      masui(100, 268, 'implant'),
       { type: 'trace', scene: 'implant', label: 'きる', tool: 'scalpel', toolName: 'メス', scary: true, color: '#ff5a6e', say: 'はぐきを <b>メス</b>で きろう（なぞる）', tip: '<b>ほんものでは</b> ほねが みえるように はぐきを ひらくよ。',
         pts: [[110, 246], [145, 244], [180, 242], [215, 244], [250, 246]], after: s => { s.i.flap = true; } },
       { type: 'depth', scene: 'implant', label: 'ドリル', tool: 'cursor', toolName: 'インプラント ドリル', snd: 'engine', green: [9.6, 10.4], bad: 11.6, max: 13, speed: 2.5, scary: true,
@@ -1092,7 +1093,7 @@ const CASES = [
     worry: '「おそうじしても ふかい ポケットが のこった」', title: 'はぐきの しゅじゅつ（ししゅう げか）', thanks: 'ほねが もどって きた！',
     scene0: { m: { boneY: 345, gumY: 262, pocket: 7, defect: true, gumRed: true } },
     steps: [
-      masui(92, 276),
+      masui(92, 276, 'molar'),
       { type: 'trace', scene: 'molar', label: 'きる', tool: 'scalpel', toolName: 'メス', scary: true, color: '#ff5a6e', say: 'はと はぐきの さかいめを <b>メス</b>で なぞろう',
         tip: '<b>ほんものでは</b> はぐきを ひらいて、ねっこと ほねを ちょくせつ みるよ（フラップ しゅじゅつ）。', pts: [[104, 262], [104, 285], [104, 310], [104, 335]], after: s => { s.m.flap = true; s.m.pocket = 0; } },
       { type: 'erase', scene: 'molar', label: 'とる', tool: 'scaler', toolName: 'スケーラー', snd: 'scrape', rub: true, rate: 0.03, r: 14,
@@ -1125,7 +1126,7 @@ const CASES = [
           { t: 'みずで ごしごし あらう', why: 'ねっこの だいじな さいぼうが とれてしまう' }] },
       { type: 'tap', scene: 'front', label: 'みる', tool: 'cursor', toolName: 'さがす', say: 'はが ぬけた <b>あな</b>を さがそう', tip: '<b>ほんものでは</b> レントゲンで ほねが おれて いないかも しらべるよ。',
         targets: () => { const t = frontTeeth()[4]; return [{ id: 'h', x: t.x, y: FR.y - 46, r: 18, ok: true, msg: 'ここに もどすよ' }]; } },
-      masui(130, 330),
+      masui(122, 342, 'front'),
       { type: 'drag', scene: 'front', label: 'もどす', tool: 'tweezer', toolName: 'ぬけた は', say: 'ぬけた はを <b>もとの あな</b>に そっと もどそう', tip: '<b>ほんものでは</b> ねっこを さわらない ように して もとの いちに もどすよ（さいしょく）。',
         items: () => { const t = frontTeeth()[4]; return [{ kind: 'itooth', x: 250, y: 500, w: 30, h: 60, slot: { x: t.x, y: FR.y - 24 } }]; }, after: s => { s.missing = []; } },
       { type: 'trace', scene: 'front', label: 'こてい', tool: 'tweezer', toolName: 'こていの ワイヤー', color: '#c9d2dc', tol: 16, say: 'となりの はと <b>ワイヤー</b>で つないで こていしよう',

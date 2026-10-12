@@ -266,19 +266,19 @@ function bgmDuck(on) {   // けずる おとなどが なっている あいだ�
 
 // ---------- かんじゃさん ----------
 const PATIENTS = [
-  { id: 'p1', lv: 4, rank: 'ラスボス', name: 'はると', hon: 'くん', age: 5, skin: '#ffd9b8', hair: '#3a2a20', style: 'boy',
+  { id: 'p1', cat: 'kid', lv: 4, rank: 'ラスボス', name: 'はると', hon: 'くん', age: 5, skin: '#ffd9b8', hair: '#3a2a20', style: 'boy',
     worry: '「おくばが しみて いたいよ…」', title: 'むしばの ちりょう（つめもの）', arch: 'primary',
     steps: ['search', 'xray', 'masui', 'wattes', 'drill', 'detect', 'excavate', 'rinse', 'bond', 'fill', 'cure', 'bite', 'polish'], card: 'c1',
     thanks: 'もう しみないよ！ ありがとう、せんせい！' },
-  { id: 'p2', lv: 1, rank: 'ふつう', name: 'みお', hon: 'ちゃん', age: 4, skin: '#ffe0c4', hair: '#6b3b1f', style: 'girl',
+  { id: 'p2', cat: 'kid', lv: 1, rank: 'ふつう', name: 'みお', hon: 'ちゃん', age: 4, skin: '#ffe0c4', hair: '#6b3b1f', style: 'girl',
     worry: '「はいしゃさんで おそうじ してほしいな」', title: 'はの おそうじ と フッそ', arch: 'primary',
     steps: ['dye', 'brush', 'scale', 'pmtc', 'fluor'], card: 'c2',
     thanks: 'はが つるつる！ 30ぷん まってから おやつに するね！' },
-  { id: 'p3', lv: 3, rank: 'だいボス', name: 'そうた', hon: 'くん', age: 6, skin: '#f7cfa8', hair: '#1f1f2a', style: 'boy2',
+  { id: 'p3', cat: 'kid', lv: 3, rank: 'だいボス', name: 'そうた', hon: 'くん', age: 6, skin: '#f7cfa8', hair: '#1f1f2a', style: 'boy2',
     worry: '「おくに おおきい はが はえてきたよ」', title: '6さいきゅうしの シーラント', arch: 'primary6',
     steps: ['find6', 'clean', 'wattes', 'etch', 'wash', 'dry', 'seal', 'cure', 'bite'], card: 'c3',
     thanks: 'おおきな はを だいじに するね！' },
-  { id: 'p4', lv: 2, rank: 'ボス', name: 'ゆい', hon: 'ちゃん', age: 6, skin: '#ffdcc0', hair: '#4a2a1a', style: 'girl',
+  { id: 'p4', cat: 'kid', lv: 2, rank: 'ボス', name: 'ゆい', hon: 'ちゃん', age: 6, skin: '#ffdcc0', hair: '#4a2a1a', style: 'girl',
     worry: '「まえばが ぐらぐら。うしろから あたらしい はが はえてきた」', title: 'ぐらぐらの こどもの はを ぬく', arch: 'primary',
     steps: ['find4', 'xray4', 'topical', 'extract', 'gauze'], card: 'c4',
     thanks: 'ぬけた はは おうちに もってかえるね！' },
@@ -417,6 +417,7 @@ const STEPS = {
 };
 
 // ---------- ゲームの じょうたい ----------
+const CASE = {};   // おとなの しょうれいは cases.js が うめる
 const G = { p: null, si: 0, step: null, key: '', t: 0, mist: 0, done: false, doneT: 0, phase: 0,
   ouchT: 0, fade: 0, flash: null, pops: [], parts: [], chips: [], teeth: [], arch: null,
   holdT: 0, shine: 0, hintT: 0, running: false, finished: false, wattes: [], grab: null, badT: 0, toolX: 300, toolY: 470 };
@@ -544,7 +545,7 @@ const P = { x: 180, y: 318, down: false, justDown: false, sx: 0, sy: 0, moved: 0
 function toLocal(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
 // ゆびで がめんを さわったときは カーソルを そこへ うごかすだけ（はを えらぶ ばめんだけ タップで きまる）
 const TAP_STEPS = ['search', 'find6', 'xray', 'find4', 'xray4'];
-function isTapStep() { return TAP_STEPS.includes(G.key) || (G.key === 'bite' && G.phase === 0); }
+function isTapStep() { if (G.step && G.step.view === 'case') return !!(CASE.isTap && CASE.isTap()); return TAP_STEPS.includes(G.key) || (G.key === 'bite' && G.phase === 0); }
 cv.addEventListener('pointerdown', e => {
   e.preventDefault(); audioInit(); bgmStart();
   try { cv.setPointerCapture(e.pointerId); } catch (_) {}
@@ -637,6 +638,7 @@ function startPatient(p) {
   if (p.id === 'p1') G.teeth.find(t => t.side === 1 && t.type === 'E').cavity = true;
   if (p.id !== 'p2') G.teeth.forEach(t => { t.plaque = 0; t.tartar = []; });  // しこう・しせきは おそうじの こだけ
   gridInit(p.id === 'p1' ? 'cavity' : 'groove');
+  if (p.kind === 'case' && CASE.patient) CASE.patient(p);
   bgmPlay(p.lv - 1);
   show('play'); startStep();
   if (!G.running) { G.running = true; last = performance.now(); requestAnimationFrame(frame); }
@@ -655,6 +657,7 @@ function startStep() {
   }
   if (G.key === 'wattes') G.wattes = [{ x: 92, y: 530, slot: null }, { x: 268, y: 530, slot: null }];
   if (G.key === 'seal') cnt.grv0 = Math.max(1, count(GRV));
+  if (G.step.view === 'case' && CASE.init) CASE.init(G.step);
   setSay();
   $('#toolName').textContent = G.step.toolName;
   resize();
@@ -680,7 +683,7 @@ function finish() {
   const st = loadStars(), s = stars(); st[G.p.id] = Math.max(st[G.p.id] || 0, s); saveStars(st);
   $('#rstars').textContent = '★'.repeat(s) + '☆'.repeat(3 - s);
   $('#rmsg').textContent = G.p.name + G.p.hon + '「' + G.p.thanks + '」';
-  const c = CARDS[G.p.card];
+  const c = G.p.cardObj || CARDS[G.p.card];
   const order = G.p.steps.map(k => STEPS[k].label).join(' → ');
   $('#rcard').innerHTML = '<h3>おぼえた こと：' + c.h + '</h3><ul>' + c.li.map(x => '<li>' + x + '</li>').join('') + '</ul>' +
     '<p class="order"><b>きょうの ちりょうの じゅんばん</b><br>' + order + '</p>';
@@ -696,6 +699,7 @@ function mistake(text) {
 function pop(x, y, text, c) { G.pops.push({ x, y, text, t: 0, c: c || '#ffffff' }); }
 
 function tapAt(x, y) {
+  if (G.step && G.step.view === 'case') return CASE.tap && CASE.tap(x, y);
   const k = G.key;
   if (k === 'search') {
     const t = toothAt(x, y);
@@ -790,7 +794,8 @@ function update(dt) {
   const jd = P.justDown; P.justDown = false;
   const L = { drill: 0, engine: 0, vac: 0, hum: 0, brush: 0, scrape: 0, air: 0 };
   const onT = Math.hypot(P.x - TB.cx, P.y - TB.cy) < TB.s * 0.95;
-  if (!G.done && G.fade < 0.5) {
+  if (!G.done && G.fade < 0.5 && G.step.view === 'case' && CASE.update) CASE.update(dt, fd, jd, L);
+  if (!G.done && G.fade < 0.5 && G.step.view !== 'case') {
     const k = G.key;
     if (k === 'topical' && P.down && Math.hypot(P.x - SD.rub.x, P.y - SD.rub.y) < SD.rub.r + 10) {
       G.holdT += fd / 160; if (G.holdT >= 1) stepDone();
@@ -973,6 +978,7 @@ function update(dt) {
 }
 function progress() {
   if (G.done) return 1;
+  if (G.step.view === 'case') return CASE.progress ? CASE.progress() : 0;
   const ph = (a, b) => G.phase ? 0.5 + clamp(b, 0, 1) * 0.5 : clamp(a, 0, 1) * 0.5;
   switch (G.key) {
     case 'search': case 'find6': case 'xray': case 'find4': case 'xray4': return 0;
@@ -1017,11 +1023,11 @@ function draw() {
   ctx.clearRect(0, 0, W, H);
   ctx.save(); rr(ctx, 0, TOP, W, H - TOP, 0); ctx.clip();
   const v = G.step.view;
-  if (v === 'arch') drawArch(); else if (v === 'xray') drawXray(); else if (v === 'side') drawSide(); else drawCloseup();
+  if (v === 'case') CASE.draw(); else if (v === 'arch') drawArch(); else if (v === 'xray') drawXray(); else if (v === 'side') drawSide(); else drawCloseup();
   drawParts();
   ctx.restore();
   drawHeader();
-  if (P.down && P.off && !G.done && !['search', 'find6', 'xray', 'wattes', 'find4', 'xray4'].includes(G.key)) {
+  if (P.down && P.off && !G.done && !isTapStep() && !['wattes'].includes(G.key)) {
     ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(P.x, P.y, 15, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
   }
@@ -1043,7 +1049,7 @@ function draw() {
 function drawHeader() {
   { const hg = ctx.createLinearGradient(0, 0, 0, TOP); hg.addColorStop(0, '#3048b8'); hg.addColorStop(0.55, '#16247a'); hg.addColorStop(1, '#0a1250');
     ctx.fillStyle = hg; ctx.fillRect(0, 0, W, TOP - 2); ctx.strokeStyle = '#7d8be0'; ctx.lineWidth = 2; ctx.strokeRect(3, 3, W - 6, TOP - 8); ctx.fillStyle = '#f2f2f8'; ctx.fillRect(0, TOP - 3, W, 2); }
-  const scary = (G.key === 'drill' || G.key === 'excavate' || G.key === 'extract' || (G.key === 'masui' && G.phase === 1)) && P.down;
+  const scary = (G.step.scary || G.key === 'drill' || G.key === 'excavate' || G.key === 'extract' || (G.key === 'masui' && G.phase === 1)) && P.down;
   const mood = G.ouchT > 0 ? 'ouch' : G.done && G.si === G.p.steps.length - 1 ? 'happy' : scary ? 'nervous' : G.key === 'xray' ? 'smile' : 'open';
   ctx.save(); rr(ctx, 12, 9, 68, 68, 6); ctx.fillStyle = '#0a0f33'; ctx.fill(); ctx.strokeStyle = '#7d8be0'; ctx.lineWidth = 2; ctx.stroke(); ctx.clip();
   drawPortrait(ctx, 12, 9, 68, G.p, mood, G.t); ctx.restore();
@@ -1474,6 +1480,7 @@ function drawTool() {
   if (active) { G.toolX = P.x; G.toolY = P.y; }
   const x = G.toolX, y = G.toolY;
   ctx.save(); ctx.lineCap = 'round';
+  if (CASE.drawTool && CASE.drawTool(tool, x, y)) { ctx.restore(); return; }
   const handle = (col, w, ex, ey) => { ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = w + 3; ctx.beginPath(); ctx.moveTo(x + 90, y + 125); ctx.lineTo(x + ex, y + ey); ctx.stroke(); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(); };
   if (tool === 'turbine' || tool === 'polisher' || tool === 'engine') {
     handle(tool === 'turbine' ? '#c7d0d8' : '#d8c27a', 13, 16, 22);
@@ -1530,10 +1537,14 @@ function drawTool() {
 }
 
 // ---------- ボタン ----------
+let TAB = 'kid';
 function buildSelect() {
   const st = loadStars(), list = $('#plist'); list.innerHTML = '';
   bgmPlay(0);
-  PATIENTS.slice().sort((a, b) => a.lv - b.lv).forEach(p => {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === TAB));
+  const cleared = c => PATIENTS.filter(p => p.cat === c && st[p.id]).length, all = c => PATIENTS.filter(p => p.cat === c).length;
+  $('#tabKid').textContent = 'こども ' + cleared('kid') + '/' + all('kid'); $('#tabAdult').textContent = 'おとな ' + cleared('adult') + '/' + all('adult');
+  PATIENTS.filter(p => p.cat === TAB).sort((a, b) => a.lv - b.lv).forEach(p => {
     const b = document.createElement('button'); b.className = 'pcard';
     const c = document.createElement('canvas'); c.width = 152; c.height = 152;
     const cc = c.getContext('2d'); drawPortrait(cc, 0, 0, 152, p, st[p.id] ? 'happy' : '', 1.2);
@@ -1541,17 +1552,18 @@ function buildSelect() {
     const info = document.createElement('div');
     info.innerHTML = '<div class="nm">' + p.name + p.hon + '（' + p.age + 'さい）' + (s ? '<span class="st">' + '★'.repeat(s) + '☆'.repeat(3 - s) + '</span>' : '') + '</div>' +
       '<span class="rank r' + p.lv + '">' + '★'.repeat(p.lv) + ' ' + p.rank + '</span>' +
-      '<div class="wr">' + p.worry + '</div><span class="tt">' + p.title + '・' + p.steps.length + 'ステップ</span>';
+      '<div class="wr">' + p.worry + '</div><span class="tt">' + (p.field ? '【' + p.field + '】' : '') + p.title + '・' + p.steps.length + 'ステップ</span>';
     b.appendChild(c); b.appendChild(info);
     b.addEventListener('click', () => { audioInit(); startPatient(p); });
     list.appendChild(b);
   });
-  $('#toCert').style.display = PATIENTS.every(p => st[p.id]) ? '' : 'none';
+  $('#toCert').style.display = PATIENTS.filter(p => st[p.id]).length >= 4 ? '' : 'none';
 }
-PATIENTS.forEach(portrait);
+setTimeout(() => PATIENTS.forEach(portrait), 0);
 $('#startBtn').addEventListener('click', () => { audioInit(); SFX.start(); bgmStart(); buildSelect(); show('select'); });
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button'); if (b && b.id !== 'startBtn' && b.id !== 'abtn') { audioInit(); bgmStart(); SFX.tap(); } });
 $('#toTitle').addEventListener('click', () => show('title'));
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { TAB = b.dataset.tab; buildSelect(); $('#plist').scrollTop = 0; }));
 $('#toSelect').addEventListener('click', () => { buildSelect(); show('select'); });
 $('#quit').addEventListener('click', () => { ctrlUp(); loopsOff(); buildSelect(); show('select'); });
 $('#mute').addEventListener('click', () => {
@@ -1560,13 +1572,15 @@ $('#mute').addEventListener('click', () => {
 });
 $('#toCert').addEventListener('click', () => {
   const d = new Date();
-  $('#certN').textContent = PATIENTS.length;
+  const stc = loadStars(); $('#certN').textContent = PATIENTS.filter(p => stc[p.id]).length;
   $('#certDate').textContent = d.getFullYear() + 'ねん ' + (d.getMonth() + 1) + 'がつ ' + d.getDate() + 'にち';
   show('cert');
 });
 $('#certName').addEventListener('input', e => { $('#certNm').textContent = (e.target.value || '　') + (e.target.value ? ' せんせい' : ''); });
 $('#certBack').addEventListener('click', () => { buildSelect(); show('select'); });
 
+// cases.js（おとなの しょうれい）へ わたす いりぐち
+window.__hcore = { G, P, CTRL, ctx, W, H, TOP, FONT, text, rr, hint, drawSpark, SFX, stepDone, mistake, pop, star, clamp, lerp, rng, STEPS, PATIENTS, drawPortrait, CASE };
 // テスト用の入り口（自動プレイで使う）
 window.__haisha = { BGM, TRACKS, CTRL, SD, audio: () => AC && AC.state, G, P, PATIENTS, startPatient, cell, high, zone, gel, dyed, bonded, count, STEPS, TB, N, CS, GUM, SLOTS, XR,
   consts: { DEC, SOFT, HOLE, RES, CUR, DEB, GRV, SEAL, SEALC, EN } };

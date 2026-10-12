@@ -26,6 +26,7 @@ function resize() {
   SC = cv.width / W;
   if (G.step && G.running && !G.finished && G.toolX != null) draw();
 }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && AC && AC.state !== 'running') { try { AC.resume(); } catch (e) {} } });
 window.addEventListener('resize', () => { if ($('#play').classList.contains('on')) resize(); });
 if (window.ResizeObserver) new ResizeObserver(() => { if ($('#play').classList.contains('on')) resize(); }).observe($('#stageWrap'));
 
@@ -41,15 +42,38 @@ const lerp = (a, b, t) => a + (b - a) * t;
 // ---------- おと ----------
 let AC = null, MASTER = null, NOISE = null, muted = false;
 const LOOPS = {};
-function audioInit() {
-  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
-  try {
-    AC = new (window.AudioContext || window.webkitAudioContext)();
-    MASTER = AC.createGain(); MASTER.gain.value = muted ? 0 : 0.6; MASTER.connect(AC.destination);
-    NOISE = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
-    const d = NOISE.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  } catch (e) { AC = null; }
+// iPhone の Safari では ①「ゆびを はなした」しゅんかん（touchend / click）でないと おとの きょかが でない
+// ② マナーモードだと Web Audio が けされる → 無音の audio を ながして「おんがく」あつかいに する
+let SILENT = null;
+function silentWavUrl() {
+  const n = 2000, buf = new ArrayBuffer(44 + n), v = new DataView(buf);
+  const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true);
+  v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
+  for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
 }
+function audioInit() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  if (!AC) {
+    try {
+      AC = new (window.AudioContext || window.webkitAudioContext)();
+      MASTER = AC.createGain(); MASTER.gain.value = muted ? 0 : 0.6; MASTER.connect(AC.destination);
+      NOISE = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+      const d = NOISE.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    } catch (e) { AC = null; return; }
+  }
+  if (AC.state !== 'running') { try { AC.resume(); } catch (e) {} }
+  // ちいさな 無音を いちど ならすと、iPhone で おとが でるように なる
+  try { const b = AC.createBuffer(1, 1, 22050), src = AC.createBufferSource(); src.buffer = b; src.connect(AC.destination); src.start(0); } catch (e) {}
+  try {
+    if (!SILENT) { SILENT = new Audio(silentWavUrl()); SILENT.loop = true; SILENT.setAttribute('playsinline', ''); }
+    if (SILENT.paused) { const pr = SILENT.play(); if (pr && pr.catch) pr.catch(() => {}); }
+  } catch (e) {}
+}
+// きょかが でる しゅんかん（ゆびを はなした とき・クリック）に かならず よぶ
+for (const ev of ['touchend', 'click', 'pointerup', 'keydown']) document.addEventListener(ev, audioInit, { capture: true, passive: true });
 function tone(f, dur, type, vol, f2, delay) {
   if (!AC) return;
   const t = AC.currentTime + (delay || 0), o = AC.createOscillator(), g = AC.createGain();
@@ -1133,7 +1157,7 @@ $('#certName').addEventListener('input', e => { $('#certNm').textContent = (e.ta
 $('#certBack').addEventListener('click', () => { buildSelect(); show('select'); });
 
 // テスト用の入り口（自動プレイで使う）
-window.__haisha = { G, P, PATIENTS, startPatient, cell, high, zone, gel, dyed, bonded, count, STEPS, TB, N, CS, GUM, SLOTS, XR,
+window.__haisha = { audio: () => AC && AC.state, G, P, PATIENTS, startPatient, cell, high, zone, gel, dyed, bonded, count, STEPS, TB, N, CS, GUM, SLOTS, XR,
   consts: { DEC, SOFT, HOLE, RES, CUR, DEB, GRV, SEAL, SEALC, EN } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if ($('#select').classList.contains('on')) buildSelect(); });
 })();

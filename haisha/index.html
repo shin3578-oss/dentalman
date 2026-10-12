@@ -24,11 +24,12 @@ body{display:flex;justify-content:center;position:fixed;inset:0;
 .screen{position:absolute;inset:0;display:none;flex-direction:column;padding:12px 14px calc(12px + env(safe-area-inset-bottom))}
 .screen.on{display:flex}
 button{font:inherit;cursor:pointer;border:none;color:inherit}
-/* まど */
+/* まど：よむ ものは あお／おす・えらぶ ものは みどり＋きんの ふち */
 .btn,.pcard,.card,#bubble,#toolName,.iconbtn{
   background:linear-gradient(180deg,var(--win1) 0%,var(--win2) 55%,var(--win3) 100%);
   border:3px solid var(--edge);border-radius:8px;
   box-shadow:0 0 0 2px #000,inset 0 0 0 2px var(--edge2),0 6px 14px rgba(0,0,0,.45);color:#fff}
+.btn,.pcard,.iconbtn{background:linear-gradient(180deg,#2f8f5a 0%,#155c36 55%,#0b3a22 100%);border-color:#ffd75e;box-shadow:0 0 0 2px #000,inset 0 0 0 2px #7fe0a8,0 6px 14px rgba(0,0,0,.45)}
 .btn{font-size:20px;padding:12px 26px 12px 34px;position:relative;letter-spacing:2px}
 .btn:before{content:"▶";position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--gold);opacity:0}
 .btn:hover:before,.btn:active:before,.btn:focus-visible:before,#startBtn:before{opacity:1}
@@ -47,6 +48,10 @@ ruby rt{font-size:.5em}
 #title .kicker{font-size:13px;color:var(--sub);letter-spacing:6px;margin:0 0 8px}
 #title .sub{font-size:15px;color:#e6e9ff;margin:0;line-height:1.7}
 .bigshin{width:auto;height:min(30vh,240px);image-rendering:pixelated;filter:drop-shadow(0 0 12px rgba(120,160,255,.45))}
+#tapStart{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;cursor:pointer;transition:opacity .8s}
+#tapStart p{margin:6px;font-size:18px;color:#ffd75e;letter-spacing:3px}
+#tapStart .tsub{font-size:12px;color:#8f9ad6;letter-spacing:1px}
+#tapStart.gone{opacity:0;pointer-events:none}
 .foot{font-size:12px;color:#8f9ad6;margin-top:6px}
 .blink{animation:blink 1.4s ease-in-out infinite}
 @keyframes blink{50%{opacity:.45}}
@@ -65,8 +70,8 @@ ruby rt{font-size:.5em}
 .pcard .rank.r1{color:#8ff0b0}.pcard .rank.r2{color:#ffc35e}.pcard .rank.r3{color:#ff6b7f}.pcard .rank.r4{color:#d38bff;box-shadow:0 0 8px rgba(211,139,255,.6)}
 .pcard .st{font-size:16px;color:var(--gold);letter-spacing:1px;margin-left:6px}
 .tabs{display:flex;gap:10px;justify-content:center;margin:2px 0 10px}
-.tab{flex:1;max-width:170px;font-size:16px;padding:8px 6px;background:linear-gradient(180deg,#24306e,#0e1650);border:3px solid #7d8be0;border-radius:6px;box-shadow:0 0 0 2px #000;color:#b9c3ff}
-.tab.on{border-color:#f2f2f8;color:#ffd75e;background:linear-gradient(180deg,#3048b8,#16247a)}
+.tab{flex:1;max-width:170px;font-size:16px;padding:8px 6px;background:linear-gradient(180deg,#1d4a33,#0b2a1a);border:3px solid #4a8a64;border-radius:6px;box-shadow:0 0 0 2px #000;color:#9fd8b4}
+.tab.on{border-color:#ffd75e;color:#ffd75e;background:linear-gradient(180deg,#2f8f5a,#155c36)}
 .tab.on:before{content:"▶ ";color:#ffd75e}
 .selfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;padding-top:8px}
 
@@ -89,15 +94,16 @@ ruby rt{font-size:.5em}
 .iconbtn{position:absolute;top:10px;width:38px;height:38px;font-size:17px;line-height:30px;text-align:center;z-index:5;padding:0}
 #quit{left:10px}#mute{right:10px}
 #pad{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 8px 0}
-#stick{width:118px;height:118px;border-radius:50%;position:relative;touch-action:none;flex:none;
-  background:radial-gradient(circle,#1d2a72 0,#0a1046 70%);border:3px solid var(--edge);box-shadow:0 0 0 2px #000,inset 0 0 0 3px var(--edge2),inset 0 0 18px #000}
-#knob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;pointer-events:none;
+#stick{width:132px;height:118px;border-radius:14px;position:relative;touch-action:none;flex:none;
+  background:repeating-linear-gradient(0deg,rgba(125,139,224,.18) 0 1px,transparent 1px 22px),repeating-linear-gradient(90deg,rgba(125,139,224,.18) 0 1px,transparent 1px 22px),radial-gradient(circle,#1d2a72 0,#0a1046 80%);border:3px solid var(--edge);box-shadow:0 0 0 2px #000,inset 0 0 0 3px var(--edge2),inset 0 0 18px #000}
+#stick.on{border-color:#ffd75e}
+#knob{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;opacity:.85;
   background:radial-gradient(circle at 35% 30%,#fff6c8 0,#ffd75e 35%,#b8860b 100%);border:2px solid #3a2a00;box-shadow:0 4px 0 #3a2a00}
 #abtn{width:104px;height:104px;border-radius:50%;color:#fff;font-size:21px;letter-spacing:1px;touch-action:none;flex:none;-webkit-user-select:none;user-select:none;
   background:radial-gradient(circle at 35% 30%,#ff9aa6 0,#d7263d 45%,#7a0f20 100%);border:4px solid var(--gold);box-shadow:0 0 0 2px #000,0 6px 0 #3a0710;text-shadow:2px 2px 0 #000}
 #abtn.on{transform:translateY(5px);box-shadow:0 0 0 2px #000,0 1px 0 #3a0710;filter:brightness(1.25)}
 #padHelp{flex:1;min-width:0;font-size:12px;color:var(--sub);text-align:center;line-height:1.4;white-space:nowrap}
-@media (max-height:720px){#bubbleRow{min-height:0}#bubbleRow img{width:auto;height:56px}#bubble{padding:5px 9px}#say{font-size:14px;line-height:1.35}#tip{font-size:11px;line-height:1.35;margin-top:2px}#play{gap:4px}#toolName{font-size:12px;padding:3px 9px}#stick{width:96px;height:96px}#knob{width:44px;height:44px;margin:-22px 0 0 -22px}#abtn{width:86px;height:86px;font-size:18px}#padHelp{font-size:11px}}
+@media (max-height:720px){#bubbleRow{min-height:0}#bubbleRow img{width:auto;height:56px}#bubble{padding:5px 9px}#say{font-size:14px;line-height:1.35}#tip{font-size:11px;line-height:1.35;margin-top:2px}#play{gap:4px}#toolName{font-size:12px;padding:3px 9px}#stick{width:112px;height:96px}#knob{width:26px;height:26px;margin:-13px 0 0 -13px}#abtn{width:86px;height:86px;font-size:18px}#padHelp{font-size:11px}}
 #play #bubbleRow{padding:0 44px 0 40px}
 
 /* けっか */
@@ -132,6 +138,7 @@ ruby rt{font-size:.5em}
 <div id="app">
 
   <section id="title" class="screen on">
+    <div id="tapStart"><p class="blink">― タップして スタート ―</p><p class="tsub">おとが でます</p></div>
     <img class="bigshin" src="doctor.png" alt="はいしゃさん">
     <div class="emblem">
       <p class="kicker">― DENTAL QUEST ―</p>
@@ -163,7 +170,7 @@ ruby rt{font-size:.5em}
     <div id="barRow"><div id="toolName"></div><div id="bar"><div id="barIn"></div></div></div>
     <div id="pad">
       <div id="stick" aria-label="スティック"><div id="knob"></div></div>
-      <div id="padHelp">← スティックで<br>うごかす<br><br>ボタンで<br>つかう →</div>
+      <div id="padHelp">← パッドを<br>なぞって うごかす<br><br>おして<br>つかう →</div>
       <button id="abtn">つかう</button>
     </div>
   </section>

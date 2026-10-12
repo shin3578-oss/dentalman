@@ -40,7 +40,7 @@ const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;
 
 // ---------- おと ----------
-let AC = null, MASTER = null, NOISE = null, muted = false;
+let AC = null, MASTER = null, NOISE = null, SFXBUS = null, LOOPBUS = null, BGMBUS = null, muted = false;
 const LOOPS = {};
 // iPhone の Safari では ①「ゆびを はなした」しゅんかん（touchend / click）でないと おとの きょかが でない
 // ② マナーモードだと Web Audio が けされる → 無音の audio を ながして「おんがく」あつかいに する
@@ -59,7 +59,14 @@ function audioInit() {
   if (!AC) {
     try {
       AC = new (window.AudioContext || window.webkitAudioContext)();
-      MASTER = AC.createGain(); MASTER.gain.value = muted ? 0 : 0.6; MASTER.connect(AC.destination);
+      // スマホの スピーカーでも きこえるように おおきめ。コンプレッサーで おとわれを ふせぐ
+      MASTER = AC.createGain(); MASTER.gain.value = muted ? 0 : 1;
+      const comp = AC.createDynamicsCompressor();
+      comp.threshold.value = -20; comp.knee.value = 10; comp.ratio.value = 5; comp.attack.value = 0.003; comp.release.value = 0.25;
+      MASTER.connect(comp); comp.connect(AC.destination);
+      SFXBUS = AC.createGain(); SFXBUS.gain.value = 2.4; SFXBUS.connect(MASTER);
+      LOOPBUS = AC.createGain(); LOOPBUS.gain.value = 3.2; LOOPBUS.connect(MASTER);
+      BGMBUS = AC.createGain(); BGMBUS.gain.value = 0; BGMBUS.connect(MASTER);
       NOISE = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
       const d = NOISE.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     } catch (e) { AC = null; return; }
@@ -74,14 +81,14 @@ function audioInit() {
 }
 // きょかが でる しゅんかん（ゆびを はなした とき・クリック）に かならず よぶ
 for (const ev of ['touchend', 'click', 'pointerup', 'keydown']) document.addEventListener(ev, audioInit, { capture: true, passive: true });
-function tone(f, dur, type, vol, f2, delay) {
+function tone(f, dur, type, vol, f2, delay, dest) {
   if (!AC) return;
   const t = AC.currentTime + (delay || 0), o = AC.createOscillator(), g = AC.createGain();
   o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
   if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.2, t + 0.015);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g); g.connect(MASTER); o.start(t); o.stop(t + dur + 0.05);
+  o.connect(g); g.connect(dest || SFXBUS); o.start(t); o.stop(t + dur + 0.05);
 }
 const SFX = {
   ding() { tone(988, 0.18, 'sine', 0.25); tone(1319, 0.32, 'sine', 0.22, 0, 0.09); },
@@ -89,13 +96,21 @@ const SFX = {
   ouch() { tone(440, 0.25, 'square', 0.08, 180); },
   pop() { tone(700, 0.08, 'sine', 0.12, 1100); },
   click() { tone(1800, 0.04, 'square', 0.06); tone(1500, 0.04, 'square', 0.05, 0, 0.12); },
+  tap() { tone(880, 0.06, 'sine', 0.16, 1320); },
+  start() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.18, 'triangle', 0.2, 0, i * 0.08)); },
+  chime() { tone(784, 0.14, 'sine', 0.14); tone(1175, 0.22, 'sine', 0.12, 0, 0.1); },
+  chu() { tone(1400 + Math.random() * 500, 0.05, 'sine', 0.07, 700); },
+  tick(n) { tone([659, 784, 988, 1175][n] || 1175, 0.1, 'triangle', 0.13); },
+  pi() { tone(1568, 0.07, 'sine', 0.1); },
+  grip() { tone(2200, 0.03, 'square', 0.07); tone(1600, 0.04, 'square', 0.06, 0, 0.05); },
+  out() { tone(500, 0.12, 'sine', 0.18, 1400); [1047, 1319, 1568].forEach((f, i) => tone(f, 0.2, 'triangle', 0.16, 0, 0.12 + i * 0.09)); },
   fanfare() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.25, 'triangle', 0.22, 0, i * 0.13)); tone(1047, 0.7, 'sine', 0.2, 0, 0.55); tone(1319, 0.7, 'sine', 0.14, 0, 0.55); },
 };
 function loop(kind, level) {
   if (!AC) return;
   let L = LOOPS[kind];
   if (!L) {
-    const g = AC.createGain(); g.gain.value = 0; g.connect(MASTER);
+    const g = AC.createGain(); g.gain.value = 0; g.connect(LOOPBUS);
     if (kind === 'drill' || kind === 'engine') {
       const hi = kind === 'drill';
       const o = AC.createOscillator(); o.type = 'sawtooth'; o.frequency.value = hi ? 1700 : 260;
@@ -118,6 +133,45 @@ function loop(kind, level) {
   if (Math.abs(L.level - level) > 0.002) { L.level = level; L.g.gain.setTargetAtTime(level, AC.currentTime, 0.04); }
 }
 function loopsOff() { for (const k in LOOPS) loop(k, 0); }
+
+const BGM_MEL = [76, 79, 81, 79, 76, 0, 74, 0, 72, 74, 76, 0, 81, 0, 79, 0, 77, 76, 74, 72, 74, 0, 69, 0, 71, 72, 74, 0, 79, 0, 0, 0,
+  76, 79, 84, 0, 83, 81, 79, 0, 81, 79, 76, 0, 72, 0, 76, 0, 77, 0, 81, 0, 79, 77, 76, 74, 74, 0, 71, 0, 72, 0, 0, 0];
+const BGM_CH = [[48, 64, 67, 72], [45, 64, 69, 72], [41, 65, 69, 72], [43, 62, 67, 71], [48, 64, 67, 72], [45, 64, 69, 72], [41, 65, 69, 72], [43, 62, 67, 71]];
+const EIGHTH = 60 / 100 / 2;
+const BGM = { on: false, next: 0, i: 0, timer: null, duck: false };
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+function bnote(m, t, dur, type, vol) {
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.value = mf(m);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(BGMBUS); o.start(t); o.stop(t + dur + 0.05);
+}
+function bgmStep(i, t) {
+  const bar = i >> 3, e = i & 7, ch = (bar === 7 && e >= 4) ? BGM_CH[0] : BGM_CH[bar];
+  const m = BGM_MEL[i];
+  if (m) { let n = 1; while (n < 4 && BGM_MEL[(i + n) % 64] === 0 && ((i + n) & 7) !== 0) n++; const d = EIGHTH * n * 0.95 + 0.15;
+    bnote(m, t, d, 'sine', 0.16); bnote(m + 12, t, d * 0.6, 'sine', 0.04); }
+  if (e === 0 || e === 4 || (bar === 7 && e === 4)) bnote(e === 0 ? ch[0] : ch[0] + 7, t, EIGHTH * 3.5, 'triangle', 0.2);
+  if (e === 0 || (bar === 7 && e === 4)) for (const c of ch.slice(1)) bnote(c - 12, t, EIGHTH * 7.5, 'sine', 0.035);
+  if (e % 2 === 1) { const s2 = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+    s2.buffer = NOISE; f.type = 'highpass'; f.frequency.value = 7000; g.gain.setValueAtTime(0.025, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    s2.connect(f); f.connect(g); g.connect(BGMBUS); s2.start(t, Math.random()); s2.stop(t + 0.06); }
+}
+function bgmTick() {
+  if (!AC || AC.state !== 'running') return;
+  if (BGM.next < AC.currentTime - 0.05) BGM.next = AC.currentTime + 0.05;
+  while (BGM.next < AC.currentTime + 0.3) { bgmStep(BGM.i, BGM.next); BGM.next += EIGHTH; BGM.i = (BGM.i + 1) % 64; }
+}
+function bgmStart() {
+  if (!AC || BGM.on) return;
+  BGM.on = true; BGM.next = AC.currentTime + 0.1;
+  BGMBUS.gain.setTargetAtTime(0.32, AC.currentTime, 0.4);
+  BGM.timer = setInterval(bgmTick, 50);
+}
+function bgmDuck(on) {   // けずる おとなどが なっている あいだは BGM を さげる
+  if (!AC || !BGM.on || BGM.duck === on) return;
+  BGM.duck = on; BGMBUS.gain.setTargetAtTime(on ? 0.12 : 0.32, AC.currentTime, 0.15);
+}
 
 // ---------- かんじゃさん ----------
 const PATIENTS = [
@@ -184,10 +238,10 @@ const STEPS = {
   masui: { view: 'tooth', tool: 'swab', toolName: 'ぬりぐすり', label: 'ますい',
     say: 'まず はぐきの <b>まる</b>の ところに <b>ぬりぐすり</b>を ぬろう',
     toolName2: 'ますいの ちゅうしゃ',
-    say2: 'ますいの ちゅうしゃ。まるに ゆびを おいて、<b>ゆっくり</b> うごかさずに まってね',
+    say2: 'ますいの ちゅうしゃ。まるの うえで <b>ボタンを おしたまま</b>、うごかさずに まってね',
     tip: '<b>ほんものでは</b> ぬりぐすり（ひょうめんますい）で はぐきを ねむらせてから ちゅうしゃ。ゆっくり いれると いたくないよ。' },
   wattes: { view: 'tooth', tool: 'none', toolName: 'ロールワッテ（わた）', label: 'わた',
-    say: '<b>わた</b>を うごかして、はの よこの てんせんに おこう（2こ）',
+    say: '<b>わた</b>の うえで ボタンを おしたまま はこんで、はの よこの てんせんに おこう（2こ）',
     tip: '<b>ほんものでは</b> つばや ほっぺ・したが じゃまに ならないように、わたや ゴムの シートで はを まもるよ。' },
   drill: { view: 'tooth', tool: 'turbine', toolName: 'タービン（はやく まわる）', label: 'けずる',
     say: 'くろい <b>むしば</b>を なぞって けずろう。<b>げんきな ところは けずらないで</b>ね！',
@@ -204,13 +258,13 @@ const STEPS = {
   bond: { view: 'tooth', tool: 'bondbrush', toolName: 'ボンド', label: 'ボンド',
     say: 'あなの なかに <b>ボンド</b>を ぬろう',
     toolName2: 'ひかりの きかい',
-    say2: 'ボンドを <b>あおい ひかり</b>で かためよう。はに ゆびを おいたまま まってね',
+    say2: 'ボンドを <b>あおい ひかり</b>で かためよう。はの うえで ボタンを おしたまま まってね',
     tip: '<b>ほんものでは</b> つめものが はに しっかり くっつくように、さきに せっちゃくざい（ボンド）を ぬって ひかりで かためるよ。' },
   fill: { view: 'tooth', tool: 'resin', toolName: 'レジン（つめもの）', label: 'つめる',
     say: 'あなを なぞって はの いろの つめもの「<b>レジン</b>」を つめよう',
     tip: '<b>ほんものでは</b> レジンは はの いろに にた プラスチック。はの かたちに あわせて つめるよ。' },
   cure: { view: 'tooth', tool: 'light', toolName: 'ひかりの きかい', label: 'かためる',
-    say: 'はに ゆびを <b>おいたまま</b> まってね。あおい ひかりで かためるよ',
+    say: 'はの うえで <b>ボタンを おしたまま</b> まってね。あおい ひかりで かためるよ',
     tip: '<b>ほんものでは</b> レジンや シーラントは、あおい ひかりを あてると かたまる。ひかりを みないように するよ。' },
   bite: { view: 'tooth', tool: 'paper', toolName: 'こうごうし（あかい かみ）', label: 'かみあわせ',
     say: 'あかい かみを のせたよ。はを タップして「<b>カチカチ</b>」かんでもらおう',
@@ -248,7 +302,7 @@ const STEPS = {
     say: 'あおい くすりを <b>おみず</b>で きれいに あらいながそう',
     tip: '<b>ほんものでは</b> くすりは しっかり あらいながして、バキュームで すいとるよ。' },
   dry: { view: 'tooth', tool: 'air', toolName: 'エアー（かぜ）', label: 'かわかす',
-    say: 'はに ゆびを おいて <b>かぜ</b>で かわかそう。しろく にごったら OK！',
+    say: 'はの うえで ボタンを おして <b>かぜ</b>で かわかそう。しろく にごったら OK！',
     tip: '<b>ほんものでは</b> くすりで ととのえた ところは かわかすと しろく にごって みえる。これが じゅんびが できた あいず。' },
   find4: { view: 'arch', tool: 'mirror', toolName: 'ミラー', label: 'みる',
     say: '<b>ぐらぐら</b> している こどもの はを さがして タップ！ うしろに あたらしい はが みえるよ',
@@ -260,11 +314,11 @@ const STEPS = {
     say: 'はぐきの <b>まる</b>の ところに <b>ぬりぐすり</b>を ぬろう',
     tip: '<b>ほんものでは</b> ぐらぐらの はは、ぬりぐすりの ますいだけで ぬくことも あるよ。' },
   extract: { view: 'side', tool: 'forceps', toolName: 'ばってんし（はを つかむ）', label: 'ぬく',
-    say: 'はを つかんで、<b>よこに ゆっくり</b> ゆらそう',
-    say2: 'ぐらぐらに なった！ <b>うえに</b> ひっぱって ぬこう',
+    say: 'はの うえで ボタンを おして つかみ、スティックで <b>よこに ゆっくり</b> ゆらそう',
+    say2: 'ぐらぐらに なった！ ボタンを おしたまま <b>うえに</b> ひっぱって ぬこう',
     tip: '<b>ほんものでは</b> いきなり ひっぱらずに、まず ゆっくり ゆらして ぬきやすく するよ。' },
   gauze: { view: 'side', tool: 'gauze', toolName: 'ガーゼ', label: 'ガーゼ',
-    say: 'ぬけた あなに <b>ガーゼ</b>を のせて、ゆびを おいたまま まってね（かんで ちを とめる）',
+    say: 'ぬけた あなの うえで <b>ボタンを おしたまま</b> まってね（ガーゼを かんで ちを とめる）',
     tip: '<b>ほんものでは</b> ガーゼを しばらく かんで ちを とめるよ。その日は ぶくぶく うがいを しすぎないでね。' },
   seal: { view: 'tooth', tool: 'sealant', toolName: 'シーラント', label: 'ぬる',
     say: 'みぞを なぞって「<b>シーラント</b>」で ふさごう',
@@ -397,20 +451,28 @@ const TOUCH_OFF = 56;
 const P = { x: 180, y: 318, down: false, justDown: false, sx: 0, sy: 0, moved: 0, fx: 180, fy: 318, hover: false,
   off: 0, rx: 180, ry: 318, rsx: 0, rsy: 0 };
 function toLocal(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
+// ゆびで がめんを さわったときは カーソルを そこへ うごかすだけ（はを えらぶ ばめんだけ タップで きまる）
+const TAP_STEPS = ['search', 'find6', 'xray', 'find4', 'xray4'];
+function isTapStep() { return TAP_STEPS.includes(G.key) || (G.key === 'bite' && G.phase === 0); }
 cv.addEventListener('pointerdown', e => {
-  e.preventDefault(); audioInit();
+  e.preventDefault(); audioInit(); bgmStart();
   try { cv.setPointerCapture(e.pointerId); } catch (_) {}
   const p = toLocal(e);
+  if (e.pointerType !== 'mouse') { CTRL.used = true; CTRL.cx = p.x; CTRL.cy = clamp(p.y, TOP + 6, H - 6); CTRL.touch = true; CTRL.tsx = p.x; CTRL.tsy = p.y; CTRL.tmoved = 0; return; }
+  CTRL.used = false;
   P.off = e.pointerType === 'mouse' ? 0 : TOUCH_OFF;
   P.down = true; P.justDown = true; P.moved = 0;
   P.rx = P.rsx = p.x; P.ry = P.rsy = p.y;
   P.x = P.sx = P.fx = p.x; P.y = P.sy = P.fy = p.y - P.off;
 });
 cv.addEventListener('pointermove', e => {
-  const p = toLocal(e); if (P.down) P.moved += Math.hypot(p.x - P.rx, p.y - P.ry);
+  const p = toLocal(e);
+  if (CTRL.touch) { CTRL.tmoved += Math.hypot(p.x - CTRL.cx, p.y - CTRL.cy); CTRL.cx = p.x; CTRL.cy = clamp(p.y, TOP + 6, H - 6); return; }
+  if (e.pointerType !== 'mouse' && CTRL.used) return; if (P.down) P.moved += Math.hypot(p.x - P.rx, p.y - P.ry);
   P.rx = p.x; P.ry = p.y; P.x = p.x; P.y = p.y - (P.down ? P.off : 0); P.hover = e.pointerType === 'mouse';
 });
 function up(e) {
+  if (CTRL.touch) { CTRL.touch = false; const p = toLocal(e); if (CTRL.tmoved < 16 && G.step && !G.done && isTapStep()) tapAt(p.x, p.y); return; }
   if (!P.down) return; P.down = false;
   const p = toLocal(e);
   dropRoll();
@@ -419,8 +481,61 @@ function up(e) {
 cv.addEventListener('pointerup', up);
 for (const ev of ['touchstart', 'touchmove', 'touchend']) cv.addEventListener(ev, e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
 document.addEventListener('touchmove', e => { if ($('#play').classList.contains('on') && e.cancelable) e.preventDefault(); }, { passive: false });
-cv.addEventListener('pointercancel', () => { P.down = false; dropRoll(); });
+cv.addEventListener('pointercancel', () => { CTRL.touch = false; if (!CTRL.a) { P.down = false; dropRoll(); } });
 cv.addEventListener('pointerleave', () => { P.hover = false; });
+
+// ---------- コントローラー（ひだり＝スティック・みぎ＝つかうボタン） ----------
+const CTRL = { vx: 0, vy: 0, a: false, cx: 180, cy: 318, used: false, touch: false, keys: {} };
+(function setupPad() {
+  const stick = $('#stick'), knob = $('#knob'), ab = $('#abtn');
+  let sid = null;
+  const setStick = e => {
+    const r = stick.getBoundingClientRect(), R = r.width / 2 - 18;
+    let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    const l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; }
+    knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+    CTRL.vx = dx / R; CTRL.vy = dy / R; CTRL.used = true;
+  };
+  const endStick = () => { sid = null; CTRL.vx = CTRL.vy = 0; knob.style.transform = ''; };
+  stick.addEventListener('pointerdown', e => { e.preventDefault(); audioInit(); sid = e.pointerId; try { stick.setPointerCapture(sid); } catch (_) {} setStick(e); });
+  stick.addEventListener('pointermove', e => { if (e.pointerId === sid) setStick(e); });
+  stick.addEventListener('pointerup', endStick); stick.addEventListener('pointercancel', endStick);
+  ab.addEventListener('pointerdown', e => { e.preventDefault(); audioInit(); bgmStart(); try { ab.setPointerCapture(e.pointerId); } catch (_) {} ctrlDown(); });
+  ab.addEventListener('pointerup', ctrlUp); ab.addEventListener('pointercancel', ctrlUp);
+  for (const el of [stick, ab]) for (const ev of ['touchstart', 'touchmove', 'touchend']) el.addEventListener(ev, e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+  // パソコン：やじるしキー と スペース
+  document.addEventListener('keydown', e => {
+    if (!$('#play').classList.contains('on')) return;
+    if (e.key.startsWith('Arrow')) { CTRL.keys[e.key] = true; CTRL.used = true; e.preventDefault(); }
+    if ((e.key === ' ' || e.key === 'Enter') && !CTRL.a) { e.preventDefault(); ctrlDown(); }
+  });
+  document.addEventListener('keyup', e => {
+    if (e.key.startsWith('Arrow')) CTRL.keys[e.key] = false;
+    if (e.key === ' ' || e.key === 'Enter') ctrlUp();
+  });
+})();
+function ctrlDown() {
+  if (CTRL.a || !G.step) return;
+  CTRL.a = true; CTRL.used = true; $('#abtn').classList.add('on');
+  P.off = 0; P.down = true; P.justDown = true; P.moved = 0;
+  P.x = P.sx = P.fx = P.rx = P.rsx = CTRL.cx; P.y = P.sy = P.fy = P.ry = P.rsy = CTRL.cy;
+}
+function ctrlUp() {
+  if (!CTRL.a) return;
+  CTRL.a = false; $('#abtn').classList.remove('on');
+  P.down = false; dropRoll();
+  if (P.moved < 16 && G.step && !G.done) tapAt(CTRL.cx, CTRL.cy);
+}
+function ctrlTick(dt) {
+  if (!CTRL.used) return;
+  let vx = CTRL.vx, vy = CTRL.vy;
+  const k = CTRL.keys; if (k.ArrowLeft) vx = -1; if (k.ArrowRight) vx = 1; if (k.ArrowUp) vy = -1; if (k.ArrowDown) vy = 1;
+  const m = Math.min(1, Math.hypot(vx, vy));
+  if (m > 0.08) { const sp = 240 * Math.pow(m, 1.5) / Math.max(m, 0.001); CTRL.cx += vx * sp * dt; CTRL.cy += vy * sp * dt; }
+  CTRL.cx = clamp(CTRL.cx, 8, W - 8); CTRL.cy = clamp(CTRL.cy, TOP + 6, H - 6);
+  if (P.down) P.moved += Math.hypot(CTRL.cx - P.x, CTRL.cy - P.y);
+  P.x = P.rx = CTRL.cx; P.y = P.ry = CTRL.cy; P.hover = true;
+}
 
 // ---------- しんこう ----------
 function startPatient(p) {
@@ -440,6 +555,7 @@ function setSay() {
 }
 function startStep() {
   G.key = G.p.steps[G.si]; G.step = STEPS[G.key];
+  G.lastPr = 0; G.lastQ = 0; G.lastSec = 0; if (G.si > 0) SFX.chime();
   G.t = 0; G.done = false; G.doneT = 0; G.holdT = 0; G.shine = 0; G.hintT = 0; G.phase = 0; G.badT = 0;
   if (G.key === 'rinse' && G.chips.length < 24) {
     const holes = []; for (let k = 0; k < NN; k++) if (cell[k] === HOLE) holes.push(k);
@@ -450,7 +566,7 @@ function startStep() {
   setSay();
   $('#toolName').textContent = G.step.toolName;
   resize();
-  P.x = P.fx = 180; P.y = P.fy = 318;
+  if (!CTRL.used) { P.x = P.fx = 180; P.y = P.fy = 318; }
   if (G.toolX == null) { G.toolX = 300; G.toolY = 470; }
 }
 function stepDone() {
@@ -458,7 +574,7 @@ function stepDone() {
   G.flash = { text: G.si === G.p.steps.length - 1 ? 'かんせい！' : 'できた！', t: 0 };
   for (let i = 0; i < 18; i++) G.parts.push(star(180, 318));
 }
-function nextPhase() { G.phase++; G.holdT = 0; G.badT = 0; SFX.ding(); setSay(); if (G.step.toolName2) $('#toolName').textContent = G.step.toolName2; }
+function nextPhase() { G.phase++; G.holdT = 0; G.lastSec = 0; G.badT = 0; SFX.ding(); setSay(); if (G.step.toolName2) $('#toolName').textContent = G.step.toolName2; }
 function nextStep() {
   const prevView = G.step.view;
   G.si++;
@@ -468,7 +584,7 @@ function nextStep() {
 }
 function stars() { return G.mist <= 1 ? 3 : G.mist <= 4 ? 2 : 1; }
 function finish() {
-  G.finished = true; loopsOff(); SFX.fanfare();
+  G.finished = true; loopsOff(); bgmDuck(false); SFX.fanfare();
   const st = loadStars(), s = stars(); st[G.p.id] = Math.max(st[G.p.id] || 0, s); saveStars(st);
   $('#rstars').textContent = '★'.repeat(s) + '☆'.repeat(3 - s);
   $('#rmsg').textContent = G.p.name + G.p.hon + '「' + G.p.thanks + '」';
@@ -544,7 +660,7 @@ function dropRoll() {
 let last = 0;
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if ($('#play').classList.contains('on') && !G.finished) { update(dt); draw(); }
+  if ($('#play').classList.contains('on') && !G.finished) { ctrlTick(dt); update(dt); draw(); }
   else loopsOff();
   requestAnimationFrame(frame);
 }
@@ -588,7 +704,7 @@ function update(dt) {
     }
     if (k === 'extract') {
       const E = G.ext;
-      if (jd) E.grip = Math.abs(P.sx - SD.px) < 40 && P.sy > SD.gum - 120 && P.sy < SD.gum + 24;
+      if (jd) { E.grip = Math.abs(P.sx - SD.px) < 40 && P.sy > SD.gum - 120 && P.sy < SD.gum + 24; if (E.grip) SFX.grip(); }
       if (!P.down) E.grip = false;
       if (E.grip && G.phase === 0) {
         const target = clamp((P.x - P.sx) / 140, -0.28, 0.28);
@@ -600,9 +716,9 @@ function update(dt) {
         if (E.wig >= 1) { E.ang = 0; nextPhase(); }
       } else if (G.phase === 0) E.ang *= Math.pow(0.02, dt);
       if (G.phase === 1) {
-        if (jd) E.grip = Math.abs(P.sx - SD.px) < 40 && P.sy > SD.gum - 120 && P.sy < SD.gum + 24;
+        if (jd) { E.grip = Math.abs(P.sx - SD.px) < 40 && P.sy > SD.gum - 120 && P.sy < SD.gum + 24; if (E.grip) SFX.grip(); }
         E.lift = E.grip ? clamp(P.sy - P.y, 0, 110) : E.lift * Math.pow(0.05, dt);
-        if (E.lift > 80) { E.out = true; E.outT = 0; SFX.pop(); pop(SD.px + 60, SD.gum - 120, 'ぬけた！', '#ffe066'); stepDone(); }
+        if (E.lift > 80) { E.out = true; E.outT = 0; SFX.out(); pop(SD.px + 60, SD.gum - 120, 'ぬけた！', '#ffe066'); stepDone(); }
       }
     }
     if (k === 'gauze') {
@@ -743,6 +859,17 @@ function update(dt) {
   }
   if (G.ext && G.ext.out) G.ext.outT = Math.min(0.6, G.ext.outT + dt);
   for (const n in L) loop(n, L[n]);
+  bgmDuck(L.drill + L.engine + L.vac + L.brush + L.scrape + L.air > 0.02);
+  // ぬる・こする たびに「ちゅっ」、4ぶんの1 すすむごとに あがる おと、まつ あいだは 1びょうごとに「ピッ」
+  if (!G.done) {
+    const pr = progress(), q = Math.floor(pr * 4);
+    if (pr > (G.lastPr || 0) + 0.004 && G.t - (G.chuT || 0) > 0.11 && !['cure', 'dry', 'gauze', 'masui', 'bond', 'extract'].includes(G.key)) { G.chuT = G.t; SFX.chu(); }
+    if (q > (G.lastQ || 0) && q < 4) SFX.tick(q - 1);
+    G.lastPr = pr; G.lastQ = q;
+    const sec = Math.floor(G.holdT);
+    if (['cure', 'dry', 'gauze'].includes(G.key) || (G.key === 'masui' && G.phase === 1) || (G.key === 'bond' && G.phase === 1)) { if (sec > (G.lastSec || 0)) SFX.pi(); }
+    G.lastSec = sec;
+  }
   for (const c of G.chips) { c.x += c.vx * dt; c.y += c.vy * dt; c.vx *= Math.pow(0.02, dt); c.vy *= Math.pow(0.02, dt); }
   for (const q of G.parts) { q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.k === 'star' || q.k === 'chip') q.vy += 260 * dt; }
   G.parts = G.parts.filter(q => q.t < q.life);
@@ -806,6 +933,12 @@ function draw() {
     ctx.beginPath(); ctx.arc(P.x, P.y, 15, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
   }
   drawTool();
+  if (CTRL.used && !G.done) {
+    ctx.save(); ctx.strokeStyle = 'rgba(40,20,30,.7)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(CTRL.cx, CTRL.cy, 11, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = CTRL.a ? '#ffe066' : '#ffffff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(CTRL.cx, CTRL.cy, 11, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(CTRL.cx - 16, CTRL.cy); ctx.lineTo(CTRL.cx - 6, CTRL.cy); ctx.moveTo(CTRL.cx + 6, CTRL.cy); ctx.lineTo(CTRL.cx + 16, CTRL.cy);
+    ctx.moveTo(CTRL.cx, CTRL.cy - 16); ctx.lineTo(CTRL.cx, CTRL.cy - 6); ctx.moveTo(CTRL.cx, CTRL.cy + 6); ctx.lineTo(CTRL.cx, CTRL.cy + 16); ctx.stroke(); ctx.restore();
+  }
   for (const q of G.pops) { const a = 1 - Math.max(0, q.t - 0.8) / 0.5; ctx.globalAlpha = a; text(ctx, q.text, clamp(q.x, 100, W - 100), q.y - q.t * 24, 16, q.c, 'center', 'rgba(40,20,30,.85)'); ctx.globalAlpha = 1; }
   if (G.flash) {
     const t = G.flash.t, s = t < 0.2 ? lerp(0.4, 1.15, t / 0.2) : t < 0.3 ? lerp(1.15, 1, (t - 0.2) / 0.1) : 1;
@@ -1087,7 +1220,7 @@ function drawSide() {
     hint('まるの なかを こする');
   }
   if (G.key === 'extract') hint(G.phase ? 'はを つかんだまま うえへ' : 'はを つかんで よこに ゆらゆら');
-  if (G.key === 'gauze') hint(P.down ? 'あと ' + Math.max(1, Math.ceil(3 - G.holdT)) + ' びょう' : 'ぬけた あなの うえに ゆびを おいてね');
+  if (G.key === 'gauze') hint(P.down ? 'あと ' + Math.max(1, Math.ceil(3 - G.holdT)) + ' びょう' : 'あなの うえで ボタンを おしたまま');
 }
 
 // 1本を おおきく
@@ -1197,10 +1330,10 @@ function drawCloseup() {
   if (G.key === 'dry' && P.down && !G.done) for (let n = 0; n < 4; n++) { ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); const a = G.t * 2.5 + n * Math.PI / 2, r0 = 14 + n * 7; ctx.arc(P.x, P.y, r0, a, a + 0.8); ctx.stroke(); }
   if (G.done) return;
   const need = G.key === 'cure' ? 3 : G.key === 'dry' ? 2.5 : (G.key === 'bond' && G.phase === 1) ? 2 : 0;
-  if (need) hint(P.down ? 'あと ' + Math.max(1, Math.ceil(need - G.holdT)) + ' びょう' : 'ゆびを はに おいてね');
+  if (need) hint(P.down ? 'あと ' + Math.max(1, Math.ceil(need - G.holdT)) + ' びょう' : 'はの うえで ボタンを おしたまま');
   else if (G.key === 'drill' || G.key === 'excavate') hint('げんきな ところ（しろ）は けずらない');
-  else if (G.key === 'masui') hint(G.phase ? 'ゆびを うごかさずに 3びょう' : 'まるの なかを こする');
-  else if (G.key === 'bite' && G.phase === 0) hint('はを タップ');
+  else if (G.key === 'masui') hint(G.phase ? 'うごかさずに 3びょう' : 'まるの なかを こする');
+  else if (G.key === 'bite' && G.phase === 0) hint('はの うえで ボタンを おす');
 }
 function mix(a, b, t) {
   const pa = [1, 3, 5].map(i => parseInt(a.substr(i, 2), 16)), pb = [1, 3, 5].map(i => parseInt(b.substr(i, 2), 16));
@@ -1300,13 +1433,14 @@ function buildSelect() {
   });
   $('#toCert').style.display = PATIENTS.every(p => st[p.id]) ? '' : 'none';
 }
-$('#startBtn').addEventListener('click', () => { audioInit(); buildSelect(); show('select'); });
+$('#startBtn').addEventListener('click', () => { audioInit(); SFX.start(); bgmStart(); buildSelect(); show('select'); });
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button'); if (b && b.id !== 'startBtn' && b.id !== 'abtn') { audioInit(); bgmStart(); SFX.tap(); } });
 $('#toTitle').addEventListener('click', () => show('title'));
 $('#toSelect').addEventListener('click', () => { buildSelect(); show('select'); });
-$('#quit').addEventListener('click', () => { loopsOff(); buildSelect(); show('select'); });
+$('#quit').addEventListener('click', () => { ctrlUp(); loopsOff(); buildSelect(); show('select'); });
 $('#mute').addEventListener('click', () => {
   muted = !muted; $('#mute').textContent = muted ? '×' : '♪';
-  if (MASTER) MASTER.gain.value = muted ? 0 : 0.6;
+  if (MASTER) MASTER.gain.value = muted ? 0 : 1;
 });
 $('#toCert').addEventListener('click', () => {
   const d = new Date();
@@ -1318,7 +1452,7 @@ $('#certName').addEventListener('input', e => { $('#certNm').textContent = (e.ta
 $('#certBack').addEventListener('click', () => { buildSelect(); show('select'); });
 
 // テスト用の入り口（自動プレイで使う）
-window.__haisha = { SD, audio: () => AC && AC.state, G, P, PATIENTS, startPatient, cell, high, zone, gel, dyed, bonded, count, STEPS, TB, N, CS, GUM, SLOTS, XR,
+window.__haisha = { CTRL, SD, audio: () => AC && AC.state, G, P, PATIENTS, startPatient, cell, high, zone, gel, dyed, bonded, count, STEPS, TB, N, CS, GUM, SLOTS, XR,
   consts: { DEC, SOFT, HOLE, RES, CUR, DEB, GRV, SEAL, SEALC, EN } };
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if ($('#select').classList.contains('on')) buildSelect(); });
 })();

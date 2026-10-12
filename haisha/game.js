@@ -3,7 +3,7 @@
 // てじゅんは じっさいの しんりょうに そろえる（むしば＝CRじゅうてん／おそうじ＝TBI〜PMTC〜フッそ／シーラント）
 (function () {
 const $ = s => document.querySelector(s);
-const FONT = '"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif';
+const FONT = '"DotGothic16","Hiragino Kaku Gothic ProN","Yu Gothic",monospace';
 const W = 360, H = 560, TOP = 88;          // キャンバスの論理サイズ。上の88pxは かんじゃさんの欄
 const cv = $('#cv'), ctx = cv.getContext('2d');
 let SC = 1;
@@ -1035,28 +1035,29 @@ function draw() {
   if (G.flash) {
     const t = G.flash.t, s = t < 0.2 ? lerp(0.4, 1.15, t / 0.2) : t < 0.3 ? lerp(1.15, 1, (t - 0.2) / 0.1) : 1;
     ctx.save(); ctx.globalAlpha = t > 0.9 ? 1 - (t - 0.9) / 0.3 : 1; ctx.translate(180, 300); ctx.scale(s, s);
-    text(ctx, G.flash.text, 0, 0, 46, '#ffe066', 'center', '#d0466e'); ctx.restore(); ctx.globalAlpha = 1;
+    text(ctx, G.flash.text, 0, 0, 46, '#ffd75e', 'center', '#3a1a00'); ctx.restore(); ctx.globalAlpha = 1;
   }
   if (G.fade > 0) { ctx.fillStyle = 'rgba(255,255,255,' + G.fade + ')'; ctx.fillRect(0, TOP, W, H - TOP); }
 }
 function drawHeader() {
-  ctx.fillStyle = '#fff7ee'; rr(ctx, 0, 0, W, TOP - 4, 22); ctx.fill();
+  { const hg = ctx.createLinearGradient(0, 0, 0, TOP); hg.addColorStop(0, '#3048b8'); hg.addColorStop(0.55, '#16247a'); hg.addColorStop(1, '#0a1250');
+    ctx.fillStyle = hg; ctx.fillRect(0, 0, W, TOP - 2); ctx.strokeStyle = '#7d8be0'; ctx.lineWidth = 2; ctx.strokeRect(3, 3, W - 6, TOP - 8); ctx.fillStyle = '#f2f2f8'; ctx.fillRect(0, TOP - 3, W, 2); }
   const scary = (G.key === 'drill' || G.key === 'excavate' || G.key === 'extract' || (G.key === 'masui' && G.phase === 1)) && P.down;
   const mood = G.ouchT > 0 ? 'ouch' : G.done && G.si === G.p.steps.length - 1 ? 'happy' : scary ? 'nervous' : G.key === 'xray' ? 'smile' : 'open';
-  ctx.save(); ctx.beginPath(); ctx.arc(46, 44, 36, 0, Math.PI * 2); ctx.fillStyle = '#ffe8d2'; ctx.fill(); ctx.clip();
+  ctx.save(); rr(ctx, 12, 9, 68, 68, 6); ctx.fillStyle = '#0a0f33'; ctx.fill(); ctx.strokeStyle = '#7d8be0'; ctx.lineWidth = 2; ctx.stroke(); ctx.clip();
   drawFace(ctx, 46, 48, 32, G.p, mood); ctx.restore();
-  text(ctx, G.p.name + G.p.hon + '（' + G.p.age + 'さい）', 92, 22, 16, '#2b3a4a', 'left');
+  text(ctx, G.p.name + G.p.hon + '（' + G.p.age + 'さい）', 92, 22, 16, '#ffffff', 'left', '#000');
   const n = G.p.steps.length, gap = Math.min(24, 168 / (n - 1)), rad = Math.min(8, gap * 0.36);
-  ctx.fillStyle = '#dbe7ea'; ctx.fillRect(100, 46.5, gap * (n - 1), 3);
+  ctx.fillStyle = '#3a4a8a'; ctx.fillRect(100, 46.5, gap * (n - 1), 3);
   for (let i = 0; i < n; i++) {
     const x = 100 + i * gap, y = 48;
     ctx.beginPath(); ctx.arc(x, y, i === G.si ? rad + 2 : rad, 0, Math.PI * 2);
-    ctx.fillStyle = i < G.si || (i === G.si && G.done) ? '#3cc4b4' : i === G.si ? '#ffc94a' : '#dbe7ea'; ctx.fill();
+    ctx.fillStyle = i < G.si || (i === G.si && G.done) ? '#6fd3ff' : i === G.si ? '#ffd75e' : '#3a4a8a'; ctx.fill();
   }
-  text(ctx, (G.si + 1) + ' / ' + n + '　' + G.step.label, 92, 72, 12, '#5d6f80', 'left');
-  text(ctx, 'やさしさ', 318, 22, 11, '#5d6f80');
+  text(ctx, (G.si + 1) + ' / ' + n + '　' + G.step.label, 92, 72, 12, '#ffd75e', 'left', '#000');
+  text(ctx, 'やさしさ', 318, 22, 11, '#b9c3ff', 'center', '#000');
   const s = stars();
-  for (let i = 0; i < 3; i++) drawHeart(ctx, 294 + i * 24, 48, 9, i < s ? '#ff7aa2' : '#e3d6dc');
+  for (let i = 0; i < 3; i++) drawHeart(ctx, 294 + i * 24, 48, 9, i < s ? '#ff4d6a' : '#2a3466');
 }
 function drawHeart(c, x, y, r, col) {
   c.beginPath(); c.moveTo(x, y + r * 0.9);

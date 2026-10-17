@@ -1295,7 +1295,7 @@ var LEVELS=[
 
 /* ===== 01_build.js ===== */
 /* build.py が毎回書き出す。手で直さない */
-var BUILD_AT="2026-10-06 18:29";
+var BUILD_AT="2026-10-18 00:42";
 
 /* ===== 10_core.js ===== */
 /* ============================ 定数 ============================ */
@@ -6583,7 +6583,7 @@ var WEAPONS=[
     need:function(p,lv,aim){ return wCount(1,"orbit")?0:this.cost; },
     use:function(p,x,y,lv,aim){
       var orb=wList(1,"orbit");
-      if(orb.length){ orbitThrow(p,orb,aim); return true; }
+      if(orb.length){ orbitThrow(p,orb,gearAim(aim)); return true; }   /* 上・ななめ上へ投げるのは8面のコントラ・アングルから（2026-10-17 院長指摘「上撃ちできちゃってる」。53_gear.js） */
       for(var i=0;i<ORBIT_N;i++)
         pshot({fx:"orbit",wid:1,x:p.x,y:p.y,w:10,h:10,dmg:2,pierce:true,once:true,ghost:true,   /* once：敵・ボスにふれたしずくは はじけて消える（1回出して最大3回＝強すぎないように） */
                ang:i/ORBIT_N*Math.PI*2,r:4,t:0});
@@ -6630,6 +6630,7 @@ var WEAPONS=[
     need:function(){ return this.cost; },
     use:function(p,x,y,lv,aim){
       if(wCount(3,"blob")>=2) return false;
+      aim=gearAim(aim);                            /* ▲の投げ上げ・遠投は8面のコントラ・アングルから＝無いと▲なしと同じ（2026-10-17 院長指摘「上撃ちできちゃってる」） */
       var vx=2.3, vy=-4.0;                         /* ふつう：約4マス先 */
       if(aim===2){ vx=0.7; vy=-5.6; }             /* ▲：高く・近く（約2マス先） */
       else if(aim===1){ vx=3.6; vy=-5.0; }         /* ▲＋←→：遠くへ（約8マス先） */
@@ -6645,7 +6646,7 @@ var WEAPONS=[
     } },
 
   { id:4, name:"ジンジバ・トルネード", short:"TORNADO", col:"#b07cff", cost:2, rate:16, noAim:true,
-    hint:"Yで床を走る竜巻（何度も当たる）。走っている間に▲を押すと、その場で上へ曲がる",
+    hint:"Yで床を走る竜巻（何度も当たる）。走っている間に▲を押すと、その場で上へ曲がる（8面のコントラ・アングルを とってから）",
     need:function(){ return this.cost; },
     use:function(p,x,y,lv,aim){
       if(wCount(4,"twister")>=2) return false;
@@ -6675,7 +6676,7 @@ var WEAPONS=[
         cubeDetonateAll(cubes);
         return true;
       }
-      var far=(aim===1||aim===2);
+      var far=(gearAim(aim)===1||gearAim(aim)===2);   /* ▲の遠投は8面のコントラ・アングルから＝無いと▲なしと同じ（2026-10-17 院長指摘「上撃ちできちゃってる」） */
       pshot({fx:"cube",wid:5,x:p.x+p.w/2-7+p.face*(far?6:18),y:p.y+p.h-18,w:14,h:14,
              vx:p.face*(far?3.4:1.3),vy:(far?-4.4:-2.2),grav:0.3,dmg:0,pierce:true,ghost:true,inert:true,
              t:0,fuse:CUBE_FUSE,arm:0,n:cubes.length});
@@ -6730,7 +6731,7 @@ var WEAPONS=[
     } },
 
   { id:8, name:"ハギシリ・ソー", short:"SAW", col:"#6f8fb5", cost:1, rate:11, noAim:true,
-    hint:"Yで回る丸ノコを投げる（つらぬく・3枚まで）。▲で上・▲＋←→でななめ上・空中で▼は下・▼＋←→でななめ下。地上の▼は前",
+    hint:"Yで回る丸ノコを投げる（つらぬく・3枚まで）。▲で上・▲＋←→でななめ上（8面のコントラ・アングルを とってから）・空中で▼は下・▼＋←→でななめ下。地上の▼は前",
     need:function(){ return this.cost; },
     use:function(p,x,y,lv,aim){
       if(wCount(8,"saw")>=SAW_MAX) return false;
@@ -6920,7 +6921,7 @@ function fireWeapon(lv){
   var y=p.y+(p.h===PH_SLIDE?4:9), x=p.x+(p.face>0?p.w:-6);
   /* ▲を押しながら撃つと真上、▲＋←→なら斜め上へ（院長指示 2026-09-04）。
      武器ごとの fire はそのまま使い、出てきた弾の向きと並びをまとめて回す */
-  var aim=aimDir(), n0=pbullets.length;
+  var aim=gearAim(aimDir()), n0=pbullets.length;   /* 上撃ち・ななめ上撃ちは8面のコントラ・アングルから（特殊武器も。2026-10-17 院長指摘「上撃ちできちゃってる」。53_gear.js） */
   if(aim===2){ x=p.x+p.w/2; y=p.y-2; }
   else if(aim===1){ x=p.x+p.w/2+p.face*p.w/2; y=p.y+2; }
   if(big) Wp.charged(p,x,y,big); else Wp.fire(p,x,y);
@@ -6941,7 +6942,8 @@ function fireWeaponNew(p,Wp,lv){
   if(lv>0 && need>wEnergy[w]){ lv=0; need=Wp.need?Wp.need(p,0,aim):Wp.cost; }
   if(need>wEnergy[w]){ if(!wBusy(w)) setWeapon(0); return false; }
   var y=p.y+(p.h===PH_SLIDE?4:9), x=p.x+(p.face>0?p.w:-6);
-  var turn=(aim && !Wp.noAim);
+  var turn=Wp.noAim?0:gearAim(aim);   /* 向き回し（上撃ち・ななめ上撃ち）は8面のコントラ・アングルから（2026-10-17 院長指摘）。
+                                       noAim の武器の▲（柱・フック・丸ノコ等）は武器の技なので aim はそのまま渡す */
   if(turn){
     if(aim===2){ x=p.x+p.w/2; y=p.y-2; }
     else { x=p.x+p.w/2+p.face*p.w/2; y=p.y+2; }
@@ -7185,7 +7187,7 @@ var W_STEP={
     if(b.cd>6){ b.cd=6; b.grind=14; }            /* 当たった：6フレームごとに当たり直し、しばらく その場で削る */
     if(b.grind>0) b.grind--;
     var sp=(b.grind>0)?0.3:1;
-    if(!b.up && (b.forceUp || (keys.up && !p.climb))){
+    if(!b.up && (b.forceUp || (keys.up && !p.climb && hasGear(G_ANGLE)))){   /* ▲で上へ曲げるのは8面のコントラ・アングルから（2026-10-17 院長指摘「上撃ちできちゃってる」。53_gear.js） */
       b.up=true; b.vx=0; b.vy=-5.0; b.onFloor=false;
       b.dmg=3;                                   /* 上へ曲げた竜巻は強い（空の相手をねらう技。床を走る間は2） */
       SFX.wTornadoUp(); part(b.x+b.w/2,b.y+b.h,"#e3ccff",8,2);
@@ -7513,7 +7515,7 @@ function sawDir(p){
   var h=(keys.right?1:0)-(keys.left?1:0);
   if(p.climb) return [p.face,0];
   var R=Math.SQRT1_2;
-  if(keys.up) return h?[h*R,-R]:[0,-1];
+  if(keys.up && hasGear(G_ANGLE)) return h?[h*R,-R]:[0,-1];   /* 上・ななめ上は8面のコントラ・アングルから＝無いと▲なしと同じ（2026-10-17 院長指摘「上撃ちできちゃってる」。53_gear.js） */
   if(keys.down && !wOnGround(p)) return h?[h*R,R]:[0,1];
   return [p.face,0];
 }
@@ -14152,7 +14154,7 @@ function drawPlayerSprite(){
       /* ▲を押している間は、溜めの光を撃つ向きへ寄せる＝「上に出るよ」の合図（文字は出さない。2026-09-29）。
          真上＝頭の上、ななめ上＝前の上。はしご中・伏せ中は aimDir が0なので動かない */
       var ad=(typeof aimDir==="function")?aimDir():0;
-      if(ad && curWeapon===0 && typeof gearAim==="function") ad=gearAim(ad);   /* フッ素ブラスターの上撃ちは8面のコントラ・アングルから＝無いときは光を寄せない（2026-10-06 院長指示。53_gear.js） */
+      if(ad && typeof gearAim==="function" && !(curWeapon>0 && WEAPONS[curWeapon].noAim)) ad=gearAim(ad);   /* 上撃ちは8面のコントラ・アングルから＝無いときは光を寄せない（フッ素ブラスター 2026-10-06・向きを回す特殊武器も 2026-10-17 院長指摘。53_gear.js）。▲が武器の技（noAim）のものは今までどおり */
       if(ad===2){ mx2=6; my2=-13; } else if(ad===1){ mx2=15; my2=-7; }
       ctx.globalAlpha=0.85; ctx.fillStyle=cs2[lv2];
       ctx.beginPath(); ctx.arc(mx2,my2,rr2,0,Math.PI*2); ctx.fill();
@@ -17668,7 +17670,7 @@ function endWarp(){
    ボス登場はボタンか画面タップで飛ばせる。撃破後（BRAVO・装備画面・お披露目）は飛ばせない（院長指示 2026-09-29）。 */
 
 var introT=0, INTRO_LEN=430;      /* 曲(32歩×bpm134=約7.16秒)と同じ長さ */
-var demoT=0, demoW=0, DEMO_LEN=260;          /* 2026-09-29 に340から短縮 */
+var demoT=0, demoW=0, DEMO_LEN=260, demoAngle0=false;          /* 2026-09-29 に340から短縮 */
 
 /* ---------------------------------------------------------------- ボス登場 */
 function startBossIntro(){
@@ -18048,6 +18050,8 @@ function drawGetw(){
 var DEMO_FADE=14;
 function startWeaponDemo(wid){
   demoW=wid; demoT=0;
+  /* 実演は ▲の技（上投げ・上へ曲げる・8方向）も見せたいので、その間だけ コントラ・アングルを持っている扱い。endWeaponDemo で戻す（2026-10-17） */
+  demoAngle0=hasGear(G_ANGLE); gearOwn[G_ANGLE]=true;
   reset();                       /* 平らな出だしの区画に主人公を戻す */
   ready=0; gateOn=false; boss=null;
   spawns=[]; pickups=[]; enemies=[]; pbullets=[]; ebullets=[]; parts=[];
@@ -18098,6 +18102,7 @@ function drawDemo(){
   }
 }
 function endWeaponDemo(){
+  gearOwn[G_ANGLE]=demoAngle0;   /* 実演の間だけ持たせていたコントラ・アングルを元に戻す（startWeaponDemo） */
   state="clear";
   showScreen("s-clear");
   var S=BOSSES[LEVELS[stageIdx].boss], got=WEAPONS[weaponOfStage(stageIdx)];
@@ -19685,7 +19690,7 @@ function gearApply(){
 function gearHazDmg(d){ return hasGear(G_GUARD)?Math.max(1,Math.round(d/2)):d; }
 /* 敵を倒したときに回復が出る割合（キシリトールガム） */
 function gearDropP(){ return hasGear(G_GUM)?0.55:0.34; }
-/* フッ素ブラスターの撃つ向き（25_game.js shoot・39_shin.js の溜めの光）：コントラ・アングルが無いと ▲ を押しても横（0）。
+/* 撃つ向き（25_game.js shoot・28_weapons.js fireWeapon の向き回し・39_shin.js の溜めの光）：コントラ・アングルが無いと ▲ を押しても横（0）。
    通常弾も溜め弾も同じ（2026-10-06 院長指示。前は通常弾だけ最初から上へ撃てた） */
 function gearAim(aim){ return hasGear(G_ANGLE)?aim:0; }
 /* キックスライディング中か（スライディング・シューズで すべっている間。伏せているときは違う） */

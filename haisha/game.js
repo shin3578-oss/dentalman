@@ -6,7 +6,9 @@ const $ = s => document.querySelector(s);
 const FONT = '"DotGothic16","Hiragino Kaku Gothic ProN","Yu Gothic",monospace';
 const W = 360, H = 560, TOP = 88;          // キャンバスの論理サイズ。上の88pxは かんじゃさんの欄
 const cv = $('#cv'), ctx = cv.getContext('2d');
-let SC = 1;
+const hcv = $('#hdr'), hctx = hcv.getContext('2d');
+let SC = 1, OY = 0;                         // OY：よこがめんでは かんじゃさんの欄を みぎの れつへ だして、まどを そのぶん おおきく する
+const LANDQ = window.matchMedia('(orientation:landscape) and (min-aspect-ratio:5/4)');
 
 // ---------- 画面きりかえ ----------
 function show(id) {
@@ -16,12 +18,15 @@ function show(id) {
 function resize() {
   const wrap = $('#stageWrap');
   if (!wrap.clientHeight) return;
-  const s = Math.max(0.3, Math.min(wrap.clientWidth / W, wrap.clientHeight / H));
+  OY = LANDQ.matches ? TOP : 0;
+  const VH = H - OY;
+  const s = Math.max(0.3, Math.min(wrap.clientWidth / W, wrap.clientHeight / VH));
   const d = Math.min(window.devicePixelRatio || 1, 2);
-  const pw = Math.round(W * s * d), ph = Math.round(H * s * d);
+  const pw = Math.round(W * s * d), ph = Math.round(VH * s * d);
+  if (OY) { const hw = Math.max(1, hcv.clientWidth); if (hcv.width !== Math.round(hw * d)) { hcv.width = Math.round(hw * d); hcv.height = Math.round(hw * TOP / W * d); } }
   // 大きさが かわらないときは さわらない（canvas の width を いれなおすと 一瞬 まっしろに なる）
   if (pw === cv.width && ph === cv.height) return;
-  cv.style.width = (W * s) + 'px'; cv.style.height = (H * s) + 'px';
+  cv.style.width = (W * s) + 'px'; cv.style.height = (VH * s) + 'px';
   cv.width = pw; cv.height = ph;
   SC = cv.width / W;
   if (G.step && G.running && !G.finished && G.toolX != null) draw();
@@ -102,6 +107,8 @@ const SFX = {
   chu() { tone(1400 + Math.random() * 500, 0.05, 'sine', 0.07, 700); },
   tick(n) { tone([659, 784, 988, 1175][n] || 1175, 0.1, 'triangle', 0.13); },
   pi() { tone(1568, 0.07, 'sine', 0.1); },
+  // ファイルで こする「シャリッ」（モーターでは ないので みじかい こすれる おとだけ）
+  rasp() { if (!AC || !NOISE) return; const t = AC.currentTime, s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(); s.buffer = NOISE; f.type = 'bandpass'; f.frequency.value = 5200; f.Q.value = 1.4; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09); s.connect(f); f.connect(g); g.connect(SFXBUS); s.start(t, Math.random() * 1.5); s.stop(t + 0.12); },
   grip() { tone(2200, 0.03, 'square', 0.07); tone(1600, 0.04, 'square', 0.06, 0, 0.05); },
   out() { tone(500, 0.12, 'sine', 0.18, 1400); [1047, 1319, 1568].forEach((f, i) => tone(f, 0.2, 'triangle', 0.16, 0, 0.12 + i * 0.09)); },
   fanfare() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.25, 'triangle', 0.22, 0, i * 0.13)); tone(1047, 0.7, 'sine', 0.2, 0, 0.55); tone(1319, 0.7, 'sine', 0.14, 0, 0.55); },
@@ -573,7 +580,26 @@ function buildArch(with6) {
   }
   G.arch = { A, k, thMin: thMin - 0.12, thMax: thMax + 0.12 };
   G.teeth = teeth;
+  // Canva の え（plates.js）が あれば、は の いち・おおきさを え に あわせる
+  // にゅうし 10ぽんは Canva の え。6さいきゅうしは その うしろに、した の はならびの え から きりだした だいきゅうし（m6.png）を おく
+  const PLK = (window.PLATES || {}).karch;
+  G.arch.plate = null;
+  if (PLK && PLK.teeth && PLK.teeth.length === 10) {
+    for (const side of [1, -1]) {
+      const mine = teeth.filter(t => t.side === side), pt = PLK.teeth.filter(q => side === 1 ? q.x > 180 : q.x <= 180).sort((a, b) => b.y - a.y);
+      if (pt.length !== 5) return;
+      const fit = (t, x, y, sz) => { const f = sz / Math.max(1, (t.w + t.d) / 2); t.x = x; t.y = y; t.w *= f; t.d *= f; t.hitR = Math.max(t.w, t.d) / 2 + 6;
+        for (const b of t.blobs) { b.lx *= f; b.ly *= f; b.r *= f; } for (const b of t.tartar) { b.lx *= f; b.ly *= f; } };
+      mine.forEach((t, i) => {
+        if (i < 5) { const q = pt[i]; fit(t, q.x, q.y, (q.a + q.b) / 2 * 0.86); }
+        else { const e = pt[4], d = pt[3], dx = e.x - d.x, dy = e.y - d.y, l = Math.hypot(dx, dy); fit(t, e.x + dx / l * 46, e.y + dy / l * 46, 58); t.ang = Math.atan2(dy, dx) - Math.PI / 2; }
+      });
+    }
+    G.arch.plate = PLK;
+  }
 }
+const PIMGS = {};
+function plateImg(src) { let i = PIMGS[src]; if (!i) { i = PIMGS[src] = new Image(); i.src = src; } return i.complete && i.naturalWidth ? i : null; }
 function toWorld(t, lx, ly) {
   const c = Math.cos(t.ang), s = Math.sin(t.ang);
   return { x: t.x + lx * c - ly * s, y: t.y + lx * s + ly * c };
@@ -587,14 +613,16 @@ function teethNear(x, y, r) { return G.teeth.filter(t => Math.hypot(t.x - x, t.y
 
 // ---------- レントゲン ----------
 const XR = { D: { x: 116, w: 86 }, E: { x: 236, w: 112 }, top: 205, cej: 292, apex: 420,
-  cav: { x: 236 + 24, y: 240, rx: 15, ry: 24 } };
+  cav: { x: 236 + 24, y: 240, rx: 15, ry: 24 }, germY: 466 };
+// Canva の え（plates.js の kxray）が あれば、はの いち・むしばの ばしょを え に あわせる
+function xrSync() { const P = (window.PLATES || {}).kxray; if (P && !XR.plate) { Object.assign(XR, P.XR); XR.plate = P; } return XR.plate; }
 
 // ---------- ポインタ ----------
 // ゆびで さわるときは、どうぐの さきを ゆびの すこし うえに だす（ゆびで かくれずに みながら ちりょうできる）
 const TOUCH_OFF = 56;
 const P = { x: 180, y: 318, down: false, justDown: false, sx: 0, sy: 0, moved: 0, fx: 180, fy: 318, hover: false,
   off: 0, rx: 180, ry: 318, rsx: 0, rsy: 0 };
-function toLocal(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
+function toLocal(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * (H - OY) + OY }; }
 // ゆびで がめんを さわったときは カーソルを そこへ うごかすだけ（はを えらぶ ばめんだけ タップで きまる）
 const TAP_STEPS = ['search', 'find6', 'xray', 'find4', 'xray4'];
 function isTapStep() { if (G.step && G.step.view === 'case') return !!(CASE.isTap && CASE.isTap()); return TAP_STEPS.includes(G.key) || (G.key === 'bite' && G.phase === 0); }
@@ -687,7 +715,7 @@ const HOW = {
   breath: '「つかう」を おしたまま すう → メーターが いっぱいに なったら はなして はく',
   extract: '＋を はに あわせて「つかう」を おしたまま、パッドを よこに ゆっくり うごかして ゆらす',
 };
-function howText() { return HOW[opKind()] || HOW.rub; }
+function howText() { return (G.step && G.step.how) || HOW[opKind()] || HOW.rub; }
 const W8 = (x, y, dn, d) => ({ x, y, dn, d });
 function pTap(x, y) { return [W8(x, y, false, 0.8), W8(x, y, true, 0.3), W8(x, y, false, 0.4)]; }
 function pRub(pts) { if (!pts || !pts.length) return []; const o = [W8(pts[0][0], pts[0][1], false, 0.8), W8(pts[0][0], pts[0][1], true, 0.25)]; for (let i = 1; i < pts.length; i++) o.push(W8(pts[i][0], pts[i][1], true, 0.4)); o.push(W8(pts[pts.length - 1][0], pts[pts.length - 1][1], false, 0.25)); return o; }
@@ -706,8 +734,8 @@ function buildDemo() {
     case 'search': { const p = tt(t => t.cavity); return pRub([[110, 230], [250, 230], [p[0], p[1]]]).slice(0, -1).concat(pTap(p[0], p[1])); }
     case 'find6': return pTap(...tt(t => t.type === 'M6'));
     case 'find4': return pTap(...tt(t => t.loose));
-    case 'xray': return pTap(XR.cav.x, XR.cav.y);
-    case 'xray4': return pTap(SD.qx, SD.qy);
+    case 'xray': xrSync(); return pTap(XR.cav.x, XR.cav.y);
+    case 'xray4': sdSync(); return pTap(SD.qx, SD.qy);
     case 'masui': return G.phase ? pHold(GUM.x, GUM.y, 1.6) : pRub(zig(GUM.x, GUM.y, 14, 8));
     case 'wattes': return pDrag([G.wattes[0].x, G.wattes[0].y], [SLOTS[1].x, SLOTS[1].y]);
     case 'drill': return pRub(cellZig(i => cell[i] === DEC));
@@ -725,9 +753,9 @@ function buildDemo() {
     case 'seal': return pRub(cellZig(i => cell[i] === GRV));
     case 'dye': case 'brush': case 'fluor': case 'pmtc': return pRub(T.filter(t => t.side === 1).slice(0, 4).map(t => [t.x, t.y]));
     case 'scale': { const o = []; for (const t of T) for (const b of t.tartar) { const w = toWorld(t, b.lx, b.ly); o.push([w.x, w.y]); } return pRub(o.slice(0, 4)); }
-    case 'topical': return pRub(zig(SD.rub.x, SD.rub.y, 14, 8));
-    case 'extract': { const x = SD.px, y = SD.gum - 40; return [W8(x, y, false, 0.8), W8(x, y, true, 0.3), W8(x - 26, y, true, 0.5), W8(x + 26, y, true, 0.6), W8(x - 26, y, true, 0.6), W8(x, y, true, 0.4)]; }
-    case 'gauze': return pHold(SD.sock.x, SD.sock.y, 1.8);
+    case 'topical': sdSync(); return pRub(zig(SD.rub.x, SD.rub.y, 14, 8));
+    case 'extract': { sdSync(); const x = SD.px, y = SD.gum - 40; return [W8(x, y, false, 0.8), W8(x, y, true, 0.3), W8(x - 26, y, true, 0.5), W8(x + 26, y, true, 0.6), W8(x - 26, y, true, 0.6), W8(x, y, true, 0.4)]; }
+    case 'gauze': sdSync(); return pHold(SD.sock.x, SD.sock.y, 1.8);
   }
   return null;
 }
@@ -869,11 +897,11 @@ function tapAt(x, y) {
     if (t.type === 'M6') { pop(t.x, t.y - 34, '6さいきゅうし！', '#ffe066'); stepDone(); }
     else { SFX.no(); pop(t.x, t.y - 26, 'これは こどもの は'); }
   } else if (k === 'xray') {
-    const c = XR.cav;
+    xrSync(); const c = XR.cav;
     if (Math.hypot((x - c.x) / (c.rx + 10), (y - c.y) / (c.ry + 10)) < 1) { pop(c.x, c.y - 40, 'むしば みつけた！', '#ffe066'); stepDone(); return; }
     for (const T of [XR.D, XR.E]) {
       if (Math.abs(x - T.x) < T.w * 0.24 && y > XR.top + 30 && y < XR.cej + 20) { SFX.no(); pop(x, y - 26, 'しんけいの へや（しずい）だよ'); return; }
-      if (Math.hypot(x - T.x, y - 466) < 36) { SFX.no(); pop(x, y - 30, 'おとなの はの たまご！'); return; }
+      if (Math.hypot(x - T.x, y - XR.germY) < 36) { SFX.no(); pop(x, y - 30, 'おとなの はの たまご！'); return; }
       if (Math.abs(x - T.x) < T.w / 2 && y > XR.top && y < XR.apex) { SFX.no(); pop(x, y - 26, 'ここは げんき'); return; }
     }
   } else if (k === 'find4') {
@@ -1175,20 +1203,21 @@ function text(c, s, x, y, size, color, align, stroke) {
   if (stroke) { c.lineWidth = size * 0.28; c.strokeStyle = stroke; c.lineJoin = 'round'; c.strokeText(s, x, y); }
   c.fillStyle = color; c.fillText(s, x, y);
 }
-function hint(s) { text(ctx, s, 180, H - 22, 13, '#ffffff', 'center', 'rgba(60,10,20,.85)'); }
+function hint(s) { if (window.__plate) return; text(ctx, s, 180, H - 22, 13, '#ffffff', 'center', 'rgba(60,10,20,.85)'); }
 function draw() {
-  ctx.setTransform(SC, 0, 0, SC, 0, 0);
+  ctx.setTransform(SC, 0, 0, SC, 0, -OY * SC);
   ctx.clearRect(0, 0, W, H);
   ctx.save(); rr(ctx, 0, TOP, W, H - TOP, 0); ctx.clip();
   const v = G.step.view;
   if (v === 'case') CASE.draw(); else if (v === 'arch') drawArch(); else if (v === 'xray') drawXray(); else if (v === 'side') drawSide(); else drawCloseup();
   drawParts();
   ctx.restore();
-  drawHeader();
+  if (OY) { const k = hcv.width / W; hctx.setTransform(k, 0, 0, k, 0, 0); hctx.clearRect(0, 0, W, TOP); drawHeader(hctx); } else drawHeader(ctx);
   if (P.down && P.off && !G.done && !isTapStep() && !['wattes'].includes(G.key)) {
     ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(P.x, P.y, 15, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
   }
+  if (window.__plate) return;
   if (DEMO.on) drawDemo(); else drawTool();
   if (CTRL.used && !G.done && !DEMO.on) {
     ctx.save(); ctx.strokeStyle = 'rgba(40,20,30,.7)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(CTRL.cx, CTRL.cy, 11, 0, Math.PI * 2); ctx.stroke();
@@ -1204,25 +1233,25 @@ function draw() {
   }
   if (G.fade > 0) { ctx.fillStyle = 'rgba(255,255,255,' + G.fade + ')'; ctx.fillRect(0, TOP, W, H - TOP); }
 }
-function drawHeader() {
-  { const hg = ctx.createLinearGradient(0, 0, 0, TOP); hg.addColorStop(0, '#3048b8'); hg.addColorStop(0.55, '#16247a'); hg.addColorStop(1, '#0a1250');
-    ctx.fillStyle = hg; ctx.fillRect(0, 0, W, TOP - 2); ctx.strokeStyle = '#7d8be0'; ctx.lineWidth = 2; ctx.strokeRect(3, 3, W - 6, TOP - 8); ctx.fillStyle = '#f2f2f8'; ctx.fillRect(0, TOP - 3, W, 2); }
+function drawHeader(c) {
+  { const hg = c.createLinearGradient(0, 0, 0, TOP); hg.addColorStop(0, '#3048b8'); hg.addColorStop(0.55, '#16247a'); hg.addColorStop(1, '#0a1250');
+    c.fillStyle = hg; c.fillRect(0, 0, W, TOP - 2); c.strokeStyle = '#7d8be0'; c.lineWidth = 2; c.strokeRect(3, 3, W - 6, TOP - 8); c.fillStyle = '#f2f2f8'; c.fillRect(0, TOP - 3, W, 2); }
   const scary = (G.step.scary || G.key === 'drill' || G.key === 'excavate' || G.key === 'extract' || (G.key === 'masui' && G.phase === 1)) && P.down;
   const mood = G.ouchT > 0 ? 'ouch' : G.done && G.si === G.p.steps.length - 1 ? 'happy' : scary ? 'nervous' : G.key === 'xray' ? 'smile' : 'open';
-  ctx.save(); rr(ctx, 12, 9, 68, 68, 6); ctx.fillStyle = '#0a0f33'; ctx.fill(); ctx.strokeStyle = '#7d8be0'; ctx.lineWidth = 2; ctx.stroke(); ctx.clip();
-  drawPortrait(ctx, 12, 9, 68, G.p, mood, G.t); ctx.restore();
-  text(ctx, G.p.name + G.p.hon + '（' + G.p.age + 'さい）', 92, 22, 16, '#ffffff', 'left', '#000');
+  c.save(); rr(c, 12, 9, 68, 68, 6); c.fillStyle = '#0a0f33'; c.fill(); c.strokeStyle = '#7d8be0'; c.lineWidth = 2; c.stroke(); c.clip();
+  drawPortrait(c, 12, 9, 68, G.p, mood, G.t); c.restore();
+  text(c, G.p.name + G.p.hon + '（' + G.p.age + 'さい）', 92, 22, 16, '#ffffff', 'left', '#000');
   const n = G.p.steps.length, gap = Math.min(24, 168 / (n - 1)), rad = Math.min(8, gap * 0.36);
-  ctx.fillStyle = '#3a4a8a'; ctx.fillRect(100, 46.5, gap * (n - 1), 3);
+  c.fillStyle = '#3a4a8a'; c.fillRect(100, 46.5, gap * (n - 1), 3);
   for (let i = 0; i < n; i++) {
     const x = 100 + i * gap, y = 48;
-    ctx.beginPath(); ctx.arc(x, y, i === G.si ? rad + 2 : rad, 0, Math.PI * 2);
-    ctx.fillStyle = i < G.si || (i === G.si && G.done) ? '#6fd3ff' : i === G.si ? '#ffd75e' : '#3a4a8a'; ctx.fill();
+    c.beginPath(); c.arc(x, y, i === G.si ? rad + 2 : rad, 0, Math.PI * 2);
+    c.fillStyle = i < G.si || (i === G.si && G.done) ? '#6fd3ff' : i === G.si ? '#ffd75e' : '#3a4a8a'; c.fill();
   }
-  text(ctx, (G.si + 1) + ' / ' + n + '　' + G.step.label, 92, 72, 12, '#ffd75e', 'left', '#000');
-  text(ctx, 'やさしさ', 318, 22, 11, '#b9c3ff', 'center', '#000');
+  text(c, (G.si + 1) + ' / ' + n + '　' + G.step.label, 92, 72, 12, '#ffd75e', 'left', '#000');
+  text(c, 'やさしさ', 318, 22, 11, '#b9c3ff', 'center', '#000');
   const s = stars();
-  for (let i = 0; i < 3; i++) drawHeart(ctx, 294 + i * 24, 48, 9, i < s ? '#ff4d6a' : '#2a3466');
+  for (let i = 0; i < 3; i++) drawHeart(c, 294 + i * 24, 48, 9, i < s ? '#ff4d6a' : '#2a3466');
 }
 function drawHeart(c, x, y, r, col) {
   c.beginPath(); c.moveTo(x, y + r * 0.9);
@@ -1281,7 +1310,9 @@ function drawFace(c, x, y, r, p, mood) {
 
 // くちの なか全体
 function drawArch() {
-  const A = G.arch.A, k = G.arch.k;
+  const A = G.arch.A, k = G.arch.k, PLK = G.arch.plate, pim = PLK && plateImg(PLK.img);
+  if (pim) ctx.drawImage(pim, 0, TOP, W, H - TOP);
+  else {
   ctx.fillStyle = '#5c1d2a'; ctx.fillRect(0, TOP, W, H - TOP);
   ctx.strokeStyle = '#e88a95'; ctx.lineWidth = 16; rr(ctx, 8, TOP + 8, W - 16, H - TOP - 16, 40); ctx.stroke();
   ctx.strokeStyle = '#f6b2ba'; ctx.lineWidth = 4; rr(ctx, 14, TOP + 14, W - 28, H - TOP - 28, 36); ctx.stroke();
@@ -1293,7 +1324,9 @@ function drawArch() {
   ctx.beginPath(); ctx.ellipse(A.cx, A.cy, A.rx, A.ry, 0, G.arch.thMin, G.arch.thMax); ctx.stroke();
   ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.ellipse(A.cx, A.cy, A.rx + 5 * k, A.ry + 5 * k, 0, G.arch.thMin + 0.05, G.arch.thMax - 0.05); ctx.stroke();
-  for (const t of G.teeth) drawArchTooth(t);
+  }
+  if (pim) { const m6 = plateImg('m6.png'); if (m6) for (const t of G.teeth) if (t.type === 'M6') { ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.ang); const h = t.w * 1.06, w = h * m6.width / m6.height; ctx.drawImage(m6, -w / 2, -h / 2, w, h); ctx.restore(); } }
+  for (const t of G.teeth) drawArchTooth(t, !!pim);
   for (const t of G.teeth) for (const b of t.tartar) {
     if (b.hp <= 0) continue;
     const w = toWorld(t, b.lx, b.ly);
@@ -1318,7 +1351,7 @@ function drawArch() {
   if (G.key === 'scale' && !G.done) hint('したの まえばの うらがわ（したの がわ）に あるよ');
   if (G.key === 'fluor' && G.done) hint('30ぷんは のんだり たべたり しないでね');
 }
-function drawArchTooth(t) {
+function drawArchTooth(t, onPlate) {
   if (t.loose) {   // うしろ（したがわ）に はえてきた おとなの は
     ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.ang); ctx.translate(0, -t.d * 0.95);
     ctx.fillStyle = '#fffdf6'; ctx.strokeStyle = '#d6c9ad'; ctx.lineWidth = 1.5;
@@ -1327,6 +1360,7 @@ function drawArchTooth(t) {
   }
   ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.ang + (t.loose && G.key === 'find4' ? Math.sin(G.t * 5) * 0.06 : 0));
   const w = t.w, d = t.d, rad = Math.min(w, d) * (t.molar ? 0.32 : t.type === 'C' ? 0.48 : 0.4);
+  if (!onPlate) {
   const g = ctx.createLinearGradient(-w / 2, -d / 2, w / 2, d / 2);
   g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#ece3cf');
   ctx.fillStyle = g; ctx.strokeStyle = '#d6c9ad'; ctx.lineWidth = 1.5;
@@ -1338,6 +1372,7 @@ function drawArchTooth(t) {
     ctx.strokeStyle = 'rgba(205,189,153,.8)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(-w * 0.3, 0); ctx.lineTo(w * 0.3, 0); ctx.stroke();
   }
   ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.ellipse(-w * 0.18, -d * 0.18, w * 0.12, d * 0.08, -0.4, 0, Math.PI * 2); ctx.fill();
+  }
   if (t.plaque > 0.01) for (const b of t.blobs) {
     const a = t.plaque;
     if (t.dyed < 1) { ctx.fillStyle = 'rgba(255,255,235,' + (0.35 * a * (1 - t.dyed)) + ')'; ctx.beginPath(); ctx.arc(b.lx, b.ly, b.r, 0, Math.PI * 2); ctx.fill(); }
@@ -1348,7 +1383,12 @@ function drawArchTooth(t) {
     ctx.fillStyle = '#4a2c18'; ctx.beginPath(); ctx.ellipse(w * 0.08, -d * 0.02, w * 0.17, d * 0.15, 0.3, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#1e120a'; ctx.beginPath(); ctx.ellipse(w * 0.09, -d * 0.02, w * 0.08, d * 0.07, 0.3, 0, Math.PI * 2); ctx.fill();
   }
-  if (t.erupt) {
+  if (t.erupt && onPlate) {   // はえかけ：うしろ はんぶんに はぐきが かぶさっている
+    // ＋y が おく がわ（buildArch で むきを そろえている）
+    const g = ctx.createRadialGradient(0, d * 0.62, d * 0.05, 0, d * 0.62, d * 0.46); g.addColorStop(0, 'rgba(226,124,132,.97)'); g.addColorStop(0.65, 'rgba(230,130,138,.9)'); g.addColorStop(1, 'rgba(232,134,142,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, d * 0.5, w * 0.6, d * 0.34, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  if (t.erupt && !onPlate) {
     ctx.fillStyle = 'rgba(242,154,166,.92)'; ctx.beginPath();
     ctx.ellipse(t.side * w * 0.42, 0, w * 0.32, d * 0.62, 0, 0, Math.PI * 2); ctx.fill();
   }
@@ -1386,6 +1426,22 @@ function molarSidePath(c, x, w, top, cej, apex, inset) {
   c.closePath();
 }
 function drawXray() {
+  const XP = xrSync(), xim = XP && plateImg(XP.img);
+  if (xim) {
+    ctx.drawImage(xim, 0, TOP, W, H - TOP);
+    const c = XR.cav, cg = ctx.createRadialGradient(c.x, c.y, 2, c.x, c.y, c.ry);   // はと はの あいだの むしば（くろく うつる）
+    cg.addColorStop(0, 'rgba(8,10,12,.92)'); cg.addColorStop(0.65, 'rgba(18,22,26,.75)'); cg.addColorStop(1, 'rgba(40,44,50,0)');
+    ctx.fillStyle = cg; ctx.beginPath(); ctx.ellipse(c.x, c.y, c.rx, c.ry, 0.15, 0, Math.PI * 2); ctx.fill();
+    if (G.hintT > 12 && !G.done) { ctx.strokeStyle = 'rgba(255,224,102,' + (0.5 + 0.5 * Math.sin(G.t * 6)) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(c.x, c.y, c.rx + 10, c.ry + 10, 0.15, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.globalAlpha = 0.9;
+    text(ctx, 'エナメルしつ（いちばん しろい）', 120, XR.top - 14, 11, '#e9edf0', 'center', 'rgba(0,0,0,.6)');
+    text(ctx, 'しずい', XP.pulpLbl[0], XP.pulpLbl[1], 10, '#e9edf0', 'center', 'rgba(0,0,0,.6)');
+    text(ctx, 'おとなの はの たまご', 180, XR.germY + 52, 11, '#cfd5da', 'center', 'rgba(0,0,0,.6)');
+    ctx.globalAlpha = 1;
+    if (G.done) { ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(c.x, c.y, c.rx + 8, c.ry + 8, 0.15, 0, Math.PI * 2); ctx.stroke(); }
+    text(ctx, 'レントゲン', 310, TOP + 18, 11, '#7f8a94', 'center');
+    return;
+  }
   ctx.fillStyle = '#07090c'; ctx.fillRect(0, TOP, W, H - TOP);
   const bg = ctx.createLinearGradient(0, XR.cej - 10, 0, H);
   bg.addColorStop(0, 'rgba(120,128,136,0)'); bg.addColorStop(0.1, 'rgba(120,128,136,.55)'); bg.addColorStop(1, 'rgba(90,96,104,.6)');
@@ -1423,6 +1479,8 @@ function drawXray() {
 
 // よこから みた したの まえば（だんめんず）。こどもの はの うしろ（したがわ）に おとなの はが そだっている
 const SD = { px: 150, gum: 300, qx: 212, qy: 345, piv: 330, sock: { x: 150, y: 302 }, rub: { x: 112, y: 318, r: 22 } };
+// Canva の え（plates.js の kside）が あれば、いちを え に あわせる
+function sdSync() { const P = (window.PLATES || {}).kside; if (P && !SD.plate) { Object.assign(SD, { px: 149.17, gum: 280, qx: 216.67, qy: 330.67, piv: 340, sock: { x: 149.17, y: 284 }, rub: { x: 112, y: 296, r: 22 } }); SD.plate = P; } return SD.plate; }
 function primPath(c) {   // ねもと(0,0)が きじゅんの こどもの まえば。ねっこは とけて みじかい
   c.beginPath(); c.moveTo(-17, 0);
   c.bezierCurveTo(-19, -30, -10, -70, -5, -84); c.lineTo(4, -82);
@@ -1436,6 +1494,53 @@ function permPath(c) {   // おとなの まえば（ねっこは まだ そだ�
   c.lineTo(16, 70); c.lineTo(9, 92); c.lineTo(-9, 92); c.lineTo(-16, 70); c.closePath();
 }
 function drawSide() {
+  const xr = G.key === 'xray4', E = G.ext, SP = sdSync(), sbg = SP && plateImg(E.out ? SP.bg : SP.img), spr = SP && plateImg(SP.prim);
+  if (SP && xr && plateImg(SP.xr)) {
+    ctx.drawImage(plateImg(SP.xr), 0, TOP, W, H - TOP);
+    ctx.globalAlpha = 0.9; text(ctx, 'こどもの は', SP.tip[0] - 4, SP.tip[1] - 14, 11, '#e9edf0', 'center', 'rgba(0,0,0,.6)'); text(ctx, 'レントゲン', 310, TOP + 18, 11, '#7f8a94', 'center'); ctx.globalAlpha = 1;
+    const ring = a => { ctx.strokeStyle = 'rgba(255,224,102,' + a + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(SD.qx, SD.qy, 40, 100, -0.05, 0, Math.PI * 2); ctx.stroke(); };
+    if (G.done) { ring(1); text(ctx, 'おとなの は', SD.qx + 30, SD.qy + 118, 12, '#ffe066', 'center'); }
+    else if (G.hintT > 12) ring(0.5 + 0.5 * Math.sin(G.t * 3));
+    return;
+  }
+  if (sbg && spr && !xr) {
+    ctx.drawImage(E.out || G.key === 'extract' ? plateImg(SP.bg) || sbg : sbg, 0, TOP, W, H - TOP);
+    // こどもの は（ぐらぐら）：ねっこの さきを ささえに よこに ゆれ、うえへ ぬける
+    if (G.key === 'extract' || E.out) {
+      const sp = SP.spr, piv = SP.apex;
+      if (!E.out || E.outT < 0.6) {
+        ctx.save();
+        if (E.out) { const t = E.outT / 0.6; ctx.translate(lerp(piv[0], 300, t), lerp(piv[1] - E.lift, 150, t)); ctx.scale(1 - t * 0.5, 1 - t * 0.5); ctx.translate(-piv[0], -piv[1]); }
+        else { ctx.translate(piv[0], piv[1] - E.lift); ctx.rotate(E.ang); ctx.translate(-piv[0], -piv[1]); }
+        ctx.drawImage(spr, sp.x, sp.y, sp.w, sp.h); ctx.restore();
+      }
+    }
+    if (E.gauze || (G.key === 'gauze' && P.down && !G.done)) {
+      const gx = E.gauze ? SD.sock.x : P.x, gy = E.gauze ? SD.sock.y - 10 : P.y;
+      ctx.fillStyle = '#ffffff'; rr(ctx, gx - 22, gy - 14, 44, 28, 6); ctx.fill();
+      ctx.strokeStyle = 'rgba(180,190,200,.7)'; ctx.lineWidth = 1;
+      for (let i = -16; i <= 16; i += 8) { ctx.beginPath(); ctx.moveTo(gx + i, gy - 12); ctx.lineTo(gx + i, gy + 12); ctx.stroke(); }
+    }
+    text(ctx, 'くちびる', 40, TOP + 40, 11, '#ffe7ec', 'center', 'rgba(60,10,20,.7)');
+    text(ctx, 'した', 318, TOP + 40, 11, '#ffe7ec', 'center', 'rgba(60,10,20,.7)');
+    text(ctx, 'よこから みた だんめん', 290, TOP + 18, 11, '#ffd5dc', 'center');
+    return drawSideHints();
+  }
+  return drawSideOld();
+}
+function drawSideHints() {
+  const E = G.ext;
+  if (G.done) return;
+  if (G.key === 'topical') {
+    const c = SD.rub;
+    ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    if (G.holdT > 0) { ctx.fillStyle = 'rgba(255,240,180,' + 0.5 * clamp(G.holdT, 0, 1) + ')'; ctx.beginPath(); ctx.arc(c.x, c.y, c.r - 3, 0, Math.PI * 2); ctx.fill(); }
+    hint('まるの なかを こする');
+  }
+  if (G.key === 'extract') hint(G.phase ? 'はを つかんだまま うえへ' : 'はを つかんで よこに ゆらゆら');
+  if (G.key === 'gauze') hint(P.down ? 'あと ' + Math.max(1, Math.ceil(3 - G.holdT)) + ' びょう' : 'あなの うえで ボタンを おしたまま');
+}
+function drawSideOld() {
   const xr = G.key === 'xray4', E = G.ext;
   ctx.fillStyle = xr ? '#07090c' : '#5c1d2a'; ctx.fillRect(0, TOP, W, H - TOP);
   if (!xr) {
@@ -1621,7 +1726,7 @@ const TOOLSHEET = new Image(); TOOLSHEET.src = 'tools.png';
 const TOOLSPR = {"turbine": {"x": 0, "y": 0, "tx": 7, "ty": 37}, "engine": {"x": 200, "y": 0, "tx": 4, "ty": 40}, "straight": {"x": 400, "y": 0, "tx": 10, "ty": 9}, "polisher": {"x": 600, "y": 0, "tx": 19, "ty": 32}, "mirror": {"x": 800, "y": 0, "tx": 27, "ty": 13}, "vacuum": {"x": 1000, "y": 0, "tx": 28, "ty": 8}, "threeway": {"x": 0, "y": 200, "tx": 8, "ty": 20}, "syringe": {"x": 200, "y": 200, "tx": 8, "ty": 9}, "resin": {"x": 400, "y": 200, "tx": 11, "ty": 17}, "light": {"x": 600, "y": 200, "tx": 9, "ty": 25}, "brush": {"x": 800, "y": 200, "tx": 24, "ty": 13}, "scaler": {"x": 1000, "y": 200, "tx": 15, "ty": 12}, "probe": {"x": 0, "y": 400, "tx": 10, "ty": 11}, "forceps": {"x": 200, "y": 400, "tx": 27, "ty": 9}, "scalpel": {"x": 400, "y": 400, "tx": 10, "ty": 12}, "needle": {"x": 600, "y": 400, "tx": 18, "ty": 10}, "file": {"x": 800, "y": 400, "tx": 11, "ty": 11}, "implantdrill": {"x": 1000, "y": 400, "tx": 7, "ty": 5}, "scanner": {"x": 0, "y": 600, "tx": 18, "ty": 24}, "tweezer": {"x": 200, "y": 600, "tx": 16, "ty": 20}, "micro": {"x": 400, "y": 600, "tx": 12, "ty": 7}, "gauze": {"x": 600, "y": 600, "tx": 100, "ty": 100}, "paper": {"x": 800, "y": 600, "tx": 9, "ty": 15}};
 const TOOLMAP = { turbine: 'turbine', engine: 'engine', straight: 'straight', polisher: 'polisher', mirror: 'mirror', vacuum: 'vacuum', water: 'threeway', air: 'threeway',
   syringe: 'syringe', resin: 'resin', sealant: 'resin', light: 'light', brush: 'brush', scaler: 'scaler', probe: 'probe', forceps: 'forceps', scalpel: 'scalpel',
-  needle: 'needle', file: 'file', implantdrill: 'implantdrill', scanner: 'scanner', tweezer: 'tweezer', swab: 'micro', fluor: 'micro', detector: 'micro',
+  needle: 'needle', implantdrill: 'implantdrill', scanner: 'scanner', tweezer: 'tweezer', swab: 'micro', fluor: 'micro', detector: 'micro',
   bondbrush: 'micro', etch: 'micro', gauze: 'gauze', paper: 'paper' };
 const TIPCOL = { swab: '#ffe9a8', fluor: '#a6e3ff', detector: '#e8285a', bondbrush: '#f4f0d0', etch: '#3f7dff', resin: '#efe3c2', sealant: '#fff1b8' };
 function drawToolSprite(tool, x, y) {

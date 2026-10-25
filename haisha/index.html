@@ -145,10 +145,53 @@ ruby rt{font-size:.5em}
 #abtn{width:104px;height:104px;border-radius:50%;color:#fff;font-size:21px;letter-spacing:1px;touch-action:none;flex:none;-webkit-user-select:none;user-select:none;
   background:radial-gradient(circle at 35% 30%,#ff9aa6 0,#d7263d 45%,#7a0f20 100%);border:4px solid var(--gold);box-shadow:0 0 0 2px #000,0 6px 0 #3a0710;text-shadow:2px 2px 0 #000}
 #abtn.on{transform:translateY(5px);box-shadow:0 0 0 2px #000,0 1px 0 #3a0710;filter:brightness(1.25)}
+#hdr{display:none}
 #padHelp{flex:1;min-width:0;font-size:12px;color:var(--sub);text-align:center;line-height:1.4;white-space:nowrap}
 @media (max-height:720px){#bubbleRow{min-height:0}#bubbleRow img{width:auto;height:56px}#bubble{padding:5px 9px}#say{font-size:14px;line-height:1.35}#tip{font-size:11px;line-height:1.35;margin-top:2px}#how{font-size:11.5px;line-height:1.35;margin-top:3px;padding:3px 6px}#play{gap:4px}#toolName{font-size:12px;padding:3px 9px}#stick{width:112px;height:96px}#knob{width:26px;height:26px;margin:-13px 0 0 -13px}#abtn{width:86px;height:86px;font-size:18px}#padHelp{font-size:11px}}
 #play #bubbleRow{padding:0 44px 0 40px}
 
+/* よこがめん：まんなかの まどを たかさ いっぱいに。ひだり＝せんせいの ふきだし＋パッド、みぎ＝どうぐ＋「つかう」 */
+@media (orientation:landscape) and (min-aspect-ratio:5/4){
+  #app:has(#play.on){max-width:none}
+  #play.on{display:grid;padding:8px calc(10px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));gap:8px 14px;
+    --sw:min(calc((100dvh - 16px) * 0.7627), calc(100vw - 460px));
+    grid-template-columns:minmax(0,1fr) var(--sw) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;
+    grid-template-areas:"bub stage hdr" "bub stage top" "bub stage mid" "stick stage abtn"}
+  #play #stageWrap{grid-area:1/2/5/3;min-width:0}
+  #play #hdr{display:block;grid-area:hdr;width:100%;max-width:420px;aspect-ratio:360/88;margin-top:50px;border:3px solid var(--edge);border-radius:8px;box-shadow:0 0 0 2px #000}
+  #play #bubbleRow{grid-area:1/1/4/2;padding:0;align-items:flex-start;min-height:0;overflow-y:auto;gap:6px}
+  #play #bubbleRow img{height:64px}
+  #play #bubble{min-width:0}
+  #play #barRow{grid-area:top;flex-wrap:wrap;align-content:flex-start;max-width:420px}
+  #play #bar{flex:1 1 100%;order:3}
+  #play #pad{display:contents}
+  #play #stick{grid-area:stick;align-self:end;justify-self:start}
+  #play #abtn{grid-area:abtn;align-self:end;justify-self:end}
+  #play #padHelp{grid-area:mid;align-self:end;white-space:normal;text-align:right}
+  #play #quit{left:auto;right:calc(58px + env(safe-area-inset-right))}
+  #play #mute{right:calc(10px + env(safe-area-inset-right))}
+}
+@media (orientation:landscape) and (min-aspect-ratio:5/4) and (min-height:600px){
+  #play #bubbleRow img{height:150px}
+  #play #bubble{padding:12px 16px}
+  #play #say{font-size:21px;line-height:1.5}#play #how{font-size:15px;line-height:1.55;padding:6px 9px;margin-top:8px}#play #tip{font-size:14.5px;line-height:1.55;margin-top:8px}
+  #play #toolName{font-size:16px;padding:7px 12px}#play #help{font-size:14px;padding:7px 11px}#play #bar{height:20px}
+  #play #stick{width:170px;height:150px}#play #knob{width:36px;height:36px;margin:-18px 0 0 -18px}
+  #play #abtn{width:136px;height:136px;font-size:26px}
+  #play #padHelp{font-size:14px}
+}
+@media (orientation:landscape) and (min-aspect-ratio:5/4) and (max-height:600px){
+  #app:has(#title.on){max-width:none}
+  #title.on{display:grid;grid-template-columns:auto minmax(0,420px);grid-auto-rows:auto;align-content:center;justify-content:center;justify-items:center;column-gap:28px;row-gap:8px}
+  #title .bigshin{grid-row:1/5;height:min(78vh,300px)}
+  #title .emblem{padding:12px 8px 10px}#title h1{font-size:32px}
+}
+@media (orientation:landscape) and (min-aspect-ratio:5/4) and (max-height:500px){
+  #play #bubbleRow img{height:44px}
+  #play #say{font-size:13.5px;line-height:1.35}#play #how{font-size:11.5px}#play #tip{font-size:11px}
+  #play #stick{width:120px;height:100px}#play #abtn{width:88px;height:88px;font-size:18px}
+  #play #padHelp{display:none}
+}
 /* けっか */
 #result{align-items:center;text-align:center;overflow-y:auto;gap:8px}
 #result h2{font-size:26px;margin:6px 0 0;color:var(--gold);letter-spacing:3px;font-weight:400;text-shadow:2px 2px 0 #5a3d00,0 0 14px rgba(255,200,80,.5)}
@@ -231,6 +274,7 @@ ruby rt{font-size:.5em}
       <div id="bubble"><div id="say"></div><div id="how"></div><div id="tip"></div></div>
     </div>
     <div id="stageWrap"><canvas id="cv"></canvas></div>
+    <canvas id="hdr"></canvas>
     <div id="barRow"><button id="help" aria-label="おてほん">？ おてほん</button><div id="toolName"></div><div id="bar"><div id="barIn"></div></div></div>
     <div id="howto">
       <div class="hw">
@@ -276,6 +320,7 @@ ruby rt{font-size:.5em}
 
 </div>
 <script src="game.js"></script>
+<script src="plates.js"></script>
 <script src="cases.js"></script>
 <script src="story.js"></script>
 </body>

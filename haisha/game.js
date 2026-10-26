@@ -491,6 +491,8 @@ const nc = i => (i + 0.5) / N * 2 - 1;
 // Canva の おくばの え（molar.png）から よみとった はの かたち と みぞ（48×48）
 const MG = { m: ["000000000000000000000000000000000000000000000000", "000000000011111111110000000011111111110000000000", "000000001111111111111111111111111111111100000000", "000000111111111111111111111111111111111111000000", "000001111111111111111111111111111111111111100000", "000011111111111111111111111111111111111111110000", "000111111111111111111111111111111111111111110000", "000111111111111111111111111111111111111111111000", "001111111111111111111111111111111111111111111000", "001111111111111111111111111111111111111111111100", "011111111111111111111111111111111111111111111100", "011111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111111", "011111111111111111111111111111111111111111111111", "011111111111111111111111111111111111111111111111", "011111111111111111111111111111111111111111111111", "011111111111111111111111111111111111111111111111", "011111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111110", "001111111111111111111111111111111111111111111110", "001111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111111", "011111111111111111111111111111111111111111111111", "011111111111111111111111111111111111111111111111", "011111111111111111111111111111111111111111111111", "011111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111110", "011111111111111111111111111111111111111111111110", "001111111111111111111111111111111111111111111110", "001111111111111111111111111111111111111111111110", "001111111111111111111111111111111111111111111100", "000111111111111111111111111111111111111111111100", "000111111111111111111111111111111111111111111000", "000011111111111111111111111111111111111111110000", "000001111111111111111111111111111111111111110000", "000000111111111111111111111111111111111111100000", "000000011111111111111111111111111111111111000000", "000000000111111111111111111111111111111100000000", "000000000001111111111111111111111111110000000000", "000000000000001111111111111111111110000000000000", "000000000000000000000000000000000000000000000000"], g: ["000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000", "000000000000000000001111000000000000000000000000", "000000000000000000000111000000000000000000000000", "000000000000000000000001100000000000000000000000", "000000000000000000000001110000000000000000000000", "000000000000000000000000110000000000000000000000", "000000000000000000000000110000000000000000000000", "000000000000000000000000110000000000000110000000", "000000000000000000000000110000000000000110000000", "000000000000001000000000110000000000000110000000", "000000000000001000000000011000000000001100000000", "000000010000001100000000011000000000001100000000", "000000001000000110000000011000000000011000000000", "000000001100000010000000011000000000011000000000", "000000000010000011000000110000000000110000000000", "000000000010000001000000110000000011100000000000", "000000000110000011000000110000000111100000000000", "000000111111111111111000111000001111111000000000", "000000011111111111111111111111111110111111000000", "000000000000110000001111100111111000001111100000", "000000000000000000000110000001100000000110000000", "000000000000000000000100000000100000000000000000", "000000000000000000001100000000100000000000000000", "000000000000000000001100000000010000000000000000", "000000000000000000011000000000010000000000000000", "000000000000000000111000000000010000000000000000", "000000000000000000011000000000011000000000000000", "000000000000000000011000000000011000000000000000", "000000000000000000110000000000011000000000000000", "000000000000000000010000000000001000000000000000", "000000000000000000010000000000001000000000000000", "000000000000000000010000000000001000000000000000", "000000000000000000011000000000000100000000000000", "000000000000000000011000000000000100000000000000", "000000000000000000010000000000000100000000000000", "000000000000000000110000000000000100000000000000", "000000000000000000010000000000000100000000000000", "000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000", "000000000000000000000000000000000000000000000000"] };
 const MOLARIMG = new Image(); MOLARIMG.src = 'molar.png';
+// ほんものの しゃしん（plates.js の ktooth）が あれば、はの かたち と みぞは しゃしんから はかった もの
+const KT = (window.PLATES || {}).ktooth; if (KT && KT.m) { MG.m = KT.m; MG.g = KT.g; }
 const inTooth = (x, y) => Math.pow(Math.abs(x), 3) + Math.pow(Math.abs(y / 0.9), 3) <= 0.82;
 function segDist(px, py, ax, ay, bx, by) {
   const dx = bx - ax, dy = by - ay, t = clamp(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy), 0, 1);
@@ -508,9 +510,9 @@ function gridInit(kind) {
     const gz = MG.g[j][i] === '1';
     cell[k] = EN;
     if (kind === 'cavity') {
-      const dx = x - 0.2, dy = y + 0.02, a = Math.atan2(dy, dx), r = Math.hypot(dx, dy);
-      const edge = 0.24 + 0.05 * Math.sin(a * 5 + 1) + 0.03 * Math.sin(a * 9);
-      if (r < edge || (gz && r < 0.42)) cell[k] = DEC;
+      const dx = x - (KT ? 0.1 : 0.2), dy = y + (KT ? 0.08 : 0.02), a = Math.atan2(dy, dx), r = Math.hypot(dx, dy);
+      const edge = KT ? 0.21 + 0.035 * Math.sin(a * 3 + 1) + 0.02 * Math.sin(a * 7 + 2) : 0.24 + 0.05 * Math.sin(a * 5 + 1) + 0.03 * Math.sin(a * 9);
+      if (r < edge || (gz && r < (KT ? 0.34 : 0.42))) cell[k] = DEC;
       if (cell[k] === DEC && r < edge * 0.72 && hash[k] < 0.6) soft[k] = 1;   // けずったあとに のこる やわらかい むしば
     } else {
       if (gz) cell[k] = hash[k] < 0.8 ? DEB : GRV;                              // エッチングする はんい
@@ -584,6 +586,20 @@ function buildArch(with6) {
   // にゅうし 10ぽんは Canva の え。6さいきゅうしは その うしろに、した の はならびの え から きりだした だいきゅうし（m6.png）を おく
   const PLK = (window.PLATES || {}).karch;
   G.arch.plate = null;
+  // ほんものの しゃしん：12ほん（A〜E と 6さいきゅうし）の いちを そのまま つかう
+  if (PLK && PLK.teeth12) {
+    for (const side of [1, -1]) {
+      const mine = teeth.filter(t => t.side === side).sort((a, b) => a.idx - b.idx), pt = PLK.teeth12[side];
+      mine.forEach((t, i) => {
+        const q = pt[i]; if (!q) return; const f = q.sz / Math.max(1, (t.w + t.d) / 2);
+        t.x = q.x; t.y = q.y; t.w *= f; t.d *= f; t.hitR = Math.max(t.w, t.d) / 2 + 6;
+        for (const b of t.blobs) { b.lx *= f; b.ly *= f; b.r *= f; } for (const b of t.tartar) { b.lx *= f; b.ly *= f; }
+        const a = pt[Math.max(0, i - 1)], c = pt[Math.min(pt.length - 1, i + 1)];
+        t.ang = Math.atan2(c.y - a.y, c.x - a.x) + (side === 1 ? 0 : Math.PI);   // +y が そと（くちびる・ほっぺ）がわ
+      });
+    }
+    G.arch.plate = PLK; return;
+  }
   if (PLK && PLK.teeth && PLK.teeth.length === 10) {
     for (const side of [1, -1]) {
       const mine = teeth.filter(t => t.side === side), pt = PLK.teeth.filter(q => side === 1 ? q.x > 180 : q.x <= 180).sort((a, b) => b.y - a.y);
@@ -735,7 +751,7 @@ function buildDemo() {
     case 'find6': return pTap(...tt(t => t.type === 'M6'));
     case 'find4': return pTap(...tt(t => t.loose));
     case 'xray': xrSync(); return pTap(XR.cav.x, XR.cav.y);
-    case 'xray4': sdSync(); return pTap(SD.qx, SD.qy);
+    case 'xray4': if (G.kf && KX4) return pTap(KX4.germs[2][0], KX4.germs[2][1]); sdSync(); return pTap(SD.qx, SD.qy);
     case 'masui': return G.phase ? pHold(GUM.x, GUM.y, 1.6) : pRub(zig(GUM.x, GUM.y, 14, 8));
     case 'wattes': return pDrag([G.wattes[0].x, G.wattes[0].y], [SLOTS[1].x, SLOTS[1].y]);
     case 'drill': return pRub(cellZig(i => cell[i] === DEC));
@@ -815,6 +831,13 @@ function startPatient(p) {
   G.ext = { wig: 0, lift: 0, ang: 0, out: false, outT: 0, gauze: false, grip: false };
   const bid = p.base || p.id;
   if (bid === 'p4') G.teeth.find(t => t.side === -1 && t.type === 'A').loose = true;
+  G.kf = bid === 'p4' && !!KF;
+  if (G.kf) {   // ほんものの しゃしん：まえの れつの こどもの まえば（ぐらぐら）と、うしろから はえてきた おとなの まえば
+    const sp = KF.spr;
+    G.teeth = [{ type: 'A', x: sp.x + sp.w / 2, y: sp.y + sp.h / 2, w: sp.w, d: sp.h, ang: 0, hitR: 30, loose: true, kf: 'L', plaque: 0, blobs: [], tartar: [], dyed: 0, fluor: 0, gloss: 0 }]
+      .concat(KF.others.map(o => ({ type: 'X', x: o[0], y: o[1], w: 40, d: 40, ang: 0, hitR: 22, kf: o[2], plaque: 0, blobs: [], tartar: [], dyed: 0, fluor: 0, gloss: 0 })));
+    Object.assign(SD, { px: KF.px, gum: KF.gum, piv: KF.piv, sock: KF.sock, rub: KF.rub });
+  }
   if (bid === 'p1') G.teeth.find(t => t.side === 1 && t.type === 'E').cavity = true;
   if (bid !== 'p2') G.teeth.forEach(t => { t.plaque = 0; t.tartar = []; });  // しこう・しせきは おそうじの こだけ
   gridInit(bid === 'p1' ? 'cavity' : 'groove');
@@ -908,7 +931,11 @@ function tapAt(x, y) {
     const t = toothAt(x, y);
     if (!t) return;
     if (t.loose) { pop(t.x, t.y - 34, 'ぐらぐら！', '#ffe066'); stepDone(); }
+    else if (t.kf === 'P') { SFX.no(); pop(t.x, t.y - 26, 'うしろから はえてきた おとなの は'); }
     else { SFX.no(); pop(t.x, t.y - 26, 'この はは ぐらぐら してないよ'); }
+  } else if (k === 'xray4' && G.kf && KX4) {
+    for (const g of KX4.germs) if (Math.hypot((x - g[0]) / (g[2] + 8), (y - g[1]) / (g[3] + 8)) < 1) { G.x4hit = g; pop(g[0], g[1] - g[3] - 16, 'おとなの は みつけた！', '#ffe066'); stepDone(); return; }
+    for (const q of KX4.prim) if (Math.hypot((x - q[0]) / q[2], (y - q[1]) / q[3]) < 1) { SFX.no(); pop(x, y - 26, 'こどもの は。この したを みよう'); return; }
   } else if (k === 'xray4') {
     if (Math.hypot((x - SD.qx) / 44, (y - SD.qy) / 110) < 1) { pop(SD.qx, SD.qy - 130, 'おとなの は みつけた！', '#ffe066'); stepDone(); return; }
     if (Math.abs(x - SD.px) < 24 && y > SD.gum - 6 && y < SD.gum + 40) { SFX.no(); pop(x, y - 26, 'こどもの はの ねっこ。とけて みじかい'); return; }
@@ -1309,7 +1336,37 @@ function drawFace(c, x, y, r, p, mood) {
 }
 
 // くちの なか全体
+// ぐらぐらの まえば（ほんものの しゃしん）：ぬいた あとの え の うえに、ぬく は を のせて うごかす
+function drawKF() {
+  const E = G.ext, base = plateImg(KF.img), hole = plateImg(KF.hole), spr = plateImg(KF.tooth), sp = KF.spr;
+  if (!base) return false;
+  if (!hole || !spr) { ctx.drawImage(base, 0, TOP, W, H - TOP); return true; }
+  ctx.drawImage(hole, 0, TOP, W, H - TOP);
+  if (!E.out || E.outT < 0.6) {
+    ctx.save();
+    if (E.out) { const t = E.outT / 0.6; ctx.translate(lerp(SD.px, 300, t), lerp(SD.piv - E.lift, 150, t)); ctx.scale(1 - t * 0.5, 1 - t * 0.5); ctx.translate(-SD.px, -SD.piv); }
+    else { const a = G.key === 'extract' ? E.ang : G.key === 'find4' && !G.done ? Math.sin(G.t * 5) * 0.05 : 0; ctx.translate(SD.px, SD.piv - E.lift); ctx.rotate(a); ctx.translate(-SD.px, -SD.piv); }
+    ctx.drawImage(spr, sp.x, sp.y, sp.w, sp.h); ctx.restore();
+  }
+  if (E.gauze || (G.key === 'gauze' && P.down && !G.done)) {
+    const gx = E.gauze ? SD.sock.x : P.x, gy = E.gauze ? SD.sock.y - 4 : P.y;
+    ctx.save(); ctx.translate(gx, gy); ctx.rotate(-0.08);
+    const gg = ctx.createLinearGradient(0, -14, 0, 14); gg.addColorStop(0, '#ffffff'); gg.addColorStop(1, '#e4e8ec');
+    ctx.fillStyle = gg; rr(ctx, -24, -15, 48, 30, 5); ctx.fill();
+    ctx.strokeStyle = 'rgba(170,180,192,.55)'; ctx.lineWidth = 0.8;
+    for (let i = -20; i <= 20; i += 4) { ctx.beginPath(); ctx.moveTo(i, -13); ctx.lineTo(i, 13); ctx.stroke(); }
+    for (let j = -11; j <= 11; j += 4) { ctx.beginPath(); ctx.moveTo(-22, j); ctx.lineTo(22, j); ctx.stroke(); }
+    if (E.gauze) { ctx.fillStyle = 'rgba(190,30,50,.35)'; ctx.beginPath(); ctx.ellipse(2, 6, 9, 5, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  }
+  return true;
+}
 function drawArch() {
+  if (G.kf && drawKF()) {
+    if (G.key === 'find4' && G.hintT > 12 && !G.done) { const t = G.teeth[0]; ctx.strokeStyle = 'rgba(255,224,102,' + (0.5 + 0.5 * Math.sin(G.t * 6)) + ')'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(t.x, t.y, t.hitR + 6, 0, Math.PI * 2); ctx.stroke(); }
+    text(ctx, 'したの まえば', 290, TOP + 18, 11, '#ffd5dc', 'center');
+    return;
+  }
   const A = G.arch.A, k = G.arch.k, PLK = G.arch.plate, pim = PLK && plateImg(PLK.img);
   if (pim) ctx.drawImage(pim, 0, TOP, W, H - TOP);
   else {
@@ -1325,7 +1382,7 @@ function drawArch() {
   ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.ellipse(A.cx, A.cy, A.rx + 5 * k, A.ry + 5 * k, 0, G.arch.thMin + 0.05, G.arch.thMax - 0.05); ctx.stroke();
   }
-  if (pim) { const m6 = plateImg('m6.png'); if (m6) for (const t of G.teeth) if (t.type === 'M6') { ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.ang); const h = t.w * 1.06, w = h * m6.width / m6.height; ctx.drawImage(m6, -w / 2, -h / 2, w, h); ctx.restore(); } }
+  if (pim && !PLK.teeth12) { const m6 = plateImg('m6.png'); if (m6) for (const t of G.teeth) if (t.type === 'M6') { ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.ang); const h = t.w * 1.06, w = h * m6.width / m6.height; ctx.drawImage(m6, -w / 2, -h / 2, w, h); ctx.restore(); } }
   for (const t of G.teeth) drawArchTooth(t, !!pim);
   for (const t of G.teeth) for (const b of t.tartar) {
     if (b.hp <= 0) continue;
@@ -1436,7 +1493,7 @@ function drawXray() {
     ctx.globalAlpha = 0.9;
     text(ctx, 'エナメルしつ（いちばん しろい）', 120, XR.top - 14, 11, '#e9edf0', 'center', 'rgba(0,0,0,.6)');
     text(ctx, 'しずい', XP.pulpLbl[0], XP.pulpLbl[1], 10, '#e9edf0', 'center', 'rgba(0,0,0,.6)');
-    text(ctx, 'おとなの はの たまご', 180, XR.germY + 52, 11, '#cfd5da', 'center', 'rgba(0,0,0,.6)');
+    text(ctx, 'おとなの はの たまご', XP.germLbl ? XP.germLbl[0] : 180, XP.germLbl ? XP.germLbl[1] : XR.germY + 52, 11, '#cfd5da', 'center', 'rgba(0,0,0,.6)');
     ctx.globalAlpha = 1;
     if (G.done) { ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(c.x, c.y, c.rx + 8, c.ry + 8, 0.15, 0, Math.PI * 2); ctx.stroke(); }
     text(ctx, 'レントゲン', 310, TOP + 18, 11, '#7f8a94', 'center');
@@ -1480,7 +1537,8 @@ function drawXray() {
 // よこから みた したの まえば（だんめんず）。こどもの はの うしろ（したがわ）に おとなの はが そだっている
 const SD = { px: 150, gum: 300, qx: 212, qy: 345, piv: 330, sock: { x: 150, y: 302 }, rub: { x: 112, y: 318, r: 22 } };
 // Canva の え（plates.js の kside）が あれば、いちを え に あわせる
-function sdSync() { const P = (window.PLATES || {}).kside; if (P && !SD.plate) { Object.assign(SD, { px: 149.17, gum: 280, qx: 216.67, qy: 330.67, piv: 340, sock: { x: 149.17, y: 284 }, rub: { x: 112, y: 296, r: 22 } }); SD.plate = P; } return SD.plate; }
+const KF = (window.PLATES || {}).kfront, KX4 = (window.PLATES || {}).kx4;
+function sdSync() { if (G.kf) return null; const P = (window.PLATES || {}).kside; if (P && !SD.plate) { Object.assign(SD, { px: 149.17, gum: 280, qx: 216.67, qy: 330.67, piv: 340, sock: { x: 149.17, y: 284 }, rub: { x: 112, y: 296, r: 22 } }); SD.plate = P; } return SD.plate; }
 function primPath(c) {   // ねもと(0,0)が きじゅんの こどもの まえば。ねっこは とけて みじかい
   c.beginPath(); c.moveTo(-17, 0);
   c.bezierCurveTo(-19, -30, -10, -70, -5, -84); c.lineTo(4, -82);
@@ -1494,6 +1552,15 @@ function permPath(c) {   // おとなの まえば（ねっこは まだ そだ�
   c.lineTo(16, 70); c.lineTo(9, 92); c.lineTo(-9, 92); c.lineTo(-16, 70); c.closePath();
 }
 function drawSide() {
+  if (G.kf && G.key === 'xray4' && KX4 && plateImg(KX4.img)) {
+    ctx.drawImage(plateImg(KX4.img), 0, TOP, W, H - TOP);
+    ctx.globalAlpha = 0.9; text(ctx, 'こどもの は', KX4.lbl.prim[0], KX4.lbl.prim[1], 11, '#e9edf0', 'center', 'rgba(0,0,0,.6)'); text(ctx, 'レントゲン', 310, TOP + 18, 11, '#7f8a94', 'center'); ctx.globalAlpha = 1;
+    const ring = (g, a) => { ctx.strokeStyle = 'rgba(255,224,102,' + a + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(g[0], g[1], g[2] + 4, g[3] + 4, 0, 0, Math.PI * 2); ctx.stroke(); };
+    if (G.done && G.x4hit) { ring(G.x4hit, 1); text(ctx, 'おとなの は（そだっている）', KX4.lbl.germ[0], KX4.lbl.germ[1], 12, '#ffe066', 'center', 'rgba(0,0,0,.6)'); }
+    else if (G.hintT > 12) for (const g of KX4.germs) ring(g, 0.5 + 0.5 * Math.sin(G.t * 3));
+    return;
+  }
+  if (G.kf && drawKF()) { text(ctx, 'したの まえば', 290, TOP + 18, 11, '#ffd5dc', 'center'); return drawSideHints(); }
   const xr = G.key === 'xray4', E = G.ext, SP = sdSync(), sbg = SP && plateImg(E.out ? SP.bg : SP.img), spr = SP && plateImg(SP.prim);
   if (SP && xr && plateImg(SP.xr)) {
     ctx.drawImage(plateImg(SP.xr), 0, TOP, W, H - TOP);
@@ -1628,7 +1695,57 @@ function drawRoll(r, ghost) {
   }
   ctx.restore();
 }
+// しゃしんの うえに マスの ようすを なめらかに かさねる（マスを 48x48 の ちいさな えに して ひきのばす）
+const CELLCV = document.createElement('canvas'); CELLCV.width = CELLCV.height = N;
+const CELLCX = CELLCV.getContext('2d'), CELLID = CELLCX.createImageData(N, N);
+const CELL2 = document.createElement('canvas'); CELL2.width = CELL2.height = 144; const CELL2X = CELL2.getContext('2d');
+// むしば・よごれ・けずった あなは「じょうざん（multiply）」で はの しつかんを のこし、つめる ざいりょうは ふつうに かさねる
+function cellLayer(pick, mode, blur) {
+  const d = CELLID.data;
+  for (let k = 0; k < NN; k++) { const c = pick(k), o = k * 4; if (c) { d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = c[3]; } else d[o + 3] = 0; }
+  CELLCX.putImageData(CELLID, 0, 0);
+  // 48 → 144 に なめらかに ひろげて ぼかしてから まどへ（マスの かどを けす）
+  CELL2X.clearRect(0, 0, 144, 144); CELL2X.imageSmoothingEnabled = true; CELL2X.imageSmoothingQuality = 'high';
+  CELL2X.filter = 'blur(' + blur + 'px)'; CELL2X.drawImage(CELLCV, 0, 0, 144, 144); CELL2X.filter = 'none';
+  ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  if (mode) ctx.globalCompositeOperation = mode;
+  ctx.drawImage(CELL2, TB.cx - TB.s, TB.cy - TB.s, TB.s * 2, TB.s * 2);
+  ctx.restore();
+}
+function drawCellsSmooth(cureMix, dryMix) {
+  // まわりの ちゃいろい しみ（むしばの ふち）
+  cellLayer(k => { if (cell[k] !== EN) return null; const i = k % N, j = k / N | 0; let m = 9;
+    for (let dj = -3; dj <= 3; dj++) for (let di = -3; di <= 3; di++) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < N && jj < N && cell[jj * N + ii] === DEC) m = Math.min(m, Math.hypot(di, dj)); }
+    return m < 9 ? [178, 128, 80, 255 * (1 - m / 4.6)] : null; }, 'multiply', 3);
+  cellLayer(k => {
+    const s = cell[k], h = hash[k];
+    if (s === DEC) { if (hp[k] < 1) return [150, 105, 70, 255];
+      let e = 0; for (const o of [-1, 1, -N, N, -N - 1, -N + 1, N - 1, N + 1]) if (cell[k + o] === EN) e++;   // ふちほど うすい ちゃいろ、まんなかは くろっぽい
+      const t = Math.min(1, e / 3) * 0.7 + h * 0.3; return [Math.round(lerp(40, 125, t)), Math.round(lerp(25, 82, t)), Math.round(lerp(14, 46, t)), 255]; }
+    if (s === SOFT && !dyed[k]) return h < 0.5 ? [196, 150, 98, 255] : [180, 134, 86, 255];
+    if (s === HOLE) { let edge = false; for (const o of [-1, 1, -N, N]) if (cell[k + o] === EN) edge = true; return edge ? [170, 128, 92, 255] : [232, 206, 160, 255]; }
+    if (s === DEB) return h < 0.4 ? [120, 88, 52, 230] : h < 0.7 ? [150, 118, 72, 200] : [96, 70, 40, 240];
+    if (s === GRV) return [190, 165, 125, 150];
+    return null;
+  }, 'multiply', 1.3);
+  cellLayer(k => {
+    const s = cell[k], h = hash[k];
+    if (s === SOFT && dyed[k]) return h < 0.5 ? [255, 79, 147, 230] : [240, 54, 127, 230];
+    if (s === HOLE && bonded[k]) return [255, 255, 255, 70];
+    if (s === RES) { const c = cureMix ? mix('#efe3c2', '#ebdfc8', cureMix).match(/\d+/g).map(Number) : [239, 227, 194]; return c.concat([235]); }
+    if (s === CUR) return [234, 222, 200, 200];
+    if (s === SEAL) { const c = cureMix ? mix('#fff1b8', '#fffbe8', cureMix).match(/\d+/g).map(Number) : [255, 241, 184]; return c.concat([200]); }
+    if (s === SEALC) return [255, 251, 232, 185];
+    if (gel[k]) return [40, 120, 255, 150];
+    if (high[k] > 0) return [225, 25, 70, 255 * clamp(high[k], 0, 1)];
+    if (s !== OUT) { const ch = etched[k] ? 1 : (zone[k] ? dryMix : 0); if (ch > 0) return [255, 255, 255, 140 * ch]; }
+    return null;
+  }, null, 1);
+}
 function drawCloseup() {
+  const KTI = KT && plateImg(KT.img);
+  const cureMix0 = (G.key === 'cure') ? clamp(G.holdT / 3, 0, 1) : 0, dryMix0 = G.key === 'dry' ? clamp(G.holdT / 2.5, 0, 1) : 0;
+  if (KTI) { ctx.drawImage(KTI, 0, TOP, W, H - TOP); drawCellsSmooth(cureMix0, dryMix0); drawCloseupRest(); return; }
   const bg = ctx.createRadialGradient(TB.cx, TB.cy, 40, TB.cx, TB.cy, 300);
   bg.addColorStop(0, '#f6a3ae'); bg.addColorStop(1, '#c9576a');
   ctx.fillStyle = bg; ctx.fillRect(0, TOP, W, H - TOP);
@@ -1674,6 +1791,9 @@ function drawCloseup() {
     if (gel[k]) { ctx.fillStyle = 'rgba(40,120,255,.55)'; ctx.beginPath(); ctx.arc(x, y, CS * 0.85, 0, Math.PI * 2); ctx.fill(); }
     if (high[k] > 0) { ctx.fillStyle = 'rgba(225,25,70,' + clamp(high[k], 0, 1) + ')'; ctx.beginPath(); ctx.arc(x, y, CS * 0.75, 0, Math.PI * 2); ctx.fill(); }
   }
+  drawCloseupRest();
+}
+function drawCloseupRest() {
   if (G.key === 'polish' || (G.p.steps.includes('polish') && G.si > G.p.steps.indexOf('polish'))) {
     const sh = G.key === 'polish' ? G.shine : 1;
     for (let k = 0; k < NN; k += 7) if (cell[k] === CUR && hash[k] < 0.25 * sh) {

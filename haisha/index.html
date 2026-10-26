@@ -132,6 +132,16 @@ ruby rt{font-size:.5em}
 #abtn.demo{transform:translateY(5px);filter:brightness(1.35);box-shadow:0 0 0 2px #000,0 0 18px #ffd75e}
 #howto{position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:16px}
 #howto.gone{display:none}
+#credits{position:absolute;inset:0;z-index:40;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:16px}
+#credits.gone{display:none}
+#credits .hw{width:100%;max-width:520px;max-height:86vh;overflow:auto;padding:14px 16px;background:linear-gradient(180deg,#3048b8,#16247a 55%,#0a1250);border:3px solid #f2f2f8;border-radius:8px;text-align:left}
+#credits h3{margin:0 0 8px;color:#ffd75e;font-size:18px;font-weight:400;text-align:center}
+#credits .crn{font-size:12px;line-height:1.6;margin:0 0 8px}
+#credits .crl{font-size:11px;line-height:1.55;padding-left:1.1em;margin:0 0 12px}
+#credits .crl b{color:#ffd75e;font-weight:400}
+#credits a,#creditsBtn{color:#9fd0ff}
+#credits .btn{display:block;margin:0 auto}
+
 #howto .hw{width:100%;max-width:420px;padding:16px 18px;background:linear-gradient(180deg,#3048b8,#16247a 55%,#0a1250);border:3px solid #f2f2f8;border-radius:8px;box-shadow:0 0 0 2px #000,inset 0 0 0 2px #7d8be0;text-align:center}
 #howto h3{margin:0 0 8px;color:#ffd75e;font-size:20px;font-weight:400;letter-spacing:3px}
 #howto ol{text-align:left;margin:0 0 14px;padding-left:1.3em}
@@ -232,7 +242,31 @@ ruby rt{font-size:.5em}
     </div>
     <p class="sub">23にんの かんじゃが まっている<br>ほんものの ちりょうに いどめ！</p>
     <button class="btn" id="startBtn"><span class="blink">はじめる</span></button>
-    <p class="foot">おとが でます（マナーモードを きってね）</p>
+    <p class="foot">おとが でます（マナーモードを きってね）　<a id="creditsBtn" href="#">しゃしんの でどころ</a></p>
+    <div id="credits" class="gone">
+      <div class="hw">
+        <h3>しゃしんの でどころ</h3>
+        <p class="crn">ちりょうの しゃしん・レントゲンは、じゆうに つかえる ほんものの しゃしん（Wikimedia Commons・PMC の ろんぶん）を つかっています。ゲームの ため きりぬきや しるしを くわえています。</p>
+        <ul class="crl">
+          <li><b>こどもの はならび・おくば</b>：<a href="https://commons.wikimedia.org/wiki/File:MixedDentition.jpg" target="_blank" rel="noopener">MixedDentition.jpg</a> ／ Roquex ／ CC0（きりぬき・へんしゅう あり）</li>
+          <li><b>こどもの レントゲン</b>：<a href="https://commons.wikimedia.org/wiki/File:Intraoral_Periapical_Radiograph_(IOPA)_showing_Deciduous(Milky_or_Primary)_Tooth_75_and_developing_crown_of_Permanent_or_Secondary_Teeth_35,_36_and_37.jpg" target="_blank" rel="noopener">Intraoral Periapical Radiograph (IOPA) showing Deciduous(Milky or Prim</a> ／ Nizil Shah ／ CC BY-SA 4.0</li>
+          <li><b>ぐらぐらの まえば</b>：<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5944594/" target="_blank" rel="noopener">Retention of mandibular primary incisor caused ectopic lingual eruptio</a> ／ PMC5944594 の著者 ／ CC BY 4.0（きりぬき・へんしゅう あり）</li>
+          <li><b>こどもの パノラマ</b>：<a href="https://commons.wikimedia.org/wiki/File:Deciduous_teeth-boy-OPG-10,10,2019.jpg" target="_blank" rel="noopener">Deciduous teeth-boy-OPG-10,10,2019.jpg</a> ／ Gang65 ／ CC BY-SA 4.0</li>
+          <li><b>はの ない うえの あご</b>：<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8830393/" target="_blank" rel="noopener">Initial intra-oral without dentures for maxilla view (Fig.)</a> ／ PMC8830393 の著者 ／ CC BY 4.0</li>
+          <li><b>ためしの いれば</b>：<a href="https://commons.wikimedia.org/wiki/File:Oberkiefer_Totalprothese_in_Wachs_aufgestellt_zur_Einprobe_20090714_006.JPG" target="_blank" rel="noopener">Oberkiefer Totalprothese in Wachs aufgestellt zur Einprobe 20090714 00</a> ／ Politikaner ／ CC BY-SA 3.0（きりぬき・へんしゅう あり）</li>
+          <li><b>いれば</b>：<a href="https://commons.wikimedia.org/wiki/File:Occclusal_denture_example.jpg" target="_blank" rel="noopener">Occclusal denture example.jpg</a> ／ DRosenbach (talk). ／ Public domain（きりぬき・へんしゅう あり）</li>
+          <li><b>いれば（うらがわ）</b>：<a href="https://commons.wikimedia.org/wiki/File:Oberkiefer_Totalprothese_in_Wachs_aufgestellt_zur_Einprobe_20090714_008.JPG" target="_blank" rel="noopener">Oberkiefer Totalprothese in Wachs aufgestellt zur Einprobe 20090714 00</a> ／ Politikaner ／ CC BY-SA 3.0</li>
+          <li><b>したの はならび</b>：<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC13298702/" target="_blank" rel="noopener">Baseline clinical condition: occlusal view of the mandibular arch (Fig</a> ／ PMC13298702 の著者 ／ CC BY 4.0</li>
+          <li><b>しせきの ついた まえば</b>：<a href="https://commons.wikimedia.org/wiki/File:MandibularAnteriorCalculus.JPG" target="_blank" rel="noopener">MandibularAnteriorCalculus.JPG</a> ／ DRosenbach at English Wikipedia ／ Public domain</li>
+          <li><b>したの はくはんしょう</b>：<a href="https://commons.wikimedia.org/wiki/File:Leukoplakiaaitor.jpg" target="_blank" rel="noopener">Leukoplakiaaitor.jpg</a> ／ Aitor III ／ Public domain</li>
+          <li><b>パノラマ（はの ない あご）</b>：<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7915536/" target="_blank" rel="noopener">Panoramic radiograph of Case Vignette 2 (Fig.)</a> ／ PMC7915536 の著者 ／ CC BY 4.0</li>
+          <li><b>CT（ずがいこつ）</b>：<a href="https://commons.wikimedia.org/wiki/File:CT_CADCAM_IMPLANTPLACEMENT.gif" target="_blank" rel="noopener">CT CADCAM IMPLANTPLACEMENT.gif</a> ／ Coronation Dental Specialty Group ／ CC BY-SA 3.0</li>
+          <li><b>ねっこの さきの うみ（レントゲン）</b>：<a href="https://commons.wikimedia.org/wiki/File:Abscessed_tooth_periapical_radiograph.jpg" target="_blank" rel="noopener">Abscessed tooth periapical radiograph.jpg</a> ／ Coronation Dental Specialty Group ／ CC BY-SA 3.0（きりぬき・へんしゅう あり）</li>
+          <li><b>おやしらず（パノラマ）</b>：<a href="https://commons.wikimedia.org/wiki/File:Orthopantomogram_showing_mesio_angular_impaction_of_third_molars.jpg" target="_blank" rel="noopener">Orthopantomogram showing mesio angular impaction of third molars.jpg</a> ／ Challiyan ／ CC BY-SA 4.0</li>
+        </ul>
+        <button class="btn" id="creditsOk">とじる</button>
+      </div>
+    </div>
   </section>
 
   <section id="story" class="screen">
@@ -319,8 +353,9 @@ ruby rt{font-size:.5em}
   </section>
 
 </div>
-<script src="game.js"></script>
+<script>document.addEventListener("click",e=>{if(e.target.id==="creditsBtn"){e.preventDefault();e.stopPropagation();document.getElementById("credits").classList.remove("gone")}if(e.target.id==="creditsOk")document.getElementById("credits").classList.add("gone")},true)</script>
 <script src="plates.js"></script>
+<script src="game.js"></script>
 <script src="cases.js"></script>
 <script src="story.js"></script>
 </body>
